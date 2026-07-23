@@ -15,6 +15,7 @@ export type TripDocumentType = "pdf" | "drive";
 
 export type Trip = {
   id: string;
+  featured: boolean;
   badge: string;
   region: string;
   days: string;
@@ -77,6 +78,7 @@ export const defaultSiteContent: SiteContent = {
   trips: [
     {
       id: "tokyo-slow",
+      featured: true,
       badge: "城市慢旅",
       region: "TOKYO・HAKONE",
       days: "5日",
@@ -91,6 +93,7 @@ export const defaultSiteContent: SiteContent = {
     },
     {
       id: "hokkaido-flower",
+      featured: true,
       badge: "季節限定",
       region: "HOKKAIDO",
       days: "7日",
@@ -105,6 +108,7 @@ export const defaultSiteContent: SiteContent = {
     },
     {
       id: "bali-healing",
+      featured: true,
       badge: "輕奢療癒",
       region: "BALI・UBUD",
       days: "6日",
@@ -200,6 +204,8 @@ export function normalizeSiteContent(value: unknown): SiteContent {
     return [
       {
         id,
+        featured:
+          typeof source.featured === "boolean" ? source.featured : true,
         badge: safeString(source.badge, fallback.badge, 40),
         region: safeString(source.region, fallback.region, 60),
         days: safeString(source.days, fallback.days, 20),

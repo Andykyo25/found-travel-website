@@ -5,7 +5,11 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const content = await getSiteContent();
-  const tripCount = content.trips.length <= 2 ? content.trips.length : "many";
+  const featuredTrips = content.trips.filter((trip) => trip.featured);
+  const otherTrips = content.trips.filter((trip) => !trip.featured);
+  const primaryTrips = featuredTrips.length ? featuredTrips : content.trips;
+  const overflowTrips = featuredTrips.length ? otherTrips : [];
+  const tripCount = primaryTrips.length <= 2 ? primaryTrips.length : "many";
 
   return (
     <main>
@@ -95,7 +99,7 @@ export default async function Home() {
         </div>
 
         <div className="trip-grid" data-count={tripCount}>
-          {content.trips.map((trip, index) => (
+          {primaryTrips.map((trip, index) => (
             <article className="trip-card" key={trip.id}>
               <div className="trip-image">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -136,6 +140,57 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      {overflowTrips.length > 0 ? (
+        <section className="section-shell more-journeys" id="more-journeys">
+          <div className="more-heading">
+            <p className="eyebrow">
+              <span />
+              MORE JOURNEYS
+            </p>
+            <h2>更多行程</h2>
+            <p>其他可洽詢的行程，點開即可看完整資料。</p>
+          </div>
+          <div className="more-trip-grid">
+            {overflowTrips.map((trip) => (
+              <article className="more-trip-card" key={trip.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="more-trip-thumb"
+                  src={trip.image}
+                  alt=""
+                  loading="lazy"
+                />
+                <div className="more-trip-body">
+                  <div className="more-trip-meta">
+                    <span>{trip.region}</span>
+                    <span>{trip.days}</span>
+                  </div>
+                  <h3>{trip.title}</h3>
+                  <div className="more-trip-footer">
+                    <span className="price">{trip.price}</span>
+                    {trip.documentUrl ? (
+                      <a
+                        className="trip-document-link"
+                        href={trip.documentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`開啟${trip.title}完整行程`}
+                      >
+                        {trip.documentName} <span aria-hidden="true">↗</span>
+                      </a>
+                    ) : (
+                      <span className="trip-document-link disabled">
+                        行程資料準備中
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="film-section section-shell" id="film">
         <div className="film-copy">

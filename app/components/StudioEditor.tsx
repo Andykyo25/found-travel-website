@@ -96,6 +96,7 @@ function createTrip(): Trip {
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `trip-${Date.now()}`,
+    featured: true,
     badge: "精選行程",
     region: "DESTINATION",
     days: "5日",
@@ -120,9 +121,42 @@ export function StudioEditor({
     kind: "idle",
     message: "尚未有變更",
   });
+  const [openTripIds, setOpenTripIds] = useState<Set<string>>(
+    () =>
+      new Set(
+        initialContent.trips.length <= 4
+          ? initialContent.trips.map((trip) => trip.id)
+          : [],
+      ),
+  );
 
   const markChanged = () => {
     setStatus({ kind: "idle", message: "有尚未儲存的變更" });
+  };
+
+  const toggleTripOpen = (id: string) => {
+    setOpenTripIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const setAllTripsOpen = (open: boolean) => {
+    setOpenTripIds(
+      open ? new Set(draft.trips.map((trip) => trip.id)) : new Set(),
+    );
+  };
+
+  const toggleFeatured = (index: number) => {
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, tripIndex) =>
+        tripIndex === index ? { ...trip, featured: !trip.featured } : trip,
+      ),
+    }));
+    markChanged();
   };
 
   const updateRoot = <K extends keyof SiteContent>(
@@ -163,10 +197,16 @@ export function StudioEditor({
   };
 
   const addTrip = () => {
+    const trip = createTrip();
     setDraft((current) => ({
       ...current,
-      trips: [...current.trips, createTrip()],
+      trips: [...current.trips, trip],
     }));
+    setOpenTripIds((current) => {
+      const next = new Set(current);
+      next.add(trip.id);
+      return next;
+    });
     setStatus({
       kind: "idle",
       message: "已新增空白行程，填寫完成後請記得儲存",
@@ -288,6 +328,11 @@ export function StudioEditor({
     ),
   );
 
+  const featuredCount = draft.trips.filter((trip) => trip.featured).length;
+  const allTripsOpen =
+    draft.trips.length > 0 &&
+    draft.trips.every((trip) => openTripIds.has(trip.id));
+
   return (
     <form
       className="studio-form"
@@ -364,12 +409,31 @@ export function StudioEditor({
       <section className="studio-section">
         <div className="studio-section-heading">
           <div>
-            <h2>精選行程</h2>
-            <p>行程數量不限，可自由新增、刪除及調整排序。</p>
+            <h2>行程管理</h2>
+            <p>
+              共 {draft.trips.length} 筆 ・ 精選 {featuredCount} ・ 其他{" "}
+              {draft.trips.length - featuredCount}
+              。「精選」顯示在首頁上方大卡片，「其他」收在首頁「更多行程」。
+            </p>
           </div>
-          <button className="button button-small" type="button" onClick={addTrip}>
-            ＋ 新增行程
-          </button>
+          <div className="studio-heading-actions">
+            {draft.trips.length > 1 ? (
+              <button
+                className="button button-secondary button-small"
+                type="button"
+                onClick={() => setAllTripsOpen(!allTripsOpen)}
+              >
+                {allTripsOpen ? "全部收合" : "全部展開"}
+              </button>
+            ) : null}
+            <button
+              className="button button-small"
+              type="button"
+              onClick={addTrip}
+            >
+              ＋ 新增行程
+            </button>
+          </div>
         </div>
 
         {draft.trips.length === 0 ? (
@@ -378,40 +442,73 @@ export function StudioEditor({
           </div>
         ) : null}
 
-        {draft.trips.map((trip, index) => (
-          <div className="studio-trip" key={trip.id}>
-            <div className="studio-trip-heading">
-              <h3>
-                行程 {index + 1}・{trip.title}
-              </h3>
-              <div className="trip-editor-actions">
+        <div className="studio-trip-list">
+          {draft.trips.map((trip, index) => (
+            <div
+              className={`studio-trip${openTripIds.has(trip.id) ? " open" : ""}`}
+              key={trip.id}
+            >
+              <div className="studio-trip-bar">
                 <button
                   type="button"
-                  onClick={() => moveTrip(index, -1)}
-                  disabled={index === 0}
-                  aria-label={`將${trip.title}往前移`}
+                  className="studio-trip-toggle"
+                  onClick={() => toggleTripOpen(trip.id)}
+                  aria-expanded={openTripIds.has(trip.id)}
                 >
-                  ↑
+                  <span className="studio-trip-chevron" aria-hidden="true">
+                    {openTripIds.has(trip.id) ? "▾" : "▸"}
+                  </span>
+                  <span className="studio-trip-index">行程 {index + 1}</span>
+                  <span className="studio-trip-name">{trip.title}</span>
+                  {!trip.featured ? (
+                    <span className="studio-trip-tag">其他</span>
+                  ) : null}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => moveTrip(index, 1)}
-                  disabled={index === draft.trips.length - 1}
-                  aria-label={`將${trip.title}往後移`}
-                >
-                  ↓
-                </button>
-                <button
-                  className="danger"
-                  type="button"
-                  onClick={() => removeTrip(index)}
-                >
-                  刪除
-                </button>
+                <div className="studio-trip-controls">
+                  <button
+                    type="button"
+                    className={`featured-toggle${trip.featured ? " on" : ""}`}
+                    onClick={() => toggleFeatured(index)}
+                    aria-pressed={trip.featured}
+                    title={
+                      trip.featured
+                        ? "目前為精選，點擊改為其他"
+                        : "目前為其他，點擊改為精選"
+                    }
+                  >
+                    {trip.featured ? "★ 精選" : "☆ 其他"}
+                  </button>
+                  <div className="trip-editor-actions">
+                    <button
+                      type="button"
+                      onClick={() => moveTrip(index, -1)}
+                      disabled={index === 0}
+                      aria-label={`將${trip.title}往前移`}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveTrip(index, 1)}
+                      disabled={index === draft.trips.length - 1}
+                      aria-label={`將${trip.title}往後移`}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      className="danger"
+                      type="button"
+                      onClick={() => removeTrip(index)}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="field-grid">
+              {openTripIds.has(trip.id) ? (
+                <div className="studio-trip-body">
+                  <div className="field-grid">
               <Field label="行程名稱">
                 <input
                   required
@@ -548,9 +645,12 @@ export function StudioEditor({
                   />
                 </Field>
               </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
       <section className="studio-section">
