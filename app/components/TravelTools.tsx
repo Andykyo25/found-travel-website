@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Destination } from "@/lib/site-content";
+import {
+  resolveInitialDestinationId,
+  travelDestinations,
+} from "@/lib/travel-destinations";
 
 type TravelData = {
   temperature: number;
@@ -11,6 +15,13 @@ type TravelData = {
 };
 
 export function TravelTools({ destination }: { destination: Destination }) {
+  const [selectedId, setSelectedId] = useState(() =>
+    resolveInitialDestinationId(destination),
+  );
+  const selected =
+    travelDestinations.find((option) => option.id === selectedId) ??
+    travelDestinations[0];
+
   const [now, setNow] = useState(() => new Date());
   const [data, setData] = useState<TravelData | null>(null);
 
@@ -21,10 +32,11 @@ export function TravelTools({ destination }: { destination: Destination }) {
 
   useEffect(() => {
     const controller = new AbortController();
+    setData(null);
     const params = new URLSearchParams({
-      latitude: String(destination.latitude),
-      longitude: String(destination.longitude),
-      currency: destination.currency,
+      latitude: String(selected.latitude),
+      longitude: String(selected.longitude),
+      currency: selected.currency,
     });
 
     fetch(`/api/travel-tools?${params}`, { signal: controller.signal })
@@ -36,57 +48,82 @@ export function TravelTools({ destination }: { destination: Destination }) {
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, [
-    destination.currency,
-    destination.latitude,
-    destination.longitude,
-  ]);
+  }, [selected.currency, selected.latitude, selected.longitude]);
 
   const localTime = useMemo(
     () =>
       new Intl.DateTimeFormat("zh-TW", {
-        timeZone: destination.timezone,
+        timeZone: selected.timezone,
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
       }).format(now),
-    [destination.timezone, now],
+    [selected.timezone, now],
   );
 
   return (
-    <section className="travel-tools" aria-label={`${destination.city}即時資訊`}>
-      <div className="tool">
-        <span className="tool-icon" aria-hidden="true">
-          ◷
-        </span>
-        <div>
-          <small>{destination.city}・當地時間</small>
-          <strong>{localTime}</strong>
-        </div>
+    <section className="travel-tools-panel" aria-label="旅遊目的地即時資訊">
+      <div className="travel-tools-picker">
+        <label htmlFor="travel-destination">選擇目的地</label>
+        <select
+          id="travel-destination"
+          value={selected.id}
+          onChange={(event) => setSelectedId(event.target.value)}
+        >
+          {travelDestinations.map((option) => (
+            <option value={option.id} key={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
-      <div className="tool">
-        <span className="tool-icon" aria-hidden="true">
-          ☀
-        </span>
-        <div aria-live="polite">
-          <small>{destination.city}・現在天氣</small>
-          <strong>
-            {data
-              ? `${Math.round(data.temperature)}°C　${data.weatherLabel}`
-              : "正在取得…"}
-          </strong>
+
+      <div className="travel-tools">
+        <div className="tool">
+          <span className="tool-icon" aria-hidden="true">
+            ◷
+          </span>
+          <div>
+            <small>{selected.city}・當地時間</small>
+            <strong>{localTime}</strong>
+          </div>
         </div>
-      </div>
-      <div className="tool">
-        <span className="tool-icon" aria-hidden="true">
-          ¥
-        </span>
-        <div aria-live="polite">
-          <small>當地貨幣匯率</small>
-          <strong>
-            1 TWD = {data ? data.rate.toFixed(2) : "—"} {destination.currency}
-          </strong>
-          <span className="tool-note">・即時參考值</span>
+        <div className="tool">
+          <span className="tool-icon" aria-hidden="true">
+            ☀
+          </span>
+          <div aria-live="polite">
+            <small>{selected.city}・現在天氣</small>
+            <strong>
+              {data
+                ? `${Math.round(data.temperature)}°C　${data.weatherLabel}`
+                : "正在取得…"}
+            </strong>
+          </div>
+        </div>
+        <div className="tool">
+          <span className="tool-icon" aria-hidden="true">
+            ¥
+          </span>
+          <div aria-live="polite">
+            <small>當地貨幣匯率</small>
+            <strong>
+              1 TWD = {data ? data.rate.toFixed(2) : "—"} {selected.currency}
+            </strong>
+            <span className="tool-note">・即時參考值</span>
+          </div>
+        </div>
+        <div className="tool">
+          <span className="tool-icon" aria-hidden="true">
+            {"⚡︎"}
+          </span>
+          <div>
+            <small>{selected.city}・電壓插頭</small>
+            <strong>
+              {selected.voltage}　{selected.plugTypes} 型
+            </strong>
+            <span className="tool-note">・{selected.frequency}</span>
+          </div>
         </div>
       </div>
     </section>
