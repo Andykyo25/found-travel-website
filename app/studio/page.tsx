@@ -5,7 +5,7 @@ import { StudioEditor } from "../components/StudioEditor";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "內容管理",
+  title: "行程內容管理",
   robots: {
     index: false,
     follow: false,
@@ -43,7 +43,7 @@ export default async function StudioPage() {
       <header className="studio-header">
         <div>
           <p>以 {user.displayName} 登入</p>
-          <h1>旅行內容管理</h1>
+          <h1>找到了旅行社・行程內容管理</h1>
         </div>
         <nav aria-label="內容管理導覽">
           <a className="button button-secondary button-small" href="/">

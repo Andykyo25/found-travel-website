@@ -3,23 +3,9 @@ import { TravelTools } from "./components/TravelTools";
 
 export const dynamic = "force-dynamic";
 
-function youtubeId(value: string) {
-  const match = value.match(
-    /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/,
-  );
-  return match?.[1] ?? "BPPMpti_Z14";
-}
-
-function splitLines(value: string) {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
-
 export default async function Home() {
   const content = await getSiteContent();
-  const videoId = youtubeId(content.videoUrl);
+  const tripCount = content.trips.length <= 2 ? content.trips.length : "many";
 
   return (
     <main>
@@ -30,9 +16,8 @@ export default async function Home() {
 
       <header className="site-header">
         <a className="brand" href="#top" aria-label={`${content.brandName}首頁`}>
-          <span className="brand-mark" aria-hidden="true">
-            <span />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="brand-logo" src="/brand/logo.png" alt="" />
           <span>{content.brandName}</span>
         </a>
 
@@ -109,7 +94,7 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="trip-grid">
+        <div className="trip-grid" data-count={tripCount}>
           {content.trips.map((trip, index) => (
             <article className="trip-card" key={trip.id}>
               <div className="trip-image">
@@ -128,26 +113,23 @@ export default async function Home() {
                 </div>
                 <h3>{trip.title}</h3>
                 <p>{trip.summary}</p>
-                <div className="trip-highlights" aria-label="行程亮點">
-                  {splitLines(trip.highlights)
-                    .slice(0, 3)
-                    .map((highlight) => (
-                      <span key={highlight}>{highlight}</span>
-                    ))}
-                </div>
-                <details>
-                  <summary>展開行程內容</summary>
-                  <ol>
-                    {splitLines(trip.itinerary).map((day) => (
-                      <li key={day}>{day}</li>
-                    ))}
-                  </ol>
-                </details>
                 <div className="trip-footer">
                   <span className="price">{trip.price}</span>
-                  <a href="#contact" aria-label={`洽詢${trip.title}`}>
-                    洽詢行程 <span aria-hidden="true">↗</span>
-                  </a>
+                  {trip.documentUrl ? (
+                    <a
+                      className="trip-document-link"
+                      href={trip.documentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`開啟${trip.title}完整行程`}
+                    >
+                      {trip.documentName} <span aria-hidden="true">↗</span>
+                    </a>
+                  ) : (
+                    <span className="trip-document-link disabled">
+                      行程資料準備中
+                    </span>
+                  )}
                 </div>
               </div>
             </article>
@@ -165,22 +147,20 @@ export default async function Home() {
           <p>
             旅行的樣子，很難只靠文字說完。看一段片，感受城市的呼吸、山野的光，以及你想留下的步調。
           </p>
-          <a
-            href={content.videoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-link light-link"
-          >
-            在 YouTube 觀看 <span aria-hidden="true">↗</span>
+          <a href="#contact" className="text-link light-link">
+            和顧問聊聊旅程 <span aria-hidden="true">↗</span>
           </a>
         </div>
         <div className="video-frame">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0`}
+          <video
+            src={content.videoUrl}
             title={content.videoTitle}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
+            controls
+            playsInline
+            preload="metadata"
+          >
+            您的瀏覽器不支援影片播放。
+          </video>
         </div>
       </section>
 
@@ -192,7 +172,7 @@ export default async function Home() {
           </p>
           <h2>找到的不只是景點，是適合你的旅行方式。</h2>
           <p>
-            我們是一群相信「旅行應該被好好照顧」的顧問。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的人陪你完成。
+            找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的業務顧問陪你完成。
           </p>
         </div>
         <div className="values-grid">
@@ -224,27 +204,37 @@ export default async function Home() {
           <p>{content.contactText}</p>
         </div>
         <div className="contact-actions">
-          <a className="button button-on-dark" href={content.lineUrl}>
+          <a
+            className="button button-on-dark"
+            href={content.lineUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
             LINE 聯絡顧問 <span aria-hidden="true">↗</span>
           </a>
-          <a className="contact-email" href={`mailto:${content.contactEmail}`}>
-            {content.contactEmail}
-          </a>
-          <a className="contact-phone" href={`tel:${content.contactPhone}`}>
-            {content.contactPhone}
-          </a>
+          <span className="contact-company">{content.companyName}</span>
         </div>
       </section>
 
       <footer className="site-footer section-shell">
-        <a className="brand footer-brand" href="#top">
-          <span className="brand-mark" aria-hidden="true">
-            <span />
+        <div className="footer-identity">
+          <a className="brand footer-brand" href="#top">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="brand-logo" src="/brand/logo.png" alt="" />
+            <span>{content.brandName}</span>
+          </a>
+          <p>內容與報價以業務顧問最終確認為準</p>
+        </div>
+        <div className="company-details">
+          <strong>{content.companyName}</strong>
+          <span>{content.businessLicense}</span>
+          <span>{content.qualityLicense}</span>
+          <span>
+            統一編號 {content.taxId} │ 負責人 {content.representative}
           </span>
-          <span>{content.brandName}</span>
-        </a>
-        <p>旅行業務團隊形象網站・內容與報價以顧問最終確認為準</p>
-        <div>
+          <span>地址：{content.address}</span>
+        </div>
+        <div className="footer-links">
           <a href="#journeys">精選行程</a>
           <a href="#about">關於我們</a>
           <a href="/studio">內容管理</a>

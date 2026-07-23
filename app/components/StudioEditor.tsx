@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { Destination, SiteContent, Trip } from "@/lib/site-content";
+import type {
+  Destination,
+  SiteContent,
+  Trip,
+  TripDocumentType,
+} from "@/lib/site-content";
 
 type Status =
   | { kind: "idle"; message: string }
@@ -85,23 +90,47 @@ function Field({
   );
 }
 
+function createTrip(): Trip {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `trip-${Date.now()}`,
+    badge: "精選行程",
+    region: "DESTINATION",
+    days: "5日",
+    title: "新行程",
+    summary: "請填寫這趟旅程最吸引人的特色與適合對象。",
+    price: "價格請洽詢",
+    image: "/trips/tokyo.jpg",
+    documentType: "pdf",
+    documentUrl: "",
+    documentName: "查看完整行程",
+  };
+}
+
 export function StudioEditor({
   initialContent,
 }: {
   initialContent: SiteContent;
 }) {
   const [draft, setDraft] = useState(initialContent);
+  const [uploadingTripId, setUploadingTripId] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>({
     kind: "idle",
     message: "尚未有變更",
   });
+
+  const markChanged = () => {
+    setStatus({ kind: "idle", message: "有尚未儲存的變更" });
+  };
 
   const updateRoot = <K extends keyof SiteContent>(
     key: K,
     value: SiteContent[K],
   ) => {
     setDraft((current) => ({ ...current, [key]: value }));
-    setStatus({ kind: "idle", message: "有尚未儲存的變更" });
+    markChanged();
   };
 
   const updateTrip = <K extends keyof Trip>(
@@ -115,7 +144,109 @@ export function StudioEditor({
         tripIndex === index ? { ...trip, [key]: value } : trip,
       ),
     }));
-    setStatus({ kind: "idle", message: "有尚未儲存的變更" });
+    markChanged();
+  };
+
+  const changeDocumentType = (
+    index: number,
+    documentType: TripDocumentType,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, tripIndex) =>
+        tripIndex === index
+          ? { ...trip, documentType, documentUrl: "", documentName: "查看完整行程" }
+          : trip,
+      ),
+    }));
+    markChanged();
+  };
+
+  const addTrip = () => {
+    setDraft((current) => ({
+      ...current,
+      trips: [...current.trips, createTrip()],
+    }));
+    setStatus({
+      kind: "idle",
+      message: "已新增空白行程，填寫完成後請記得儲存",
+    });
+  };
+
+  const removeTrip = (index: number) => {
+    const trip = draft.trips[index];
+    if (!trip || !window.confirm(`確定刪除「${trip.title}」嗎？`)) return;
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.filter((_, tripIndex) => tripIndex !== index),
+    }));
+    setStatus({ kind: "idle", message: "行程已移除，請儲存以更新網站" });
+  };
+
+  const moveTrip = (index: number, offset: -1 | 1) => {
+    const target = index + offset;
+    if (target < 0 || target >= draft.trips.length) return;
+    setDraft((current) => {
+      const trips = [...current.trips];
+      [trips[index], trips[target]] = [trips[target], trips[index]];
+      return { ...current, trips };
+    });
+    markChanged();
+  };
+
+  const uploadPdf = async (index: number, file: File) => {
+    const trip = draft.trips[index];
+    if (!trip) return;
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setStatus({ kind: "error", message: "請選擇 PDF 檔案" });
+      return;
+    }
+
+    setUploadingTripId(trip.id);
+    setStatus({ kind: "saving", message: `正在上傳 ${file.name}…` });
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/studio/pdf", {
+        method: "POST",
+        body,
+      });
+      const result = (await response.json()) as {
+        url?: string;
+        filename?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !result.url) {
+        throw new Error(result.error ?? "PDF 上傳失敗");
+      }
+
+      setDraft((current) => ({
+        ...current,
+        trips: current.trips.map((item, tripIndex) =>
+          tripIndex === index
+            ? {
+                ...item,
+                documentType: "pdf",
+                documentUrl: result.url ?? "",
+                documentName: result.filename ?? file.name,
+              }
+            : item,
+        ),
+      }));
+      setStatus({
+        kind: "success",
+        message: "PDF 已上傳，請再按「儲存並更新網站」完成發布",
+      });
+    } catch (error) {
+      setStatus({
+        kind: "error",
+        message: error instanceof Error ? error.message : "PDF 上傳失敗",
+      });
+    } finally {
+      setUploadingTripId(null);
+    }
   };
 
   const save = async () => {
@@ -165,16 +296,19 @@ export function StudioEditor({
         void save();
       }}
     >
+      <section className="studio-section studio-guide">
+        <h2>業務上架流程</h2>
+        <div className="studio-guide-grid">
+          <span><b>1</b> 新增行程</span>
+          <span><b>2</b> 上傳 PDF 或貼上 Google Drive 連結</span>
+          <span><b>3</b> 儲存並更新網站</span>
+        </div>
+      </section>
+
       <section className="studio-section">
         <h2>首頁主內容</h2>
-        <p>修改品牌名稱、首頁標題與最上方公告。</p>
+        <p>商標與首頁影片已固定使用公司提供的正式素材。</p>
         <div className="field-grid">
-          <Field label="品牌名稱">
-            <input
-              value={draft.brandName}
-              onChange={(event) => updateRoot("brandName", event.target.value)}
-            />
-          </Field>
           <Field label="公告文字">
             <input
               value={draft.announcement}
@@ -201,24 +335,10 @@ export function StudioEditor({
               onChange={(event) => updateRoot("heroText", event.target.value)}
             />
           </Field>
-        </div>
-      </section>
-
-      <section className="studio-section">
-        <h2>影片與即時小工具</h2>
-        <p>影片可貼入一般 YouTube 網址；小工具會自動顯示選定地點的時間、天氣與匯率。</p>
-        <div className="field-grid">
-          <Field label="影片區標題">
+          <Field label="影片區標題" wide>
             <input
               value={draft.videoTitle}
               onChange={(event) => updateRoot("videoTitle", event.target.value)}
-            />
-          </Field>
-          <Field label="YouTube 網址" hint="例如：https://youtu.be/影片代碼">
-            <input
-              type="url"
-              value={draft.videoUrl}
-              onChange={(event) => updateRoot("videoUrl", event.target.value)}
             />
           </Field>
           <Field label="小工具顯示地點" wide>
@@ -242,16 +362,59 @@ export function StudioEditor({
       </section>
 
       <section className="studio-section">
-        <h2>精選行程</h2>
-        <p>每個欄位都可以直接修改；亮點與每日行程請一行填一項。</p>
+        <div className="studio-section-heading">
+          <div>
+            <h2>精選行程</h2>
+            <p>行程數量不限，可自由新增、刪除及調整排序。</p>
+          </div>
+          <button className="button button-small" type="button" onClick={addTrip}>
+            ＋ 新增行程
+          </button>
+        </div>
+
+        {draft.trips.length === 0 ? (
+          <div className="empty-trips">
+            尚未建立行程，請按「新增行程」開始。
+          </div>
+        ) : null}
+
         {draft.trips.map((trip, index) => (
           <div className="studio-trip" key={trip.id}>
-            <h3>
-              行程 {index + 1}・{trip.title}
-            </h3>
+            <div className="studio-trip-heading">
+              <h3>
+                行程 {index + 1}・{trip.title}
+              </h3>
+              <div className="trip-editor-actions">
+                <button
+                  type="button"
+                  onClick={() => moveTrip(index, -1)}
+                  disabled={index === 0}
+                  aria-label={`將${trip.title}往前移`}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveTrip(index, 1)}
+                  disabled={index === draft.trips.length - 1}
+                  aria-label={`將${trip.title}往後移`}
+                >
+                  ↓
+                </button>
+                <button
+                  className="danger"
+                  type="button"
+                  onClick={() => removeTrip(index)}
+                >
+                  刪除
+                </button>
+              </div>
+            </div>
+
             <div className="field-grid">
               <Field label="行程名稱">
                 <input
+                  required
                   value={trip.title}
                   onChange={(event) =>
                     updateTrip(index, "title", event.target.value)
@@ -260,6 +423,7 @@ export function StudioEditor({
               </Field>
               <Field label="天數">
                 <input
+                  required
                   value={trip.days}
                   onChange={(event) =>
                     updateTrip(index, "days", event.target.value)
@@ -268,6 +432,7 @@ export function StudioEditor({
               </Field>
               <Field label="分類標籤">
                 <input
+                  required
                   value={trip.badge}
                   onChange={(event) =>
                     updateTrip(index, "badge", event.target.value)
@@ -276,6 +441,7 @@ export function StudioEditor({
               </Field>
               <Field label="地區小字">
                 <input
+                  required
                   value={trip.region}
                   onChange={(event) =>
                     updateTrip(index, "region", event.target.value)
@@ -284,14 +450,16 @@ export function StudioEditor({
               </Field>
               <Field label="起始價格">
                 <input
+                  required
                   value={trip.price}
                   onChange={(event) =>
                     updateTrip(index, "price", event.target.value)
                   }
                 />
               </Field>
-              <Field label="圖片網址或網站路徑">
+              <Field label="封面圖片網址或網站路徑">
                 <input
+                  required
                   value={trip.image}
                   onChange={(event) =>
                     updateTrip(index, "image", event.target.value)
@@ -300,37 +468,139 @@ export function StudioEditor({
               </Field>
               <Field label="行程簡介" wide>
                 <textarea
+                  required
                   value={trip.summary}
                   onChange={(event) =>
                     updateTrip(index, "summary", event.target.value)
                   }
                 />
               </Field>
-              <Field label="行程亮點" hint="每行一項" wide>
-                <textarea
-                  value={trip.highlights}
-                  onChange={(event) =>
-                    updateTrip(index, "highlights", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="每日行程" hint="每行一天" wide>
-                <textarea
-                  value={trip.itinerary}
-                  onChange={(event) =>
-                    updateTrip(index, "itinerary", event.target.value)
-                  }
-                />
-              </Field>
+            </div>
+
+            <div className="document-editor">
+              <h4>完整行程資料</h4>
+              <div className="document-type-switch" role="group" aria-label="行程資料來源">
+                <button
+                  type="button"
+                  className={trip.documentType === "pdf" ? "active" : ""}
+                  onClick={() => changeDocumentType(index, "pdf")}
+                >
+                  上傳 PDF
+                </button>
+                <button
+                  type="button"
+                  className={trip.documentType === "drive" ? "active" : ""}
+                  onClick={() => changeDocumentType(index, "drive")}
+                >
+                  Google Drive 網址
+                </button>
+              </div>
+
+              {trip.documentType === "pdf" ? (
+                <div className="pdf-upload">
+                  <label className="file-picker">
+                    <span>
+                      {uploadingTripId === trip.id
+                        ? "正在上傳…"
+                        : trip.documentUrl
+                          ? `已上傳：${trip.documentName}`
+                          : "選擇 PDF 檔案"}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      disabled={uploadingTripId === trip.id}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadPdf(index, file);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                  <small>單一檔案上限 25 MB；上傳完成後請按最下方儲存按鈕。</small>
+                </div>
+              ) : (
+                <div className="field-grid">
+                  <Field
+                    label="Google Drive 分享網址"
+                    hint="請先把檔案權限設為「知道連結的任何人都可查看」"
+                    wide
+                  >
+                    <input
+                      type="url"
+                      placeholder="https://drive.google.com/..."
+                      value={trip.documentUrl}
+                      onChange={(event) =>
+                        updateTrip(index, "documentUrl", event.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+              )}
+
+              <div className="field-grid document-label-field">
+                <Field label="前端按鈕文字" wide>
+                  <input
+                    value={trip.documentName}
+                    onChange={(event) =>
+                      updateTrip(index, "documentName", event.target.value)
+                    }
+                  />
+                </Field>
+              </div>
             </div>
           </div>
         ))}
       </section>
 
       <section className="studio-section">
-        <h2>聯絡資訊</h2>
-        <p>請把示範資料換成團隊實際使用的信箱、電話與 LINE 網址。</p>
+        <h2>公司與聯絡資訊</h2>
+        <p>公司登記資料會顯示於網站頁尾；LINE 連結是主要洽詢管道。</p>
         <div className="field-grid">
+          <Field label="公司名稱" wide>
+            <input
+              value={draft.companyName}
+              onChange={(event) =>
+                updateRoot("companyName", event.target.value)
+              }
+            />
+          </Field>
+          <Field label="旅行業執照">
+            <input
+              value={draft.businessLicense}
+              onChange={(event) =>
+                updateRoot("businessLicense", event.target.value)
+              }
+            />
+          </Field>
+          <Field label="品保協會編號">
+            <input
+              value={draft.qualityLicense}
+              onChange={(event) =>
+                updateRoot("qualityLicense", event.target.value)
+              }
+            />
+          </Field>
+          <Field label="統一編號">
+            <input
+              value={draft.taxId}
+              onChange={(event) => updateRoot("taxId", event.target.value)}
+            />
+          </Field>
+          <Field label="負責人">
+            <input
+              value={draft.representative}
+              onChange={(event) =>
+                updateRoot("representative", event.target.value)
+              }
+            />
+          </Field>
+          <Field label="公司地址" wide>
+            <input
+              value={draft.address}
+              onChange={(event) => updateRoot("address", event.target.value)}
+            />
+          </Field>
           <Field label="聯絡區標題" wide>
             <input
               value={draft.contactTitle}
@@ -344,23 +614,6 @@ export function StudioEditor({
               value={draft.contactText}
               onChange={(event) =>
                 updateRoot("contactText", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="聯絡信箱">
-            <input
-              type="email"
-              value={draft.contactEmail}
-              onChange={(event) =>
-                updateRoot("contactEmail", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="聯絡電話">
-            <input
-              value={draft.contactPhone}
-              onChange={(event) =>
-                updateRoot("contactPhone", event.target.value)
               }
             />
           </Field>
@@ -381,9 +634,9 @@ export function StudioEditor({
         <button
           className="button"
           type="submit"
-          disabled={status.kind === "saving"}
+          disabled={status.kind === "saving" || Boolean(uploadingTripId)}
         >
-          {status.kind === "saving" ? "儲存中…" : "儲存並更新網站"}
+          {status.kind === "saving" ? "處理中…" : "儲存並更新網站"}
         </button>
       </div>
     </form>

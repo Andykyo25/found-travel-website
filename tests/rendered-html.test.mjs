@@ -13,11 +13,16 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(page, /精選行程/);
   assert.match(page, /TravelTools/);
   assert.match(page, /內容管理/);
-  assert.match(content, /Found・旅行顧問/);
+  assert.match(page, /trip-document-link/);
+  assert.match(page, /homepage\.mp4|content\.videoUrl/);
+  assert.match(content, /找到了旅行社/);
+  assert.match(content, /OR5AYhI/);
+  assert.match(content, /documentType/);
+  assert.match(content, /00161819/);
   assert.match(content, /東京慢旅 5日/);
   assert.match(content, /北海道花野 7日/);
   assert.match(content, /峇里島療癒 6日/);
-  assert.match(layout, /Found・旅行顧問/);
+  assert.match(layout, /找到了旅行社/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 

@@ -8,6 +8,8 @@ export type Destination = {
   longitude: number;
 };
 
+export type TripDocumentType = "pdf" | "drive";
+
 export type Trip = {
   id: string;
   badge: string;
@@ -15,10 +17,11 @@ export type Trip = {
   days: string;
   title: string;
   summary: string;
-  highlights: string;
-  itinerary: string;
   price: string;
   image: string;
+  documentType: TripDocumentType;
+  documentUrl: string;
+  documentName: string;
 };
 
 export type SiteContent = {
@@ -31,9 +34,13 @@ export type SiteContent = {
   videoUrl: string;
   contactTitle: string;
   contactText: string;
-  contactEmail: string;
-  contactPhone: string;
   lineUrl: string;
+  companyName: string;
+  businessLicense: string;
+  qualityLicense: string;
+  taxId: string;
+  representative: string;
+  address: string;
   destination: Destination;
   trips: Trip[];
 };
@@ -55,20 +62,24 @@ type D1DatabaseLike = {
 };
 
 export const defaultSiteContent: SiteContent = {
-  brandName: "Found・旅行顧問",
-  announcement: "2026 夏秋慢旅行・接受預約中",
-  heroKicker: "FOUND YOUR WAY",
+  brandName: "找到了旅行社",
+  announcement: "專業規劃・安心出發・LINE 即時諮詢",
+  heroKicker: "FOUND TRAVEL",
   heroTitle: "好旅行，不只抵達，也被好好照顧。",
   heroText:
-    "由熟悉目的地的顧問團隊，替你把每一段期待，排成剛剛好的旅程。",
-  videoTitle: "這趟旅程，先從 60 秒開始",
-  videoUrl: "https://www.youtube.com/watch?v=BPPMpti_Z14",
+    "由找到了旅行社的專業顧問團隊，替你把每一段期待，排成剛剛好的旅程。",
+  videoTitle: "旅行的樣子，先從一段影片開始",
+  videoUrl: "/media/homepage.mp4",
   contactTitle: "下一趟旅行，讓我們一起找到。",
   contactText:
-    "告訴我們想去的地方、預計日期與同行者，顧問會用一對一方式協助你釐清方向。",
-  contactEmail: "hello@foundtravel.tw",
-  contactPhone: "+886-2-2345-6789",
-  lineUrl: "https://line.me/",
+    "告訴我們想去的地方、預計日期與同行者，業務顧問會透過 LINE 一對一協助你規劃。",
+  lineUrl: "https://lin.ee/OR5AYhI",
+  companyName: "找到了旅行社股份有限公司",
+  businessLicense: "綜合旅行社 │ 交觀綜字222700號",
+  qualityLicense: "旅行業品質保障協會北2738號",
+  taxId: "00161819",
+  representative: "艾施鴻",
+  address: "台北市內湖區內湖路一段120巷15弄25號3樓",
   destination: {
     city: "東京",
     timezone: "Asia/Tokyo",
@@ -85,11 +96,11 @@ export const defaultSiteContent: SiteContent = {
       title: "東京慢旅 5日",
       summary:
         "住進喜歡的街區，以一日一重點的速度，走過東京與箱根的日常風景。",
-      highlights: "設計旅宿\n小巷食堂\n箱根湖景",
-      itinerary:
-        "Day 1・抵達東京，顧問安排機場接送與街區散步\nDay 2・清澄白河咖啡與東京現代美術館\nDay 3・築地早晨、銀座選物與自由晚餐\nDay 4・箱根一日，蘆之湖與溫泉旅宿\nDay 5・最後採買，依航班返回台灣",
       price: "NT$36,800 起",
       image: "/trips/tokyo.jpg",
+      documentType: "drive",
+      documentUrl: "",
+      documentName: "查看完整行程",
     },
     {
       id: "hokkaido-flower",
@@ -99,11 +110,11 @@ export const defaultSiteContent: SiteContent = {
       title: "北海道花野 7日",
       summary:
         "把薰衣草田、丘陵公路與溫泉時間排進一趟不趕路的北國夏日。",
-      highlights: "富良野花田\n美瑛單車\n森林溫泉",
-      itinerary:
-        "Day 1・新千歲集合，入住札幌\nDay 2・小樽運河與職人店鋪\nDay 3・美瑛丘陵單車與農場午餐\nDay 4・富良野花田與葡萄酒莊\nDay 5・森林步道與溫泉旅宿\nDay 6・札幌自由活動與海鮮晚餐\nDay 7・依航班返回台灣",
       price: "NT$58,900 起",
       image: "/trips/hokkaido.jpg",
+      documentType: "drive",
+      documentUrl: "",
+      documentName: "查看完整行程",
     },
     {
       id: "bali-healing",
@@ -113,20 +124,17 @@ export const defaultSiteContent: SiteContent = {
       title: "峇里島療癒 6日",
       summary:
         "從烏布稻田到海邊日落，在島嶼的香氣與慢節奏裡，把自己放回旅行。",
-      highlights: "烏布選旅\n私人瑜伽\n海景晚餐",
-      itinerary:
-        "Day 1・抵達峇里島，專車前往烏布\nDay 2・稻田散步、咖啡莊園與按摩\nDay 3・私人瑜伽、料理課與自由午後\nDay 4・移動至南部海岸，入住海景旅宿\nDay 5・海邊自由日與日落晚餐\nDay 6・依航班專車送機",
       price: "NT$42,500 起",
       image: "/trips/bali.jpg",
+      documentType: "drive",
+      documentUrl: "",
+      documentName: "查看完整行程",
     },
   ],
 };
 
 function getD1(): D1DatabaseLike | null {
-  return (
-    (env as unknown as { DB?: D1DatabaseLike }).DB ??
-    null
-  );
+  return (env as unknown as { DB?: D1DatabaseLike }).DB ?? null;
 }
 
 async function ensureTables(db: D1DatabaseLike) {
@@ -154,6 +162,10 @@ function safeString(value: unknown, fallback: string, max = 1000) {
     : fallback;
 }
 
+function safeOptionalString(value: unknown, max = 1000) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
 function safeNumber(
   value: unknown,
   fallback: number,
@@ -166,6 +178,30 @@ function safeNumber(
     : fallback;
 }
 
+function safeDocumentUrl(value: unknown, type: TripDocumentType) {
+  const raw = safeOptionalString(value, 1200);
+  if (!raw) return "";
+
+  if (type === "pdf" && raw.startsWith("/api/trip-pdf?key=")) {
+    return raw;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:") return "";
+    if (
+      type === "drive" &&
+      parsed.hostname !== "drive.google.com" &&
+      parsed.hostname !== "docs.google.com"
+    ) {
+      return "";
+    }
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
+
 export function normalizeSiteContent(value: unknown): SiteContent {
   const input =
     typeof value === "object" && value ? (value as Partial<SiteContent>) : {};
@@ -173,32 +209,67 @@ export function normalizeSiteContent(value: unknown): SiteContent {
     typeof input.destination === "object" && input.destination
       ? input.destination
       : defaultSiteContent.destination;
-  const inputTrips = Array.isArray(input.trips) ? input.trips : [];
-  const trips = defaultSiteContent.trips.map((fallback, index) => {
-    const source =
-      typeof inputTrips[index] === "object" && inputTrips[index]
-        ? inputTrips[index]
-        : fallback;
-    return {
-      id: fallback.id,
-      badge: safeString(source.badge, fallback.badge, 40),
-      region: safeString(source.region, fallback.region, 60),
-      days: safeString(source.days, fallback.days, 20),
-      title: safeString(source.title, fallback.title, 80),
-      summary: safeString(source.summary, fallback.summary, 300),
-      highlights: safeString(source.highlights, fallback.highlights, 300),
-      itinerary: safeString(source.itinerary, fallback.itinerary, 2500),
-      price: safeString(source.price, fallback.price, 60),
-      image: safeString(source.image, fallback.image, 500),
-    };
+  const sourceTrips = Array.isArray(input.trips)
+    ? input.trips
+    : defaultSiteContent.trips;
+  const usedIds = new Set<string>();
+  const trips = sourceTrips.flatMap((tripValue, index) => {
+    if (!tripValue || typeof tripValue !== "object") return [];
+    const source = tripValue as Partial<Trip>;
+    const fallback =
+      defaultSiteContent.trips[index] ?? defaultSiteContent.trips[0];
+    const baseId = safeString(source.id, `trip-${index + 1}`, 80).replace(
+      /[^A-Za-z0-9_-]/g,
+      "-",
+    );
+    let id = baseId || `trip-${index + 1}`;
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+
+    const documentType: TripDocumentType =
+      source.documentType === "pdf" ? "pdf" : "drive";
+
+    return [
+      {
+        id,
+        badge: safeString(source.badge, fallback.badge, 40),
+        region: safeString(source.region, fallback.region, 60),
+        days: safeString(source.days, fallback.days, 20),
+        title: safeString(source.title, fallback.title, 100),
+        summary: safeString(source.summary, fallback.summary, 500),
+        price: safeString(source.price, fallback.price, 60),
+        image: safeString(source.image, fallback.image, 800),
+        documentType,
+        documentUrl: safeDocumentUrl(source.documentUrl, documentType),
+        documentName: safeString(
+          source.documentName,
+          "查看完整行程",
+          120,
+        ),
+      },
+    ];
   });
 
+  const savedBrandName = safeString(
+    input.brandName,
+    defaultSiteContent.brandName,
+    60,
+  );
+  const savedLineUrl = safeString(
+    input.lineUrl,
+    defaultSiteContent.lineUrl,
+    500,
+  );
+
   return {
-    brandName: safeString(
-      input.brandName,
-      defaultSiteContent.brandName,
-      60,
-    ),
+    brandName:
+      savedBrandName === "Found・旅行顧問"
+        ? defaultSiteContent.brandName
+        : savedBrandName,
     announcement: safeString(
       input.announcement,
       defaultSiteContent.announcement,
@@ -224,11 +295,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       defaultSiteContent.videoTitle,
       100,
     ),
-    videoUrl: safeString(
-      input.videoUrl,
-      defaultSiteContent.videoUrl,
-      500,
-    ),
+    videoUrl: defaultSiteContent.videoUrl,
     contactTitle: safeString(
       input.contactTitle,
       defaultSiteContent.contactTitle,
@@ -239,17 +306,32 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       defaultSiteContent.contactText,
       400,
     ),
-    contactEmail: safeString(
-      input.contactEmail,
-      defaultSiteContent.contactEmail,
-      200,
+    lineUrl:
+      savedLineUrl === "https://line.me/"
+        ? defaultSiteContent.lineUrl
+        : savedLineUrl,
+    companyName: safeString(
+      input.companyName,
+      defaultSiteContent.companyName,
+      100,
     ),
-    contactPhone: safeString(
-      input.contactPhone,
-      defaultSiteContent.contactPhone,
-      60,
+    businessLicense: safeString(
+      input.businessLicense,
+      defaultSiteContent.businessLicense,
+      120,
     ),
-    lineUrl: safeString(input.lineUrl, defaultSiteContent.lineUrl, 500),
+    qualityLicense: safeString(
+      input.qualityLicense,
+      defaultSiteContent.qualityLicense,
+      120,
+    ),
+    taxId: safeString(input.taxId, defaultSiteContent.taxId, 20),
+    representative: safeString(
+      input.representative,
+      defaultSiteContent.representative,
+      40,
+    ),
+    address: safeString(input.address, defaultSiteContent.address, 200),
     destination: {
       city: safeString(
         destinationInput.city,
