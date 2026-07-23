@@ -1,4 +1,5 @@
 import { getSiteContent } from "@/lib/site-content";
+import { HeroShowcase } from "./components/HeroShowcase";
 import { TravelTools } from "./components/TravelTools";
 
 export const dynamic = "force-dynamic";
@@ -59,27 +60,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="hero-art" aria-label="日出與遠山的旅行意象">
-          <div className="sun-ring">
-            <div className="sun" />
-          </div>
-          <div className="cloud cloud-one" />
-          <div className="cloud cloud-two" />
-          <div className="mountain mountain-back" />
-          <div className="mountain mountain-front" />
-          <div className="route-line">
-            <span className="route-star">✦</span>
-          </div>
-          <a className="film-card" href="#film">
-            <span>
-              <small>TRAVEL FILM</small>
-              {content.videoTitle}
-            </span>
-            <span className="play" aria-hidden="true">
-              ▶
-            </span>
-          </a>
-        </div>
+        <HeroShowcase trips={content.trips} />
       </section>
 
       <TravelTools destination={content.destination} />

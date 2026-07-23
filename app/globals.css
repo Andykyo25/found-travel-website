@@ -258,163 +258,161 @@ img {
   font-weight: 900;
 }
 
-.hero-art {
-  position: relative;
-  min-height: 620px;
-  overflow: hidden;
-  background: linear-gradient(145deg, #fac79f 0%, #f4dab2 35%, #dce4c7 100%);
-}
-
-.sun-ring {
-  position: absolute;
-  top: 52px;
-  right: 12%;
-  width: 255px;
-  height: 255px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 248, 200, 0.37);
-  box-shadow:
-    0 0 0 26px rgba(255, 248, 200, 0.14),
-    0 0 0 56px rgba(255, 248, 200, 0.08);
-}
-
-.sun {
-  width: 175px;
-  height: 175px;
-  border-radius: 50%;
-  background: var(--coral);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
-}
-
-.cloud {
-  position: absolute;
-  width: 120px;
-  height: 32px;
-  border-radius: 999px;
-  background: rgba(255, 250, 226, 0.65);
-}
-
-.cloud::before,
-.cloud::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  border-radius: 50%;
-  background: inherit;
-}
-
-.cloud::before {
-  left: 20px;
-  width: 55px;
-  height: 55px;
-}
-
-.cloud::after {
-  right: 16px;
-  width: 40px;
-  height: 40px;
-}
-
-.cloud-one {
-  left: 13%;
-  top: 150px;
-}
-
-.cloud-two {
-  right: -15px;
-  top: 275px;
-  transform: scale(0.8);
-}
-
-.mountain {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: -20%;
-  height: 56%;
-  border-radius: 50% 50% 0 0;
-}
-
-.mountain-back {
-  bottom: -6%;
-  background: #aabf99;
-  transform: rotate(-4deg);
-}
-
-.mountain-front {
-  left: 25%;
-  right: -28%;
-  background: var(--sage-deep);
-  transform: rotate(7deg);
-}
-
-.route-line {
-  position: absolute;
-  right: 38%;
-  bottom: 31%;
-  width: 120px;
-  height: 145px;
-  border-left: 2px dashed rgba(255, 255, 255, 0.75);
-  border-top: 2px dashed rgba(255, 255, 255, 0.75);
-  border-radius: 50% 0 0;
-  transform: rotate(-12deg);
-}
-
-.route-star {
-  position: absolute;
-  left: -9px;
-  top: -12px;
-  color: #fff;
-  font-size: 20px;
-}
-
-.film-card {
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: 34px;
-  min-height: 108px;
+.hero-showcase {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 22px 24px 22px 30px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 28px;
-  background: rgba(255, 253, 248, 0.84);
-  backdrop-filter: blur(18px);
+  gap: 8px;
+  min-height: 620px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.hero-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 56px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  box-shadow: 0 16px 36px rgba(74, 82, 70, 0.14);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    flex-grow 520ms cubic-bezier(0.22, 0.8, 0.25, 1),
+    min-width 520ms cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+
+a.hero-card {
+  cursor: pointer;
+}
+
+.hero-card.active {
+  flex-grow: 7;
+  min-width: 340px;
+}
+
+.hero-card:focus-visible {
+  outline: 3px solid rgba(239, 116, 92, 0.8);
+  outline-offset: 3px;
+}
+
+.hero-card-bg {
+  position: absolute;
+  inset: 0;
+  background-color: #d9e2d3;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.03);
+  transition: transform 700ms ease;
+}
+
+.hero-card.active .hero-card-bg {
+  transform: scale(1);
+}
+
+.hero-card-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(20, 28, 22, 0.74) 0%,
+    rgba(20, 28, 22, 0.16) 48%,
+    rgba(20, 28, 22, 0.04) 100%
+  );
+}
+
+.hero-card-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  margin: 0 auto;
+  height: 230px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  color: #fff;
   font-family: "Noto Serif TC", "PMingLiU", serif;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
-  transition: transform 220ms ease;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  transition: opacity 240ms ease;
 }
 
-.film-card:hover {
-  transform: translateY(-4px);
+.hero-card.active .hero-card-label {
+  opacity: 0;
 }
 
-.film-card small {
+.hero-card-full {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 26px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease 120ms;
+}
+
+.hero-card.active .hero-card-full {
+  opacity: 1;
+}
+
+.hero-card-badge {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.92);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.hero-card-info {
   display: block;
-  margin-bottom: 8px;
-  color: var(--sage-deep);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  min-width: 230px;
 }
 
-.play {
-  width: 58px;
-  height: 58px;
-  flex: 0 0 58px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
+.hero-card-meta {
+  display: flex;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.hero-card-title {
+  display: block;
+  margin: 10px 0 18px;
+  color: #fff;
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 30px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+
+.hero-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
   background: var(--coral);
   color: #fff;
-  font-size: 16px;
-  box-shadow: 0 10px 25px rgba(217, 95, 73, 0.25);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(217, 95, 73, 0.35);
+}
+
+.hero-card.active:hover .hero-card-cta {
+  background: var(--coral-deep);
 }
 
 .travel-tools-panel {
@@ -1458,8 +1456,8 @@ img {
     grid-template-columns: 1fr 0.9fr;
   }
 
-  .hero-art {
-    min-height: 590px;
+  .hero-showcase {
+    min-height: 560px;
   }
 
   .trip-grid {
@@ -1520,8 +1518,8 @@ img {
     padding: 55px 34px;
   }
 
-  .hero-art {
-    min-height: 520px;
+  .hero-showcase {
+    min-height: 480px;
   }
 
   .travel-tools-panel {
@@ -1619,20 +1617,33 @@ img {
     width: 100%;
   }
 
-  .hero-art {
-    min-height: 460px;
+  .hero-showcase {
+    flex-direction: column;
+    min-height: 0;
+    overflow-x: hidden;
   }
 
-  .sun-ring {
-    right: 3%;
-    transform: scale(0.8);
+  .hero-card {
+    min-width: 0;
+    min-height: 66px;
+    transition: min-height 450ms cubic-bezier(0.22, 0.8, 0.25, 1);
   }
 
-  .film-card {
-    left: 18px;
-    right: 18px;
-    bottom: 18px;
-    min-height: 92px;
+  .hero-card.active {
+    min-height: 340px;
+  }
+
+  .hero-card-label {
+    writing-mode: horizontal-tb;
+    height: auto;
+    left: 26px;
+    right: auto;
+    bottom: 20px;
+    justify-content: flex-start;
+  }
+
+  .hero-card-title {
+    white-space: normal;
   }
 
   .travel-tools-panel {
