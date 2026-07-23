@@ -866,6 +866,84 @@ img {
   gap: 10px;
 }
 
+.studio-header nav form {
+  margin: 0;
+}
+
+.studio-login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 36px 20px;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(240, 121, 89, 0.16), transparent 28%),
+    radial-gradient(circle at 14% 78%, rgba(136, 153, 125, 0.18), transparent 32%),
+    var(--sand);
+}
+
+.studio-login-card {
+  width: min(100%, 520px);
+  padding: clamp(30px, 6vw, 52px);
+  border: 1px solid rgba(89, 100, 82, 0.14);
+  border-radius: 30px;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 30px 80px rgba(56, 65, 51, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+.studio-login-brand {
+  width: fit-content;
+  margin-bottom: 36px;
+}
+
+.studio-login-card h1 {
+  margin: 16px 0 12px;
+  color: var(--ink);
+  font-size: clamp(34px, 7vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.studio-login-intro {
+  margin: 0 0 28px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.studio-login-form {
+  display: grid;
+  gap: 18px;
+}
+
+.studio-login-button {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.studio-login-button:disabled {
+  opacity: 0.62;
+  cursor: wait;
+}
+
+.studio-login-status {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: #f5f1e8;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.studio-login-status.error {
+  background: #fff0eb;
+  color: #a33a2b;
+}
+
+.studio-login-back {
+  display: inline-flex;
+  margin-top: 28px;
+}
+
 .studio-form {
   display: grid;
   gap: 20px;

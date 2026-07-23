@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "zh_TW",
       images: [
         {
-          url: "/og-found.png",
+          url: "/og-railway.png",
           width: 1200,
           height: 630,
           alt: "找到了旅行社暖日旅誌",
@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: "找到了旅行社",
       description: "把每一段期待，排成剛剛好的旅程。",
-      images: ["/og-found.png"],
+      images: ["/og-railway.png"],
     },
   };
 }

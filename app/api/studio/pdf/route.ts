@@ -1,41 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "@/app/chatgpt-auth";
-import { claimOrCheckEditor } from "@/lib/site-content";
+import {
+  getStudioUserFromRequest,
+  isSameOriginRequest,
+} from "@/lib/studio-auth";
+import {
+  isRailwayStorageConfigured,
+  uploadTripPdf,
+} from "@/lib/railway-storage";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const maxPdfBytes = 25 * 1024 * 1024;
 
-function getFilesBucket() {
-  return (
-    env as unknown as {
-      FILES?: {
-        put: (
-          key: string,
-          value: ReadableStream | ArrayBuffer,
-          options?: {
-            httpMetadata?: { contentType?: string };
-            customMetadata?: Record<string, string>;
-          },
-        ) => Promise<unknown>;
-      };
-    }
-  ).FILES;
-}
-
 export async function POST(request: NextRequest) {
-  const user = await getChatGPTUser();
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "無效的操作來源" }, { status: 403 });
+  }
+
+  const user = getStudioUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "請先登入" }, { status: 401 });
   }
 
-  if (!(await claimOrCheckEditor(user.email))) {
-    return NextResponse.json({ error: "沒有編輯權限" }, { status: 403 });
-  }
-
-  const bucket = getFilesBucket();
-  if (!bucket) {
+  if (!isRailwayStorageConfigured()) {
     return NextResponse.json(
       { error: "檔案儲存空間尚未啟用" },
       { status: 503 },
@@ -70,17 +58,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const key = `trip-pdfs/${Date.now()}-${crypto.randomUUID()}.pdf`;
-  await bucket.put(key, file.stream(), {
-    httpMetadata: { contentType: "application/pdf" },
-    customMetadata: {
-      filename: file.name.slice(0, 240),
-      uploadedBy: user.email.slice(0, 240),
-    },
-  });
+  try {
+    const uploadedKey = await uploadTripPdf(
+      new Uint8Array(await file.arrayBuffer()),
+      file.name,
+      user.email,
+    );
 
-  return NextResponse.json({
-    url: `/api/trip-pdf?key=${encodeURIComponent(key)}`,
-    filename: file.name,
-  });
+    return NextResponse.json({
+      url: `/api/trip-pdf?key=${encodeURIComponent(uploadedKey)}`,
+      filename: file.name,
+    });
+  } catch (error) {
+    console.error("Unable to upload PDF", error);
+    return NextResponse.json(
+      { error: "PDF 上傳失敗，請稍後再試" },
+      { status: 500 },
+    );
+  }
 }

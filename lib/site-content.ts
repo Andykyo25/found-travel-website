@@ -1,4 +1,7 @@
-import { env } from "cloudflare:workers";
+import {
+  readSiteContentObject,
+  writeSiteContentObject,
+} from "@/lib/railway-storage";
 
 export type Destination = {
   city: string;
@@ -43,22 +46,6 @@ export type SiteContent = {
   address: string;
   destination: Destination;
   trips: Trip[];
-};
-
-type D1Result<T> = {
-  results?: T[];
-};
-
-type D1Statement = {
-  bind: (...values: unknown[]) => D1Statement;
-  first: <T>() => Promise<T | null>;
-  run: () => Promise<unknown>;
-  all: <T>() => Promise<D1Result<T>>;
-};
-
-type D1DatabaseLike = {
-  prepare: (query: string) => D1Statement;
-  batch: (statements: D1Statement[]) => Promise<unknown>;
 };
 
 export const defaultSiteContent: SiteContent = {
@@ -132,29 +119,6 @@ export const defaultSiteContent: SiteContent = {
     },
   ],
 };
-
-function getD1(): D1DatabaseLike | null {
-  return (env as unknown as { DB?: D1DatabaseLike }).DB ?? null;
-}
-
-async function ensureTables(db: D1DatabaseLike) {
-  await db.batch([
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS site_content (
-        id INTEGER PRIMARY KEY,
-        payload TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        updated_by TEXT
-      )
-    `),
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS site_editors (
-        email TEXT PRIMARY KEY,
-        created_at TEXT NOT NULL
-      )
-    `),
-  ]);
-}
 
 function safeString(value: unknown, fallback: string, max = 1000) {
   return typeof value === "string" && value.trim()
@@ -366,30 +330,9 @@ export function normalizeSiteContent(value: unknown): SiteContent {
 }
 
 export async function getSiteContent(): Promise<SiteContent> {
-  const db = getD1();
-  if (!db) return defaultSiteContent;
-
   try {
-    await ensureTables(db);
-    const row = await db
-      .prepare("SELECT payload FROM site_content WHERE id = 1")
-      .first<{ payload: string }>();
-
-    if (!row) {
-      await db
-        .prepare(
-          "INSERT INTO site_content (id, payload, updated_at, updated_by) VALUES (1, ?, ?, ?)",
-        )
-        .bind(
-          JSON.stringify(defaultSiteContent),
-          new Date().toISOString(),
-          "system",
-        )
-        .run();
-      return defaultSiteContent;
-    }
-
-    return normalizeSiteContent(JSON.parse(row.payload));
+    const saved = await readSiteContentObject<SiteContent>();
+    return saved ? normalizeSiteContent(saved) : defaultSiteContent;
   } catch {
     return defaultSiteContent;
   }
@@ -399,60 +342,11 @@ export async function saveSiteContent(
   value: unknown,
   editorEmail: string,
 ): Promise<SiteContent> {
-  const db = getD1();
-  if (!db) throw new Error("Content database is unavailable");
   const content = normalizeSiteContent(value);
-
-  await ensureTables(db);
-  await db
-    .prepare(`
-      INSERT INTO site_content (id, payload, updated_at, updated_by)
-      VALUES (1, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        payload = excluded.payload,
-        updated_at = excluded.updated_at,
-        updated_by = excluded.updated_by
-    `)
-    .bind(JSON.stringify(content), new Date().toISOString(), editorEmail)
-    .run();
-
+  await writeSiteContentObject({
+    ...content,
+    _updatedAt: new Date().toISOString(),
+    _updatedBy: editorEmail,
+  });
   return content;
-}
-
-export async function claimOrCheckEditor(email: string): Promise<boolean> {
-  const db = getD1();
-  if (!db) return false;
-
-  await ensureTables(db);
-  const normalizedEmail = email.trim().toLowerCase();
-  const configuredEditors = String(
-    (env as unknown as { SITE_EDITOR_EMAILS?: string }).SITE_EDITOR_EMAILS ?? "",
-  )
-    .split(/[\n,;]/)
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (configuredEditors.includes(normalizedEmail)) {
-    return true;
-  }
-
-  const count = await db
-    .prepare("SELECT COUNT(*) AS count FROM site_editors")
-    .first<{ count: number }>();
-
-  if (!count?.count) {
-    await db
-      .prepare(
-        "INSERT OR IGNORE INTO site_editors (email, created_at) VALUES (?, ?)",
-      )
-      .bind(normalizedEmail, new Date().toISOString())
-      .run();
-  }
-
-  const editor = await db
-    .prepare("SELECT email FROM site_editors WHERE email = ?")
-    .bind(normalizedEmail)
-    .first<{ email: string }>();
-
-  return Boolean(editor);
 }
