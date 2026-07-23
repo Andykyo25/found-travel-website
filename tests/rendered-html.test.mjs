@@ -19,6 +19,7 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(content, /OR5AYhI/);
   assert.match(content, /documentType/);
   assert.match(content, /00161819/);
+  assert.match(content, /SITE_EDITOR_EMAILS/);
   assert.match(content, /東京慢旅 5日/);
   assert.match(content, /北海道花野 7日/);
   assert.match(content, /峇里島療癒 6日/);

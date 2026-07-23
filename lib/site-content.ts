@@ -424,6 +424,18 @@ export async function claimOrCheckEditor(email: string): Promise<boolean> {
   if (!db) return false;
 
   await ensureTables(db);
+  const normalizedEmail = email.trim().toLowerCase();
+  const configuredEditors = String(
+    (env as unknown as { SITE_EDITOR_EMAILS?: string }).SITE_EDITOR_EMAILS ?? "",
+  )
+    .split(/[\n,;]/)
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (configuredEditors.includes(normalizedEmail)) {
+    return true;
+  }
+
   const count = await db
     .prepare("SELECT COUNT(*) AS count FROM site_editors")
     .first<{ count: number }>();
@@ -433,13 +445,13 @@ export async function claimOrCheckEditor(email: string): Promise<boolean> {
       .prepare(
         "INSERT OR IGNORE INTO site_editors (email, created_at) VALUES (?, ?)",
       )
-      .bind(email.toLowerCase(), new Date().toISOString())
+      .bind(normalizedEmail, new Date().toISOString())
       .run();
   }
 
   const editor = await db
     .prepare("SELECT email FROM site_editors WHERE email = ?")
-    .bind(email.toLowerCase())
+    .bind(normalizedEmail)
     .first<{ email: string }>();
 
   return Boolean(editor);
