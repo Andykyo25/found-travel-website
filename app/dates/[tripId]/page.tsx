@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DepartureTable } from "@/app/components/DepartureTable";
 import { getSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
@@ -43,24 +44,7 @@ export default async function TripDatesPage({
         </p>
 
         {trip.departures.length > 0 ? (
-          <div className="dates-table-wrap">
-            <table className="dates-table">
-              <thead>
-                <tr>
-                  <th>出發日期</th>
-                  <th>價格</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trip.departures.map((departure) => (
-                  <tr key={departure.id}>
-                    <td className="dates-date">{departure.date}</td>
-                    <td className="dates-price">{departure.price || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DepartureTable departures={trip.departures} />
         ) : (
           <div className="dates-empty">
             出發日期規劃中，歡迎透過 LINE 詢問最新團期。

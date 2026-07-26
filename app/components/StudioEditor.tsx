@@ -123,6 +123,55 @@ function createDeparture(): TripDeparture {
   };
 }
 
+function formatDepartureDate(value: string) {
+  const digits = value.trim();
+  if (!/^\d{6,8}$/.test(digits)) return value;
+
+  const year = digits.slice(0, 4);
+  const rest = digits.slice(4);
+  let month = "";
+  let day = "";
+  if (rest.length === 4) {
+    month = rest.slice(0, 2);
+    day = rest.slice(2);
+  } else if (rest.length === 2) {
+    month = rest.slice(0, 1);
+    day = rest.slice(1);
+  } else {
+    const twoDigitMonth = Number(rest.slice(0, 2));
+    if (twoDigitMonth >= 1 && twoDigitMonth <= 12) {
+      month = rest.slice(0, 2);
+      day = rest.slice(2);
+    } else {
+      month = rest.slice(0, 1);
+      day = rest.slice(1);
+    }
+  }
+
+  const monthNumber = Number(month);
+  const dayNumber = Number(day);
+  if (
+    monthNumber < 1 ||
+    monthNumber > 12 ||
+    dayNumber < 1 ||
+    dayNumber > 31
+  ) {
+    return value;
+  }
+
+  return `${year}/${String(monthNumber).padStart(2, "0")}/${String(
+    dayNumber,
+  ).padStart(2, "0")}`;
+}
+
+function formatDeparturePrice(value: string) {
+  const trimmed = value.trim();
+  if (!/^[0-9,]+$/.test(trimmed)) return value;
+  const digits = trimmed.replace(/,/g, "");
+  if (!digits) return value;
+  return Number(digits).toLocaleString("en-US");
+}
+
 export function StudioEditor({
   initialContent,
   initialUpdatedAt,
@@ -718,7 +767,9 @@ export function StudioEditor({
                       <div>
                         <h4>出發日期表</h4>
                         <small>
-                          顯示於前台「查看出發時間」頁；未填日期的列儲存時會自動略過，完全沒有日期時前台不會顯示該按鈕。
+                          顯示於前台「查看出發時間」頁，沒有日期時前台不顯示該按鈕。日期輸入
+                          20260402 會自動轉成 2026/04/02，價格輸入 26800
+                          會自動加上逗號；未填日期的列儲存時會略過。
                         </small>
                       </div>
                       <button
@@ -754,10 +805,23 @@ export function StudioEditor({
                                   event.target.value,
                                 )
                               }
+                              onBlur={(event) => {
+                                const formatted = formatDepartureDate(
+                                  event.target.value,
+                                );
+                                if (formatted !== event.target.value) {
+                                  updateDeparture(
+                                    index,
+                                    departureIndex,
+                                    "date",
+                                    formatted,
+                                  );
+                                }
+                              }}
                             />
                             <input
                               aria-label="價格"
-                              placeholder="NT$26,900"
+                              placeholder="26,900"
                               value={departure.price}
                               onChange={(event) =>
                                 updateDeparture(
@@ -767,6 +831,19 @@ export function StudioEditor({
                                   event.target.value,
                                 )
                               }
+                              onBlur={(event) => {
+                                const formatted = formatDeparturePrice(
+                                  event.target.value,
+                                );
+                                if (formatted !== event.target.value) {
+                                  updateDeparture(
+                                    index,
+                                    departureIndex,
+                                    "price",
+                                    formatted,
+                                  );
+                                }
+                              }}
                             />
                             <div className="trip-editor-actions">
                               <button
