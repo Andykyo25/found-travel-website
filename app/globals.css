@@ -282,7 +282,7 @@ img {
     min-width 520ms cubic-bezier(0.22, 0.8, 0.25, 1);
 }
 
-a.hero-card {
+.hero-card {
   cursor: pointer;
 }
 
@@ -361,6 +361,7 @@ a.hero-card {
 
 .hero-card.active .hero-card-full {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .hero-card-badge {
@@ -411,8 +412,30 @@ a.hero-card {
   box-shadow: 0 10px 24px rgba(217, 95, 73, 0.35);
 }
 
-.hero-card.active:hover .hero-card-cta {
+.hero-card-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+a.hero-card-cta:hover {
   background: var(--coral-deep);
+}
+
+.hero-card-cta-alt {
+  background: rgba(255, 253, 248, 0.92);
+  color: var(--ink);
+  box-shadow: 0 10px 24px rgba(20, 28, 22, 0.25);
+}
+
+a.hero-card-cta-alt:hover {
+  background: #ffffff;
+}
+
+.hero-card-cta-disabled {
+  background: rgba(255, 253, 248, 0.55);
+  color: var(--muted);
+  box-shadow: none;
 }
 
 .travel-tools-panel {
@@ -677,6 +700,13 @@ a.hero-card {
   font-weight: 700;
 }
 
+.trip-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
 .more-journeys {
   padding-top: 0;
   padding-bottom: 120px;
@@ -761,6 +791,109 @@ a.hero-card {
 
 .more-trip-footer .price {
   font-size: 16px;
+}
+
+.dates-shell {
+  width: min(860px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 18px 0 72px;
+}
+
+.dates-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0 26px;
+}
+
+.dates-card {
+  padding: clamp(24px, 4vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.dates-card h1 {
+  margin: 14px 0 10px;
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.dates-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 26px;
+  color: var(--sage-deep);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dates-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.dates-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dates-table th {
+  padding: 14px 18px;
+  background: #f5f1e8;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.dates-table td {
+  padding: 16px 18px;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+}
+
+.dates-table th:last-child,
+.dates-table td:last-child {
+  text-align: right;
+}
+
+.dates-date {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.dates-price {
+  color: var(--coral-deep);
+  font-weight: 900;
+}
+
+.dates-empty {
+  padding: 34px 18px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.dates-footnote {
+  margin: 16px 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dates-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
 }
 
 .film-section {
@@ -1400,8 +1533,69 @@ a.hero-card {
   opacity: 0;
 }
 
-.document-label-field {
-  margin-top: 16px;
+.departure-editor {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 18px;
+  background: #f5f1e8;
+}
+
+.departure-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.departure-editor h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.departure-editor-heading small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.departure-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.departure-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.departure-row-head {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.departure-row input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 12px;
+  font-weight: 500;
+}
+
+.departure-empty {
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .empty-trips {
@@ -1666,6 +1860,27 @@ a.hero-card {
 
   .more-trip-grid {
     grid-template-columns: 1fr;
+  }
+
+  .trip-links {
+    align-items: flex-start;
+  }
+
+  .dates-shell {
+    width: calc(100% - 24px);
+  }
+
+  .departure-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .departure-row-head {
+    display: none;
+  }
+
+  .departure-row .trip-editor-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
 
   .film-section {

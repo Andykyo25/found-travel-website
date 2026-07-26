@@ -5,6 +5,7 @@ import type {
   Destination,
   SiteContent,
   Trip,
+  TripDeparture,
   TripDocumentType,
 } from "@/lib/site-content";
 
@@ -107,6 +108,18 @@ function createTrip(): Trip {
     documentType: "pdf",
     documentUrl: "",
     documentName: "查看完整行程",
+    departures: [],
+  };
+}
+
+function createDeparture(): TripDeparture {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `departure-${Date.now()}`,
+    date: "",
+    price: "",
   };
 }
 
@@ -237,6 +250,64 @@ export function StudioEditor({
     markChanged();
   };
 
+  const updateTripDepartures = (
+    tripIndex: number,
+    updater: (departures: TripDeparture[]) => TripDeparture[],
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, index) =>
+        index === tripIndex
+          ? { ...trip, departures: updater(trip.departures) }
+          : trip,
+      ),
+    }));
+    markChanged();
+  };
+
+  const addDeparture = (tripIndex: number) => {
+    updateTripDepartures(tripIndex, (departures) => [
+      ...departures,
+      createDeparture(),
+    ]);
+  };
+
+  const updateDeparture = <K extends keyof TripDeparture>(
+    tripIndex: number,
+    departureIndex: number,
+    key: K,
+    value: TripDeparture[K],
+  ) => {
+    updateTripDepartures(tripIndex, (departures) =>
+      departures.map((departure, index) =>
+        index === departureIndex ? { ...departure, [key]: value } : departure,
+      ),
+    );
+  };
+
+  const removeDeparture = (tripIndex: number, departureIndex: number) => {
+    updateTripDepartures(tripIndex, (departures) =>
+      departures.filter((_, index) => index !== departureIndex),
+    );
+  };
+
+  const moveDeparture = (
+    tripIndex: number,
+    departureIndex: number,
+    offset: -1 | 1,
+  ) => {
+    updateTripDepartures(tripIndex, (departures) => {
+      const target = departureIndex + offset;
+      if (target < 0 || target >= departures.length) return departures;
+      const next = [...departures];
+      [next[departureIndex], next[target]] = [
+        next[target],
+        next[departureIndex],
+      ];
+      return next;
+    });
+  };
+
   const uploadPdf = async (index: number, file: File) => {
     const trip = draft.trips[index];
     if (!trip) return;
@@ -350,7 +421,7 @@ export function StudioEditor({
         <h2>業務上架流程</h2>
         <div className="studio-guide-grid">
           <span><b>1</b> 新增行程</span>
-          <span><b>2</b> 上傳 PDF 或貼上 Google Drive 連結</span>
+          <span><b>2</b> 上傳行程 PDF／Drive 並填出發日期</span>
           <span><b>3</b> 儲存並更新網站</span>
         </div>
       </section>
@@ -640,16 +711,105 @@ export function StudioEditor({
                 </div>
               )}
 
-              <div className="field-grid document-label-field">
-                <Field label="前端按鈕文字" wide>
-                  <input
-                    value={trip.documentName}
-                    onChange={(event) =>
-                      updateTrip(index, "documentName", event.target.value)
-                    }
-                  />
-                </Field>
-              </div>
+                  </div>
+
+                  <div className="departure-editor">
+                    <div className="departure-editor-heading">
+                      <div>
+                        <h4>出發日期表</h4>
+                        <small>
+                          顯示於前台「查看出發時間」頁；未填日期的列儲存時會自動略過，完全沒有日期時前台不會顯示該按鈕。
+                        </small>
+                      </div>
+                      <button
+                        className="button button-secondary button-small"
+                        type="button"
+                        onClick={() => addDeparture(index)}
+                      >
+                        ＋ 新增日期
+                      </button>
+                    </div>
+
+                    {trip.departures.length > 0 ? (
+                      <div className="departure-rows">
+                        <div
+                          className="departure-row departure-row-head"
+                          aria-hidden="true"
+                        >
+                          <span>出發日期</span>
+                          <span>價格</span>
+                          <span />
+                        </div>
+                        {trip.departures.map((departure, departureIndex) => (
+                          <div className="departure-row" key={departure.id}>
+                            <input
+                              aria-label="出發日期"
+                              placeholder="2026/09/09"
+                              value={departure.date}
+                              onChange={(event) =>
+                                updateDeparture(
+                                  index,
+                                  departureIndex,
+                                  "date",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                            <input
+                              aria-label="價格"
+                              placeholder="NT$26,900"
+                              value={departure.price}
+                              onChange={(event) =>
+                                updateDeparture(
+                                  index,
+                                  departureIndex,
+                                  "price",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                            <div className="trip-editor-actions">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  moveDeparture(index, departureIndex, -1)
+                                }
+                                disabled={departureIndex === 0}
+                                aria-label="將日期往上移"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  moveDeparture(index, departureIndex, 1)
+                                }
+                                disabled={
+                                  departureIndex ===
+                                  trip.departures.length - 1
+                                }
+                                aria-label="將日期往下移"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                className="danger"
+                                type="button"
+                                onClick={() =>
+                                  removeDeparture(index, departureIndex)
+                                }
+                              >
+                                刪除
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="departure-empty">
+                        尚未填寫出發日期。
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}

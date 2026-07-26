@@ -13,6 +13,12 @@ export type Destination = {
 
 export type TripDocumentType = "pdf" | "drive";
 
+export type TripDeparture = {
+  id: string;
+  date: string;
+  price: string;
+};
+
 export type Trip = {
   id: string;
   featured: boolean;
@@ -26,6 +32,7 @@ export type Trip = {
   documentType: TripDocumentType;
   documentUrl: string;
   documentName: string;
+  departures: TripDeparture[];
 };
 
 export type SiteContent = {
@@ -90,6 +97,7 @@ export const defaultSiteContent: SiteContent = {
       documentType: "drive",
       documentUrl: "",
       documentName: "查看完整行程",
+      departures: [],
     },
     {
       id: "hokkaido-flower",
@@ -105,6 +113,7 @@ export const defaultSiteContent: SiteContent = {
       documentType: "drive",
       documentUrl: "",
       documentName: "查看完整行程",
+      departures: [],
     },
     {
       id: "bali-healing",
@@ -120,6 +129,7 @@ export const defaultSiteContent: SiteContent = {
       documentType: "drive",
       documentUrl: "",
       documentName: "查看完整行程",
+      departures: [],
     },
   ],
 };
@@ -201,6 +211,40 @@ export function normalizeSiteContent(value: unknown): SiteContent {
     const documentType: TripDocumentType =
       source.documentType === "pdf" ? "pdf" : "drive";
 
+    const departuresSource = Array.isArray(source.departures)
+      ? source.departures
+      : [];
+    const usedDepartureIds = new Set<string>();
+    const departures = departuresSource.flatMap(
+      (departureValue, departureIndex) => {
+        if (!departureValue || typeof departureValue !== "object") return [];
+        const departure = departureValue as Partial<TripDeparture>;
+        const date = safeOptionalString(departure.date, 40);
+        if (!date) return [];
+
+        const departureBaseId = safeString(
+          departure.id,
+          `departure-${departureIndex + 1}`,
+          80,
+        ).replace(/[^A-Za-z0-9_-]/g, "-");
+        let departureId = departureBaseId || `departure-${departureIndex + 1}`;
+        let departureSuffix = 2;
+        while (usedDepartureIds.has(departureId)) {
+          departureId = `${departureBaseId}-${departureSuffix}`;
+          departureSuffix += 1;
+        }
+        usedDepartureIds.add(departureId);
+
+        return [
+          {
+            id: departureId,
+            date,
+            price: safeOptionalString(departure.price, 60),
+          },
+        ];
+      },
+    );
+
     return [
       {
         id,
@@ -220,6 +264,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
           "查看完整行程",
           120,
         ),
+        departures,
       },
     ];
   });

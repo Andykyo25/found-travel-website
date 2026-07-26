@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { Trip } from "@/lib/site-content";
 
 function TripCardInner({ trip }: { trip: Trip }) {
+  const hasDocument = Boolean(trip.documentUrl);
+  const hasDepartures = trip.departures.length > 0;
+
   return (
     <>
       <span
@@ -21,14 +24,32 @@ function TripCardInner({ trip }: { trip: Trip }) {
             <span>{trip.days}</span>
           </span>
           <span className="hero-card-title">{trip.title}</span>
-          <span className="hero-card-cta">
-            {trip.documentUrl ? (
-              <>
-                看完整行程 <span aria-hidden="true">↗</span>
-              </>
-            ) : (
-              "行程資料準備中"
-            )}
+          <span className="hero-card-ctas">
+            {hasDocument ? (
+              <a
+                className="hero-card-cta"
+                href={trip.documentUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`查看${trip.title}行程內容`}
+              >
+                查看行程內容 <span aria-hidden="true">↗</span>
+              </a>
+            ) : null}
+            {hasDepartures ? (
+              <a
+                className="hero-card-cta hero-card-cta-alt"
+                href={`/dates/${trip.id}`}
+                aria-label={`查看${trip.title}出發時間`}
+              >
+                查看出發時間 <span aria-hidden="true">→</span>
+              </a>
+            ) : null}
+            {!hasDocument && !hasDepartures ? (
+              <span className="hero-card-cta hero-card-cta-disabled">
+                行程資料準備中
+              </span>
+            ) : null}
           </span>
         </span>
       </span>
@@ -63,29 +84,17 @@ export function HeroShowcase({ trips }: { trips: Trip[] }) {
 
   return (
     <div className="hero-showcase" aria-label="精選旅程" ref={scrollerRef}>
-      {trips.map((trip, index) => {
-        const className = `hero-card${index === activeIndex ? " active" : ""}`;
-        const activate = () => setActiveIndex(index);
-
-        return trip.documentUrl ? (
-          <a
-            key={trip.id}
-            className={className}
-            href={trip.documentUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`${trip.title}，看完整行程`}
-            onMouseEnter={activate}
-            onFocus={activate}
-          >
-            <TripCardInner trip={trip} />
-          </a>
-        ) : (
-          <div key={trip.id} className={className} onMouseEnter={activate}>
-            <TripCardInner trip={trip} />
-          </div>
-        );
-      })}
+      {trips.map((trip, index) => (
+        <div
+          key={trip.id}
+          className={`hero-card${index === activeIndex ? " active" : ""}`}
+          onMouseEnter={() => setActiveIndex(index)}
+          onClick={() => setActiveIndex(index)}
+          onFocus={() => setActiveIndex(index)}
+        >
+          <TripCardInner trip={trip} />
+        </div>
+      ))}
     </div>
   );
 }

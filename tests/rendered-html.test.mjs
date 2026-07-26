@@ -3,7 +3,7 @@ import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("the finished travel site replaces all starter content", async () => {
-  const [page, layout, content, packageJson, studioPage, auth, railway] =
+  const [page, layout, content, packageJson, studioPage, auth, railway, datesPage] =
     await Promise.all([
       readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -12,6 +12,7 @@ test("the finished travel site replaces all starter content", async () => {
       readFile(new URL("../app/studio/page.tsx", import.meta.url), "utf8"),
       readFile(new URL("../lib/studio-auth.ts", import.meta.url), "utf8"),
       readFile(new URL("../railway.json", import.meta.url), "utf8"),
+      readFile(new URL("../app/dates/[tripId]/page.tsx", import.meta.url), "utf8"),
     ]);
 
   assert.match(page, /精選行程/);
@@ -22,6 +23,10 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(content, /找到了旅行社/);
   assert.match(content, /OR5AYhI/);
   assert.match(content, /documentType/);
+  assert.match(content, /departures/);
+  assert.match(page, /查看出發時間/);
+  assert.match(datesPage, /notFound/);
+  assert.match(datesPage, /出發日期/);
   assert.match(content, /00161819/);
   assert.match(content, /writeSiteContentObject/);
   assert.match(content, /東京慢旅 5日/);

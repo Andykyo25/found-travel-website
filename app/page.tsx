@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import { HeroShowcase } from "./components/HeroShowcase";
 import { TravelTools } from "./components/TravelTools";
@@ -100,21 +101,32 @@ export default async function Home() {
                 <p>{trip.summary}</p>
                 <div className="trip-footer">
                   <span className="price">{trip.price}</span>
-                  {trip.documentUrl ? (
-                    <a
-                      className="trip-document-link"
-                      href={trip.documentUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`開啟${trip.title}完整行程`}
-                    >
-                      {trip.documentName} <span aria-hidden="true">↗</span>
-                    </a>
-                  ) : (
-                    <span className="trip-document-link disabled">
-                      行程資料準備中
-                    </span>
-                  )}
+                  <div className="trip-links">
+                    {trip.documentUrl ? (
+                      <a
+                        className="trip-document-link"
+                        href={trip.documentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`查看${trip.title}行程內容`}
+                      >
+                        查看行程內容 <span aria-hidden="true">↗</span>
+                      </a>
+                    ) : (
+                      <span className="trip-document-link disabled">
+                        行程資料準備中
+                      </span>
+                    )}
+                    {trip.departures.length > 0 ? (
+                      <Link
+                        className="trip-document-link"
+                        href={`/dates/${trip.id}`}
+                        aria-label={`查看${trip.title}出發時間`}
+                      >
+                        查看出發時間 <span aria-hidden="true">→</span>
+                      </Link>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </article>
@@ -150,21 +162,32 @@ export default async function Home() {
                   <h3>{trip.title}</h3>
                   <div className="more-trip-footer">
                     <span className="price">{trip.price}</span>
-                    {trip.documentUrl ? (
-                      <a
-                        className="trip-document-link"
-                        href={trip.documentUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`開啟${trip.title}完整行程`}
-                      >
-                        {trip.documentName} <span aria-hidden="true">↗</span>
-                      </a>
-                    ) : (
-                      <span className="trip-document-link disabled">
-                        行程資料準備中
-                      </span>
-                    )}
+                    <div className="trip-links">
+                      {trip.documentUrl ? (
+                        <a
+                          className="trip-document-link"
+                          href={trip.documentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`查看${trip.title}行程內容`}
+                        >
+                          查看行程內容 <span aria-hidden="true">↗</span>
+                        </a>
+                      ) : (
+                        <span className="trip-document-link disabled">
+                          行程資料準備中
+                        </span>
+                      )}
+                      {trip.departures.length > 0 ? (
+                        <Link
+                          className="trip-document-link"
+                          href={`/dates/${trip.id}`}
+                          aria-label={`查看${trip.title}出發時間`}
+                        >
+                          查看出發時間 <span aria-hidden="true">→</span>
+                        </Link>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </article>
