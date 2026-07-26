@@ -189,6 +189,18 @@ export async function requireStudioUser() {
   redirect("/studio/login");
 }
 
+export function requestOrigin(request: Request) {
+  const requestUrl = new URL(request.url);
+  const host =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+    request.headers.get("host") ??
+    requestUrl.host;
+  const protocol =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ??
+    requestUrl.protocol.replace(":", "");
+  return `${protocol}://${host}`;
+}
+
 export function isSameOriginRequest(request: Request) {
   const origin = request.headers.get("origin");
   if (origin) {

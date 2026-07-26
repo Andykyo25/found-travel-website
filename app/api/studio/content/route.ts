@@ -4,7 +4,7 @@ import {
   isSameOriginRequest,
 } from "@/lib/studio-auth";
 import {
-  normalizeSiteContent,
+  getSiteContentWithMeta,
   saveSiteContent,
 } from "@/lib/site-content";
 
@@ -28,10 +28,29 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "內容格式不正確" }, { status: 400 });
   }
 
+  const baseUpdatedAt =
+    typeof body === "object" &&
+    body !== null &&
+    typeof (body as { _baseUpdatedAt?: unknown })._baseUpdatedAt === "string"
+      ? (body as { _baseUpdatedAt: string })._baseUpdatedAt
+      : null;
+
   try {
-    const content = normalizeSiteContent(body);
-    const saved = await saveSiteContent(content, user.email);
-    return NextResponse.json({ content: saved, savedAt: new Date().toISOString() });
+    const { meta } = await getSiteContentWithMeta();
+    if (meta.updatedAt && meta.updatedAt !== baseUpdatedAt) {
+      return NextResponse.json(
+        {
+          error: `內容已由 ${meta.updatedBy ?? "其他管理員"} 更新過，為避免互相覆蓋，請重新整理頁面取得最新內容後再編輯`,
+        },
+        { status: 409 },
+      );
+    }
+
+    const saved = await saveSiteContent(body, user.email);
+    return NextResponse.json({
+      content: saved.content,
+      savedAt: saved.updatedAt,
+    });
   } catch (error) {
     console.error("Unable to save site content", error);
     return NextResponse.json(

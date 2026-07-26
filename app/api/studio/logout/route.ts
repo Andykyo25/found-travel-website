@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   isSameOriginRequest,
+  requestOrigin,
   studioSessionCookie,
 } from "@/lib/studio-auth";
 
@@ -12,15 +13,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "無效的登出來源" }, { status: 403 });
   }
 
+  const origin = requestOrigin(request);
   const response = NextResponse.redirect(
-    new URL("/studio/login", request.url),
+    new URL("/studio/login", origin),
     303,
   );
   response.cookies.set({
     name: studioSessionCookie,
     value: "",
     httpOnly: true,
-    secure: request.nextUrl.protocol === "https:",
+    secure: origin.startsWith("https:"),
     sameSite: "lax",
     path: "/",
     maxAge: 0,

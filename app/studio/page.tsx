@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireStudioUser } from "@/lib/studio-auth";
-import { getSiteContent } from "@/lib/site-content";
+import { getSiteContentWithMeta } from "@/lib/site-content";
 import { StudioEditor } from "../components/StudioEditor";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export const metadata = {
 
 export default async function StudioPage() {
   const user = await requireStudioUser();
-  const content = await getSiteContent();
+  const { content, meta } = await getSiteContentWithMeta();
 
   return (
     <main className="studio-shell">
@@ -38,7 +38,10 @@ export default async function StudioPage() {
           </form>
         </nav>
       </header>
-      <StudioEditor initialContent={content} />
+      <StudioEditor
+        initialContent={content}
+        initialUpdatedAt={meta.updatedAt}
+      />
     </main>
   );
 }

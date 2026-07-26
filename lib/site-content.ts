@@ -335,24 +335,52 @@ export function normalizeSiteContent(value: unknown): SiteContent {
   };
 }
 
-export async function getSiteContent(): Promise<SiteContent> {
+export type SiteContentMeta = {
+  updatedAt: string | null;
+  updatedBy: string | null;
+};
+
+type StoredSiteContent = Partial<SiteContent> & {
+  _updatedAt?: unknown;
+  _updatedBy?: unknown;
+};
+
+export async function getSiteContentWithMeta(): Promise<{
+  content: SiteContent;
+  meta: SiteContentMeta;
+}> {
+  const emptyMeta: SiteContentMeta = { updatedAt: null, updatedBy: null };
   try {
-    const saved = await readSiteContentObject<SiteContent>();
-    return saved ? normalizeSiteContent(saved) : defaultSiteContent;
+    const saved = await readSiteContentObject<StoredSiteContent>();
+    if (!saved) return { content: defaultSiteContent, meta: emptyMeta };
+    return {
+      content: normalizeSiteContent(saved),
+      meta: {
+        updatedAt:
+          typeof saved._updatedAt === "string" ? saved._updatedAt : null,
+        updatedBy:
+          typeof saved._updatedBy === "string" ? saved._updatedBy : null,
+      },
+    };
   } catch {
-    return defaultSiteContent;
+    return { content: defaultSiteContent, meta: emptyMeta };
   }
+}
+
+export async function getSiteContent(): Promise<SiteContent> {
+  return (await getSiteContentWithMeta()).content;
 }
 
 export async function saveSiteContent(
   value: unknown,
   editorEmail: string,
-): Promise<SiteContent> {
+): Promise<{ content: SiteContent; updatedAt: string }> {
   const content = normalizeSiteContent(value);
+  const updatedAt = new Date().toISOString();
   await writeSiteContentObject({
     ...content,
-    _updatedAt: new Date().toISOString(),
+    _updatedAt: updatedAt,
     _updatedBy: editorEmail,
   });
-  return content;
+  return { content, updatedAt };
 }

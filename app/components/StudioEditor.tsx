@@ -112,10 +112,13 @@ function createTrip(): Trip {
 
 export function StudioEditor({
   initialContent,
+  initialUpdatedAt,
 }: {
   initialContent: SiteContent;
+  initialUpdatedAt: string | null;
 }) {
   const [draft, setDraft] = useState(initialContent);
+  const [baseUpdatedAt, setBaseUpdatedAt] = useState(initialUpdatedAt);
   const [uploadingTripId, setUploadingTripId] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>({
     kind: "idle",
@@ -295,10 +298,11 @@ export function StudioEditor({
       const response = await fetch("/api/studio/content", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify({ ...draft, _baseUpdatedAt: baseUpdatedAt }),
       });
       const result = (await response.json()) as {
         content?: SiteContent;
+        savedAt?: string;
         error?: string;
       };
 
@@ -307,6 +311,7 @@ export function StudioEditor({
       }
 
       setDraft(result.content);
+      setBaseUpdatedAt(result.savedAt ?? null);
       setStatus({
         kind: "success",
         message: "已儲存，重新整理網站即可看到最新內容",
