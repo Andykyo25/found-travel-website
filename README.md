@@ -37,7 +37,8 @@ STUDIO_USERS=amy@example.com:密碼至少8字元
 bob@example.com:另一組密碼8字元
 ```
 
-- 密碼至少 8 字元；不可包含換行、逗號或分號（可包含冒號）。
+- Email 與密碼之間的冒號，半形「:」或全形「：」皆可。
+- 密碼至少 8 字元；不可包含換行、逗號或分號（半形與全形皆同）。
 - 原本的 `STUDIO_ADMIN_EMAIL` / `STUDIO_ADMIN_PASSWORD` 仍然有效，
   會與 `STUDIO_USERS` 名單合併。
 - 移除某一行後（Railway 改變數會自動重新部署），該帳號立即失效，

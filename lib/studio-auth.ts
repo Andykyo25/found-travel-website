@@ -51,10 +51,10 @@ function configuredUsers(): StudioAccount[] {
     process.env.STUDIO_ADMIN_PASSWORD ?? "",
   );
 
-  for (const entry of (process.env.STUDIO_USERS ?? "").split(/[\n;,]+/)) {
+  for (const entry of (process.env.STUDIO_USERS ?? "").split(/[\n;,；，]+/)) {
     const trimmed = entry.trim();
     if (!trimmed) continue;
-    const separator = trimmed.indexOf(":");
+    const separator = trimmed.search(/[:：]/);
     if (separator <= 0) continue;
     add(trimmed.slice(0, separator), trimmed.slice(separator + 1).trim());
   }
@@ -105,6 +105,13 @@ function decodedSessionEmail(value: string) {
 
 export function isStudioAuthConfigured() {
   return configuredUsers().length > 0;
+}
+
+export function studioAccountSummary() {
+  return {
+    studioAccounts: configuredUsers().length,
+    studioUsersVariableSet: Boolean((process.env.STUDIO_USERS ?? "").trim()),
+  };
 }
 
 export function verifyStudioCredentials(email: string, password: string) {
