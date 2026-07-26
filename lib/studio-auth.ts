@@ -33,19 +33,50 @@ const loginAttempts =
   }
 ).foundTravelLoginAttempts = loginAttempts;
 
-function configuredEmail() {
-  return (process.env.STUDIO_ADMIN_EMAIL ?? "").trim().toLowerCase();
+type StudioAccount = {
+  email: string;
+  password: string;
+};
+
+function configuredUsers(): StudioAccount[] {
+  const accounts = new Map<string, string>();
+  const add = (email: string, password: string) => {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || password.length < 8) return;
+    if (!accounts.has(normalized)) accounts.set(normalized, password);
+  };
+
+  add(
+    process.env.STUDIO_ADMIN_EMAIL ?? "",
+    process.env.STUDIO_ADMIN_PASSWORD ?? "",
+  );
+
+  for (const entry of (process.env.STUDIO_USERS ?? "").split(/[\n;,]+/)) {
+    const trimmed = entry.trim();
+    if (!trimmed) continue;
+    const separator = trimmed.indexOf(":");
+    if (separator <= 0) continue;
+    add(trimmed.slice(0, separator), trimmed.slice(separator + 1).trim());
+  }
+
+  return [...accounts.entries()].map(([email, password]) => ({
+    email,
+    password,
+  }));
 }
 
 function sessionSecret() {
   const configured = process.env.STUDIO_SESSION_SECRET?.trim();
   if (configured) return configured;
-  const password = process.env.STUDIO_ADMIN_PASSWORD ?? "";
-  return password
-    ? createHash("sha256")
-        .update(`found-travel-session\0${password}`)
-        .digest("base64url")
-    : "";
+  const users = configuredUsers();
+  if (users.length === 0) return "";
+  const roster = users
+    .map((user) => `${user.email}\0${user.password}`)
+    .sort()
+    .join("\n");
+  return createHash("sha256")
+    .update(`found-travel-session\0${roster}`)
+    .digest("base64url");
 }
 
 function safeEqual(left: string, right: string) {
@@ -73,21 +104,21 @@ function decodedSessionEmail(value: string) {
 }
 
 export function isStudioAuthConfigured() {
-  return Boolean(
-    configuredEmail() &&
-      (process.env.STUDIO_ADMIN_PASSWORD ?? "").length >= 10,
-  );
+  return configuredUsers().length > 0;
 }
 
 export function verifyStudioCredentials(email: string, password: string) {
-  const expectedEmail = configuredEmail();
-  const expectedPassword = process.env.STUDIO_ADMIN_PASSWORD ?? "";
-  if (!isStudioAuthConfigured()) return false;
+  const users = configuredUsers();
+  if (users.length === 0) return false;
 
-  return (
-    safeEqual(email.trim().toLowerCase(), expectedEmail) &&
-    safeEqual(password, expectedPassword)
-  );
+  const normalized = email.trim().toLowerCase();
+  let matched = false;
+  for (const user of users) {
+    const emailMatches = safeEqual(normalized, user.email);
+    const passwordMatches = safeEqual(password, user.password);
+    if (emailMatches && passwordMatches) matched = true;
+  }
+  return matched;
 }
 
 export function createStudioSession(email: string) {
@@ -109,7 +140,12 @@ export function verifyStudioSession(token: string | undefined) {
   const expiresAt = Number(parts[2]);
   const email = decodedSessionEmail(parts[1]).trim().toLowerCase();
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now() / 1000) return null;
-  if (!safeEqual(email, configuredEmail())) return null;
+
+  let known = false;
+  for (const user of configuredUsers()) {
+    if (safeEqual(email, user.email)) known = true;
+  }
+  if (!known) return null;
 
   return {
     email,

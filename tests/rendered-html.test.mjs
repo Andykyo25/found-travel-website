@@ -33,6 +33,7 @@ test("the finished travel site replaces all starter content", async () => {
   assert.doesNotMatch(packageJson, /vinext|wrangler|drizzle-orm/);
   assert.match(studioPage, /requireStudioUser/);
   assert.match(auth, /STUDIO_ADMIN_EMAIL/);
+  assert.match(auth, /STUDIO_USERS/);
   assert.doesNotMatch(auth, /ChatGPT/);
   assert.match(railway, /DOCKERFILE/);
 

@@ -56,7 +56,7 @@ export function StudioLoginForm() {
           name="password"
           type="password"
           autoComplete="current-password"
-          minLength={10}
+          minLength={8}
           required
         />
       </label>

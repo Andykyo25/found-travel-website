@@ -20,12 +20,31 @@
 
 ```text
 STUDIO_ADMIN_EMAIL=tgfc069@gmail.com
-STUDIO_ADMIN_PASSWORD=請在 Railway 介面填入至少 10 字元的密碼
+STUDIO_ADMIN_PASSWORD=請在 Railway 介面填入至少 8 字元的密碼
 ```
 
 `STUDIO_ADMIN_PASSWORD` 只應儲存在 Railway Variables，不要寫入 GitHub。
 需要自行指定 session 簽章時，可再加入至少 32 字元的
-`STUDIO_SESSION_SECRET`；未設定時網站會從後台密碼安全衍生。
+`STUDIO_SESSION_SECRET`；未設定時網站會從後台帳號名單安全衍生。
+
+## 新增業務的管理員帳號
+
+要讓每位業務有自己的登入帳號，在網站 Service 的 Variables 加入
+`STUDIO_USERS`，一行一組「Email:密碼」（也可用分號分隔多組）：
+
+```text
+STUDIO_USERS=amy@example.com:密碼至少8字元
+bob@example.com:另一組密碼8字元
+```
+
+- 密碼至少 8 字元；不可包含換行、逗號或分號（可包含冒號）。
+- 原本的 `STUDIO_ADMIN_EMAIL` / `STUDIO_ADMIN_PASSWORD` 仍然有效，
+  會與 `STUDIO_USERS` 名單合併。
+- 移除某一行後（Railway 改變數會自動重新部署），該帳號立即失效，
+  已登入的 session 也會馬上作廢。
+- 後台儲存內容時會記錄操作者 Email，可追溯是哪位業務更新的。
+- 未設定 `STUDIO_SESSION_SECRET` 時，調整名單會讓所有人需要重新
+  登入一次；建議加上固定的 `STUDIO_SESSION_SECRET` 避免此情況。
 
 6. 部署完成後，進入 **Settings → Networking → Generate Domain**，
    取得免費的 `*.up.railway.app` 網址。
