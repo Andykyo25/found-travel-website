@@ -1123,6 +1123,8 @@ a.hero-card-cta-alt:hover {
 }
 
 .studio-header,
+.studio-tabs,
+.studio-panel,
 .studio-form {
   width: min(980px, 100%);
   margin-inline: auto;
@@ -1978,6 +1980,429 @@ a.hero-card-cta-alt:hover {
   .studio-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+/* ---------- 後台分頁 ---------- */
+
+.studio-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.studio-tab {
+  padding: 10px 22px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.studio-tab:hover {
+  color: var(--coral-deep);
+}
+
+.studio-tab.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.studio-warning {
+  margin: 0 0 18px;
+  padding: 12px 15px;
+  border-radius: 14px;
+  background: #fff4e8;
+  color: #96551f;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ---------- 後台聯絡諮詢表格 ---------- */
+
+.contact-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.contact-search {
+  flex: 1 1 240px;
+  max-width: 320px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 11px 18px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.contact-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.contact-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.contact-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.contact-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.contact-table th {
+  padding: 13px 16px;
+  background: #f5f1e8;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.contact-table td {
+  padding: 15px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  vertical-align: top;
+}
+
+.contact-cell-time {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.contact-name {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #fdece4;
+  color: #a33a2b;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.contact-cell-mobile {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.contact-cell-mobile a:hover {
+  color: var(--coral-deep);
+}
+
+.contact-slot-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contact-slot-tag {
+  padding: 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sage-deep);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.contact-cell-message {
+  min-width: 260px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.contact-table-empty {
+  padding: 44px 20px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ---------- 前台聯絡表單頁 ---------- */
+
+.contact-shell {
+  width: min(860px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 18px 0 72px;
+}
+
+.contact-card {
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.contact-card h1 {
+  margin: 14px 0 12px;
+  font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.contact-card-lede {
+  margin: 0 0 32px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.contact-form {
+  display: grid;
+  gap: 22px;
+}
+
+.field-required {
+  color: var(--coral-deep);
+}
+
+/* fieldset 保持 block，legend 在 grid/flex 容器內的排版各家瀏覽器不一致。 */
+.contact-slots {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.contact-slots legend {
+  padding: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.contact-slots legend small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.contact-slot-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.contact-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.contact-slot:hover {
+  border-color: var(--coral);
+}
+
+.contact-slot.on {
+  border-color: var(--coral);
+  background: #fdece4;
+  color: #a33a2b;
+}
+
+.contact-slot input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--coral);
+}
+
+.contact-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.contact-form-status {
+  margin: 0;
+  padding: 12px 15px;
+  border-radius: 14px;
+  background: #f5f1e8;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.contact-form-status.error {
+  background: #fff0eb;
+  color: #a33a2b;
+}
+
+.contact-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.contact-form-actions .button {
+  min-width: 180px;
+}
+
+.contact-form-actions .button:disabled {
+  opacity: 0.62;
+  cursor: wait;
+}
+
+.contact-form-actions small {
+  flex: 1 1 240px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.contact-success {
+  padding: 12px 0 4px;
+  text-align: center;
+}
+
+.contact-success-mark {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--sage-deep);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.contact-success h2 {
+  margin: 0 0 12px;
+  font-size: 26px;
+}
+
+.contact-success p {
+  max-width: 480px;
+  margin: 0 auto 28px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.contact-success-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.contact-aside {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 22px;
+  padding: 22px clamp(20px, 3vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 253, 248, 0.7);
+}
+
+.contact-aside > div {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.contact-aside strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.button-on-dark-ghost {
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.32);
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+
+.button-on-dark-ghost:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+@media (max-width: 620px) {
+  .studio-tabs {
+    width: 100%;
+  }
+
+  .studio-tab {
+    flex: 1;
+    padding-inline: 12px;
+    text-align: center;
+  }
+
+  .contact-table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .contact-search {
+    max-width: none;
+  }
+
+  .contact-toolbar-actions {
+    justify-content: space-between;
+  }
+
+  .contact-form-actions .button {
+    width: 100%;
+  }
+
+  .contact-success-actions .button {
+    width: 100%;
   }
 }
 

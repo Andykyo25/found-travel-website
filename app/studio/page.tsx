@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { requireStudioUser } from "@/lib/studio-auth";
 import { getSiteContentWithMeta } from "@/lib/site-content";
 import { StudioEditor } from "../components/StudioEditor";
+import { StudioHeader } from "../components/StudioHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -19,25 +19,7 @@ export default async function StudioPage() {
 
   return (
     <main className="studio-shell">
-      <header className="studio-header">
-        <div>
-          <p>以 {user.email} 登入</p>
-          <h1>找到了旅行社・行程內容管理</h1>
-        </div>
-        <nav aria-label="內容管理導覽">
-          <Link className="button button-secondary button-small" href="/">
-            查看網站
-          </Link>
-          <form method="post" action="/api/studio/logout">
-            <button
-              className="button button-secondary button-small"
-              type="submit"
-            >
-              登出
-            </button>
-          </form>
-        </nav>
-      </header>
+      <StudioHeader email={user.email} active="content" />
       <StudioEditor
         initialContent={content}
         initialUpdatedAt={meta.updatedAt}

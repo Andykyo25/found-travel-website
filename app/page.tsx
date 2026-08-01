@@ -31,6 +31,7 @@ export default async function Home() {
           <a href="#journeys">精選行程</a>
           <a href="#film">旅行靈感</a>
           <a href="#about">關於我們</a>
+          <Link href="/contact">聯絡表單</Link>
         </nav>
 
         <a className="button button-small" href="#contact">
@@ -271,6 +272,9 @@ export default async function Home() {
           >
             LINE 聯絡顧問 <span aria-hidden="true">↗</span>
           </a>
+          <Link className="button button-on-dark-ghost" href="/contact">
+            填寫聯絡表單 <span aria-hidden="true">→</span>
+          </Link>
           <span className="contact-company">{content.companyName}</span>
         </div>
       </section>
@@ -296,6 +300,7 @@ export default async function Home() {
         <div className="footer-links">
           <a href="#journeys">精選行程</a>
           <a href="#about">關於我們</a>
+          <Link href="/contact">聯絡表單</Link>
           <a href="/studio">內容管理</a>
         </div>
       </footer>

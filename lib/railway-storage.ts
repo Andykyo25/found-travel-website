@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   GetObjectCommand,
+  ListObjectsV2Command,
   NoSuchKey,
   PutObjectCommand,
   S3Client,
@@ -9,6 +10,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const contentKey = "content/site-content.json";
+const contactPrefix = "contact-requests/";
 let cachedClient: S3Client | null = null;
 
 type StorageConfig = {
@@ -115,6 +117,70 @@ export async function writeSiteContentObject(value: unknown) {
       CacheControl: "no-store",
     }),
   );
+}
+
+// 每筆聯絡單各存成一個物件，避免多位客人同時送出時互相覆蓋。
+// 檔名前綴使用毫秒時間戳，字典排序即等於時間排序。
+export async function writeContactRequestObject(id: string, value: unknown) {
+  const storage = getClient();
+  if (!storage) throw new Error("Railway Storage Bucket is unavailable");
+
+  await storage.client.send(
+    new PutObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: `${contactPrefix}${Date.now()}-${id}.json`,
+      Body: JSON.stringify(value),
+      ContentType: "application/json; charset=utf-8",
+      CacheControl: "no-store",
+    }),
+  );
+}
+
+// 回傳未經驗證的原始物件，由 lib/contact-requests.ts 負責正規化。
+export async function listContactRequestObjects(
+  limit: number,
+): Promise<unknown[] | null> {
+  const storage = getClient();
+  if (!storage) return null;
+
+  const keys: string[] = [];
+  let continuationToken: string | undefined;
+  do {
+    const page = await storage.client.send(
+      new ListObjectsV2Command({
+        Bucket: storage.config.bucket,
+        Prefix: contactPrefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
+    for (const object of page.Contents ?? []) {
+      if (object.Key) keys.push(object.Key);
+    }
+    continuationToken = page.IsTruncated
+      ? page.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  const newestFirst = keys.sort().reverse().slice(0, limit);
+  const loaded = await Promise.all(
+    newestFirst.map(async (key) => {
+      try {
+        const result = await storage.client.send(
+          new GetObjectCommand({
+            Bucket: storage.config.bucket,
+            Key: key,
+          }),
+        );
+        if (!result.Body) return null;
+        const raw = await result.Body.transformToString("utf-8");
+        return JSON.parse(raw) as unknown;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return loaded.filter((item) => item !== null);
 }
 
 export async function uploadTripPdf(

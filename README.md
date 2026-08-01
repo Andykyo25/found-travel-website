@@ -6,6 +6,7 @@
 - `/studio` 使用核准 Email 與密碼登入
 - 行程支援不限筆數、PDF 上傳或 Google Drive 分享連結
 - 首頁使用公司 Logo、正式影片、天氣、當地時間與匯率工具
+- `/contact` 公開聯絡表單，送出後即時通知 LINE，並存進 `/studio/contacts`
 - Railway 連接 GitHub `main` 後，每次推送會自動重新部署
 
 ## Railway 第一次設定
@@ -27,6 +28,12 @@ STUDIO_ADMIN_PASSWORD=請在 Railway 介面填入至少 8 字元的密碼
 需要自行指定 session 簽章時，可再加入至少 32 字元的
 `STUDIO_SESSION_SECRET`；未設定時網站會從後台帳號名單安全衍生。
 
+6. 部署完成後，進入 **Settings → Networking → Generate Domain**，
+   取得免費的 `*.up.railway.app` 網址。
+
+Railway Bucket 會保存首頁內容、行程 PDF 與客人聯絡表單，因此 GitHub 重新部署
+不會清除業務已上架的資料。
+
 ## 新增業務的管理員帳號
 
 要讓每位業務有自己的登入帳號，在網站 Service 的 Variables 加入
@@ -47,11 +54,39 @@ bob@example.com:另一組密碼8字元
 - 未設定 `STUDIO_SESSION_SECRET` 時，調整名單會讓所有人需要重新
   登入一次；建議加上固定的 `STUDIO_SESSION_SECRET` 避免此情況。
 
-6. 部署完成後，進入 **Settings → Networking → Generate Domain**，
-   取得免費的 `*.up.railway.app` 網址。
+## 聯絡表單與 LINE 通知
 
-Railway Bucket 會保存首頁內容與 PDF，因此 GitHub 重新部署不會清除業務已
-上架的資料。
+客人在前台 `/contact` 送出「聯絡人／行動電話／希望聯繫時段／內容」後：
+
+1. 表單存進 Railway Bucket 的 `contact-requests/`，每筆一個檔案。
+2. 業務群組收到 LINE 通知。
+3. 業務登入 `/studio` 切到 **聯絡諮詢** 分頁即可看到全部表單，並可匯出 CSV。
+
+通知需要在網站 Service 的 Variables 設定，以下兩種擇一（兩種都設會同時送）：
+
+**方式一：LINE Messaging API（不經第三方）**
+
+```text
+LINE_CHANNEL_ACCESS_TOKEN=LINE Developers 後台的 Channel access token
+LINE_TARGET_ID=要收通知的群組 ID 或個人 userId
+```
+
+需先在 LINE Developers 建立 Messaging API channel，把官方帳號邀請進業務群組，
+再由 webhook 事件取得該群組的 `groupId`。
+
+**方式二：Make / Zapier Webhook（沿用現有自動化流程）**
+
+```text
+CONTACT_WEBHOOK_URL=自動化服務提供的 Webhook 網址
+```
+
+網站會以 POST 送出 JSON，其中 `text` 欄位已經是排版好的通知訊息，
+另外也附上 `name`、`mobile`、`preferredTimes`、`message`、`createdAt` 供自行組版。
+
+兩者都未設定時，表單仍會正常收件並存檔，只是群組不會收到即時通知，
+後台聯絡諮詢分頁會顯示提醒。
+
+為避免表單機器人灌爆，同一來源 IP 每 10 分鐘最多送出 5 次。
 
 ## Railway Bucket 變數
 

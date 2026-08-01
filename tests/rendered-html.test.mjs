@@ -3,17 +3,36 @@ import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("the finished travel site replaces all starter content", async () => {
-  const [page, layout, content, packageJson, studioPage, auth, railway, datesPage] =
-    await Promise.all([
-      readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-      readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-      readFile(new URL("../lib/site-content.ts", import.meta.url), "utf8"),
-      readFile(new URL("../package.json", import.meta.url), "utf8"),
-      readFile(new URL("../app/studio/page.tsx", import.meta.url), "utf8"),
-      readFile(new URL("../lib/studio-auth.ts", import.meta.url), "utf8"),
-      readFile(new URL("../railway.json", import.meta.url), "utf8"),
-      readFile(new URL("../app/dates/[tripId]/page.tsx", import.meta.url), "utf8"),
-    ]);
+  const [
+    page,
+    layout,
+    content,
+    packageJson,
+    studioPage,
+    auth,
+    railway,
+    datesPage,
+    contactPage,
+    contactApi,
+    contactNotify,
+    studioContactsPage,
+  ] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/site-content.ts", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/studio/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/studio-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../railway.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/dates/[tripId]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/contact/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/contact/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/contact-notify.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/studio/contacts/page.tsx", import.meta.url),
+      "utf8",
+    ),
+  ]);
 
   assert.match(page, /精選行程/);
   assert.match(page, /TravelTools/);
@@ -36,6 +55,14 @@ test("the finished travel site replaces all starter content", async () => {
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.doesNotMatch(packageJson, /vinext|wrangler|drizzle-orm/);
+  assert.match(page, /href="\/contact"/);
+  assert.match(contactPage, /ContactForm/);
+  assert.match(contactApi, /parseContactRequestInput/);
+  assert.match(contactApi, /notifyContactRequest/);
+  assert.match(contactNotify, /api\.line\.me\/v2\/bot\/message\/push/);
+  assert.match(contactNotify, /CONTACT_WEBHOOK_URL/);
+  assert.match(studioContactsPage, /requireStudioUser/);
+  assert.match(studioContactsPage, /ContactRequestTable/);
   assert.match(studioPage, /requireStudioUser/);
   assert.match(auth, /STUDIO_ADMIN_EMAIL/);
   assert.match(auth, /STUDIO_USERS/);
