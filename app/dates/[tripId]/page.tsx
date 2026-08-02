@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DepartureTable } from "@/app/components/DepartureTable";
 import { getSiteContent } from "@/lib/site-content";
+import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,8 @@ export default async function TripDatesPage({ params }: PageProps) {
           LINE 聯絡顧問報名 <span aria-hidden="true">↗</span>
         </a>
       </section>
+    
+      <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ContactForm } from "@/app/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
+import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,8 @@ export default async function ContactPage() {
           改用 LINE 諮詢 <span aria-hidden="true">↗</span>
         </a>
       </section>
+    
+      <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );
 }

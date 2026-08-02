@@ -9,6 +9,7 @@ import {
   departureRows,
   upcomingDepartureRows,
 } from "@/lib/trip-filters";
+import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,8 @@ export default async function AllDeparturesPage() {
       )}
 
       <DepartureBoardCta lineUrl={content.lineUrl} />
+    
+      <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );
 }

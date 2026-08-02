@@ -11,6 +11,7 @@ import { MobileNav, type NavLink } from "./components/MobileNav";
 import { PackageCard } from "./components/PackageCard";
 import { TravelTools } from "./components/TravelTools";
 import { TripFilterBar } from "./components/TripFilterBar";
+import { LineFloatingButton } from "./components/LineFloatingButton";
 
 export const dynamic = "force-dynamic";
 
@@ -312,6 +313,8 @@ export default async function Home({
           <a href="/studio">內容管理</a>
         </div>
       </footer>
+    
+      <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );
 }

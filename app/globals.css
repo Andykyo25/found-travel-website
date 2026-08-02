@@ -2946,6 +2946,55 @@ img {
   }
 }
 
+/* ---------- LINE 浮動聯絡鈕 ---------- */
+
+/* z-index 40：在頁面內容之上，但要低於手機選單遮罩（60）。 */
+.line-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 40;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #06c755;
+  color: #fff;
+  box-shadow:
+    0 12px 28px rgba(6, 199, 85, 0.36),
+    0 2px 10px rgba(20, 30, 26, 0.18);
+  transition:
+    transform 220ms cubic-bezier(0.22, 0.8, 0.25, 1),
+    box-shadow 220ms ease;
+}
+
+.line-fab:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow:
+    0 18px 36px rgba(6, 199, 85, 0.44),
+    0 3px 12px rgba(20, 30, 26, 0.22);
+}
+
+.line-fab svg {
+  width: 32px;
+  height: 32px;
+}
+
+@media (max-width: 620px) {
+  .line-fab {
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    width: 52px;
+    height: 52px;
+  }
+
+  .line-fab svg {
+    width: 29px;
+    height: 29px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
