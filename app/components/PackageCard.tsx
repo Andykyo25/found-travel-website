@@ -111,6 +111,19 @@ export function PackageCard({
         </span>
       </div>
 
+      {trip.departures.length > 0 ? (
+        <Link
+          className="package-dates"
+          href={`/dates/${trip.id}`}
+          aria-label={`查看${trip.title}出發時間`}
+        >
+          查看全部 {trip.departures.length} 個出發日{" "}
+          <span aria-hidden="true">→</span>
+        </Link>
+      ) : null}
+
+      {/* footer 一定是卡片最後一個元素，配合 margin-top:auto
+          讓同一列每張卡的價格與按鈕都對齊在底部。 */}
       <div className="package-footer">
         <div className="package-price">
           <strong>{trip.price}</strong>
@@ -136,17 +149,6 @@ export function PackageCard({
           </Link>
         )}
       </div>
-
-      {trip.departures.length > 0 ? (
-        <Link
-          className="package-dates"
-          href={`/dates/${trip.id}`}
-          aria-label={`查看${trip.title}出發時間`}
-        >
-          查看全部 {trip.departures.length} 個出發日{" "}
-          <span aria-hidden="true">→</span>
-        </Link>
-      ) : null}
     </article>
   );
 }

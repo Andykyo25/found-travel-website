@@ -21,7 +21,7 @@ export default async function StudioLoginPage() {
       <section className="studio-login-card">
         <Link className="brand studio-login-brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/brand/logo.png" alt="" />
+          <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
           <span>找到了旅行社</span>
         </Link>
         <p className="eyebrow">

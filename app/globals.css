@@ -90,12 +90,15 @@ img {
   letter-spacing: -0.02em;
 }
 
+/* logo-mark.png 已去背，直接疊在底色或照片上，不再加白底色塊。 */
 .brand-logo {
   width: 58px;
   height: 46px;
   object-fit: contain;
-  border-radius: 10px;
-  background: #fff;
+}
+
+.hero-brand .brand-logo {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
 }
 
 .site-footer a {
@@ -328,11 +331,11 @@ img {
 /* ---------- 行程搜尋列 ---------- */
 
 .trip-filter-bar {
-  width: min(720px, 100%);
+  width: min(640px, 100%);
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 9px 9px 9px 8px;
+  padding: 8px 8px 8px 6px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--paper);
@@ -351,8 +354,8 @@ img {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 7px 16px;
+  gap: 10px;
+  padding: 12px 18px;
   border-radius: 999px;
   cursor: pointer;
   transition: background-color 180ms ease;
@@ -362,30 +365,20 @@ img {
   background: rgba(39, 53, 47, 0.05);
 }
 
-.trip-filter-icon {
+.trip-filter-field svg {
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
   color: var(--sage-deep);
-  font-size: 15px;
 }
 
-.trip-filter-text {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.trip-filter-text small {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.trip-filter-text select {
+.trip-filter-field select {
   width: 100%;
+  min-width: 0;
   appearance: none;
   -webkit-appearance: none;
   border: 0;
-  padding: 0 18px 0 0;
+  padding: 0 20px 0 0;
   background-color: transparent;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23647169' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -719,11 +712,11 @@ img {
 
 .package-footer {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 18px;
 }
 
 .package-price {
@@ -767,7 +760,7 @@ img {
 }
 
 .package-dates {
-  margin-top: 12px;
+  margin-top: 14px;
   color: var(--coral-deep);
   font-size: 13px;
   font-weight: 800;
@@ -1196,7 +1189,7 @@ img {
   background:
     radial-gradient(circle at 78% 18%, rgba(240, 121, 89, 0.16), transparent 28%),
     radial-gradient(circle at 14% 78%, rgba(136, 153, 125, 0.18), transparent 32%),
-    var(--sand);
+    var(--cream);
 }
 
 .studio-login-card {

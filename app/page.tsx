@@ -38,7 +38,8 @@ export default async function Home({
 
   const months = monthOptions(content.trips);
   const categories = categoryOptions(content.trips);
-  const heroImage = orderedTrips[0]?.image ?? "/trips/tokyo.jpg";
+  const heroImage =
+    content.heroImage || orderedTrips[0]?.image || "/trips/tokyo.jpg";
   const hasFilters = Boolean(
     filters.month || filters.budget || filters.category,
   );
@@ -63,7 +64,7 @@ export default async function Home({
               aria-label={`${content.brandName}首頁`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="brand-logo" src="/brand/logo.png" alt="" />
+              <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
               <span>{content.brandName}</span>
             </a>
 
@@ -256,7 +257,7 @@ export default async function Home({
         <div className="footer-identity">
           <a className="brand footer-brand" href="#top">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="brand-logo" src="/brand/logo.png" alt="" />
+            <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
             <span>{content.brandName}</span>
           </a>
           <p>內容與報價以業務顧問最終確認為準</p>

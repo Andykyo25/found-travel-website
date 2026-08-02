@@ -18,7 +18,7 @@ export default async function ContactPage() {
       <header className="dates-header">
         <Link className="brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/brand/logo.png" alt="" />
+          <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
           <span>{content.brandName}</span>
         </Link>
         <Link className="button button-secondary button-small" href="/">

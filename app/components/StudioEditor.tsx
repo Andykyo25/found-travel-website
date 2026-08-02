@@ -505,6 +505,17 @@ export function StudioEditor({
               onChange={(event) => updateRoot("heroText", event.target.value)}
             />
           </Field>
+          <Field
+            label="首頁大圖網址或網站路徑"
+            hint="顯示在首頁最上方的滿版背景照。留空會自動使用第一個行程的封面圖。建議用寬幅橫圖（如 1920×1080）。"
+            wide
+          >
+            <input
+              placeholder="留空 = 自動使用第一個行程的封面圖"
+              value={draft.heroImage}
+              onChange={(event) => updateRoot("heroImage", event.target.value)}
+            />
+          </Field>
           <Field label="影片區標題" wide>
             <input
               value={draft.videoTitle}
