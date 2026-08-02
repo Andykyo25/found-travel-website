@@ -37,7 +37,9 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(page, /精選行程/);
   assert.match(page, /TravelTools/);
   assert.match(page, /內容管理/);
-  assert.match(page, /trip-document-link/);
+  assert.match(page, /PackageCard/);
+  assert.match(page, /TripFilterBar/);
+  assert.match(page, /hero-full/);
   assert.match(page, /homepage\.mp4|content\.videoUrl/);
   assert.match(content, /找到了旅行社/);
   assert.match(content, /OR5AYhI/);

@@ -1,17 +1,47 @@
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
-import { HeroShowcase } from "./components/HeroShowcase";
+import {
+  categoryOptions,
+  filterTrips,
+  monthOptions,
+  readTripFilters,
+  tripFilterHref,
+} from "@/lib/trip-filters";
+import { PackageCard } from "./components/PackageCard";
 import { TravelTools } from "./components/TravelTools";
+import { TripFilterBar } from "./components/TripFilterBar";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+const visibleTripLimit = 6;
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const content = await getSiteContent();
-  const featuredTrips = content.trips.filter((trip) => trip.featured);
-  const otherTrips = content.trips.filter((trip) => !trip.featured);
-  const primaryTrips = featuredTrips.length ? featuredTrips : content.trips;
-  const overflowTrips = featuredTrips.length ? otherTrips : [];
-  const tripCount = primaryTrips.length <= 2 ? primaryTrips.length : "many";
+  const filters = readTripFilters(params);
+  const showAll = params.all === "1";
+
+  // 精選行程排在前面，其餘接著顯示，兩者共用同一個列表與篩選。
+  const orderedTrips = [
+    ...content.trips.filter((trip) => trip.featured),
+    ...content.trips.filter((trip) => !trip.featured),
+  ];
+  const matchedTrips = filterTrips(orderedTrips, filters);
+  const visibleTrips = showAll
+    ? matchedTrips
+    : matchedTrips.slice(0, visibleTripLimit);
+  const hasMore = matchedTrips.length > visibleTrips.length;
+
+  const months = monthOptions(content.trips);
+  const categories = categoryOptions(content.trips);
+  const heroImage = orderedTrips[0]?.image ?? "/trips/tokyo.jpg";
+  const hasFilters = Boolean(
+    filters.month || filters.budget || filters.category,
+  );
 
   return (
     <main>
@@ -20,182 +50,125 @@ export default async function Home() {
         {content.announcement}
       </div>
 
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label={`${content.brandName}首頁`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/brand/logo.png" alt="" />
-          <span>{content.brandName}</span>
-        </a>
+      <section className="hero-full" id="top">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="hero-media" src={heroImage} alt="" />
+        <span className="hero-scrim" aria-hidden="true" />
 
-        <nav className="desktop-nav" aria-label="主要導覽">
-          <a href="#journeys">精選行程</a>
-          <a href="#film">旅行靈感</a>
-          <a href="#about">關於我們</a>
-          <Link href="/contact">聯絡表單</Link>
-        </nav>
-
-        <a className="button button-small" href="#contact">
-          找顧問聊聊 <span aria-hidden="true">↗</span>
-        </a>
-      </header>
-
-      <section className="hero section-shell" id="top">
-        <div className="hero-copy">
-          <p className="eyebrow">
-            <span />
-            {content.heroKicker}
-          </p>
-          <h1>{content.heroTitle}</h1>
-          <p className="hero-lede">{content.heroText}</p>
-          <div className="hero-actions">
-            <a className="button" href="#contact">
-              找顧問聊聊 <span aria-hidden="true">↗</span>
+        <div className="hero-inner">
+          <header className="hero-bar">
+            <a
+              className="brand hero-brand"
+              href="#top"
+              aria-label={`${content.brandName}首頁`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="brand-logo" src="/brand/logo.png" alt="" />
+              <span>{content.brandName}</span>
             </a>
-            <a className="button button-secondary" href="#journeys">
-              探索精選行程 <span aria-hidden="true">→</span>
-            </a>
-          </div>
-          <div className="hero-trust" aria-label="服務特色">
-            <span>單一顧問窗口</span>
-            <span>行程逐日確認</span>
-            <span>出發前後陪伴</span>
+
+            <nav className="hero-nav" aria-label="主要導覽">
+              <a className="active" href="#top">
+                首頁
+              </a>
+              <a href="#journeys">精選行程</a>
+              <a href="#film">旅行靈感</a>
+              <a href="#about">關於我們</a>
+            </nav>
+
+            <div className="hero-bar-actions">
+              <Link className="button button-small" href="/contact">
+                聯絡表單 <span aria-hidden="true">↗</span>
+              </Link>
+            </div>
+          </header>
+
+          <div className="hero-center">
+            <p className="hero-kicker">{content.heroKicker}</p>
+            <h1 className="hero-title">{content.heroTitle}</h1>
+            <p className="hero-sub">{content.heroText}</p>
+            {/* key 讓網址篩選條件改變時重新掛載，兩條搜尋列才不會顯示舊值。 */}
+            <TripFilterBar
+              key={`hero-${filters.month}-${filters.budget}`}
+              months={months}
+              filters={filters}
+              tone="on-image"
+            />
           </div>
         </div>
-
-        <HeroShowcase trips={content.trips} />
       </section>
 
       <TravelTools destination={content.destination} />
 
-      <section className="section-shell journeys" id="journeys">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">
-              <span />
-              CURATED JOURNEYS
-            </p>
-            <h2>這次想去哪裡，慢慢選。</h2>
-          </div>
+      <section className="packages section-shell" id="journeys">
+        <div className="packages-head">
+          <p className="eyebrow eyebrow-center">
+            <span />
+            EXPLORE POPULAR PACKAGE
+            <span />
+          </p>
+          <h2>這次想去哪裡，慢慢選。</h2>
           <p>
             不把行程塞滿，而是留下剛好的空白。每一團皆可依航班、季節與同行者需求微調。
           </p>
         </div>
 
-        <div className="trip-grid" data-count={tripCount}>
-          {primaryTrips.map((trip, index) => (
-            <article className="trip-card" key={trip.id}>
-              <div className="trip-image">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={trip.image}
-                  alt={`${trip.title}行程風景`}
-                  loading={index === 0 ? "eager" : "lazy"}
-                />
-                <span className="trip-badge">{trip.badge}</span>
-              </div>
-              <div className="trip-body">
-                <div className="trip-meta">
-                  <span>{trip.region}</span>
-                  <span>{trip.days}</span>
-                </div>
-                <h3>{trip.title}</h3>
-                <p>{trip.summary}</p>
-                <div className="trip-footer">
-                  <span className="price">{trip.price}</span>
-                  <div className="trip-links">
-                    {trip.documentUrl ? (
-                      <a
-                        className="trip-document-link"
-                        href={trip.documentUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`查看${trip.title}行程內容`}
-                      >
-                        查看行程內容 <span aria-hidden="true">↗</span>
-                      </a>
-                    ) : (
-                      <span className="trip-document-link disabled">
-                        行程資料準備中
-                      </span>
-                    )}
-                    {trip.departures.length > 0 ? (
-                      <Link
-                        className="trip-document-link"
-                        href={`/dates/${trip.id}`}
-                        aria-label={`查看${trip.title}出發時間`}
-                      >
-                        查看出發時間 <span aria-hidden="true">→</span>
-                      </Link>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+        <TripFilterBar
+          key={`packages-${filters.month}-${filters.budget}`}
+          months={months}
+          filters={filters}
+        />
 
-      {overflowTrips.length > 0 ? (
-        <section className="section-shell more-journeys" id="more-journeys">
-          <div className="more-heading">
-            <p className="eyebrow">
-              <span />
-              MORE JOURNEYS
-            </p>
-            <h2>更多行程</h2>
-            <p>其他可洽詢的行程，點開即可看完整資料。</p>
-          </div>
-          <div className="more-trip-grid">
-            {overflowTrips.map((trip) => (
-              <article className="more-trip-card" key={trip.id}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="more-trip-thumb"
-                  src={trip.image}
-                  alt=""
-                  loading="lazy"
-                />
-                <div className="more-trip-body">
-                  <div className="more-trip-meta">
-                    <span>{trip.region}</span>
-                    <span>{trip.days}</span>
-                  </div>
-                  <h3>{trip.title}</h3>
-                  <div className="more-trip-footer">
-                    <span className="price">{trip.price}</span>
-                    <div className="trip-links">
-                      {trip.documentUrl ? (
-                        <a
-                          className="trip-document-link"
-                          href={trip.documentUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`查看${trip.title}行程內容`}
-                        >
-                          查看行程內容 <span aria-hidden="true">↗</span>
-                        </a>
-                      ) : (
-                        <span className="trip-document-link disabled">
-                          行程資料準備中
-                        </span>
-                      )}
-                      {trip.departures.length > 0 ? (
-                        <Link
-                          className="trip-document-link"
-                          href={`/dates/${trip.id}`}
-                          aria-label={`查看${trip.title}出發時間`}
-                        >
-                          查看出發時間 <span aria-hidden="true">→</span>
-                        </Link>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </article>
+        {categories.length > 0 ? (
+          <nav className="category-pills" aria-label="行程分類">
+            <Link
+              className={`category-pill${filters.category ? "" : " active"}`}
+              href={tripFilterHref({ ...filters, category: "" }, showAll)}
+            >
+              全部
+            </Link>
+            {categories.map((category) => (
+              <Link
+                key={category}
+                className={`category-pill${
+                  filters.category === category ? " active" : ""
+                }`}
+                href={tripFilterHref({ ...filters, category }, showAll)}
+              >
+                {category}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+
+        {visibleTrips.length > 0 ? (
+          <div className="package-grid">
+            {visibleTrips.map((trip, index) => (
+              <PackageCard key={trip.id} trip={trip} priority={index === 0} />
             ))}
           </div>
-        </section>
-      ) : null}
+        ) : (
+          <div className="packages-empty">
+            <p>目前沒有符合條件的行程。</p>
+            {hasFilters ? (
+              <Link className="button button-secondary" href="/#journeys">
+                清除篩選條件
+              </Link>
+            ) : null}
+          </div>
+        )}
+
+        {hasMore ? (
+          <div className="packages-more">
+            <Link
+              className="explore-more"
+              href={tripFilterHref(filters, true)}
+            >
+              看更多行程 <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        ) : null}
+      </section>
 
       <section className="film-section section-shell" id="film">
         <div className="film-copy">

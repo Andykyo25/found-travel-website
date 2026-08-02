@@ -538,7 +538,8 @@ export function StudioEditor({
             <p>
               共 {draft.trips.length} 筆 ・ 精選 {featuredCount} ・ 其他{" "}
               {draft.trips.length - featuredCount}
-              。「精選」顯示在首頁上方大卡片，「其他」收在首頁「更多行程」。
+              。首頁行程區會把「精選」排在前面，「其他」接在後面；一次先顯示 6
+              筆，其餘收在「看更多行程」。
             </p>
           </div>
           <div className="studio-heading-actions">
