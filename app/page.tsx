@@ -7,6 +7,7 @@ import {
   readTripFilters,
   tripFilterHref,
 } from "@/lib/trip-filters";
+import { MobileNav, type NavLink } from "./components/MobileNav";
 import { PackageCard } from "./components/PackageCard";
 import { TravelTools } from "./components/TravelTools";
 import { TripFilterBar } from "./components/TripFilterBar";
@@ -14,6 +15,15 @@ import { TripFilterBar } from "./components/TripFilterBar";
 export const dynamic = "force-dynamic";
 
 const visibleTripLimit = 6;
+
+// 桌機膠囊導覽與手機漢堡選單共用這一份，避免兩邊漏改。
+const navLinks: NavLink[] = [
+  { href: "#top", label: "首頁" },
+  { href: "#journeys", label: "精選行程" },
+  { href: "/dates", label: "出發團期" },
+  { href: "#film", label: "旅行靈感" },
+  { href: "#about", label: "關於我們" },
+];
 
 export default async function Home({
   searchParams,
@@ -69,19 +79,35 @@ export default async function Home({
             </a>
 
             <nav className="hero-nav" aria-label="主要導覽">
-              <a className="active" href="#top">
-                首頁
-              </a>
-              <a href="#journeys">精選行程</a>
-              <Link href="/dates">出發團期</Link>
-              <a href="#film">旅行靈感</a>
-              <a href="#about">關於我們</a>
+              {navLinks.map((link, index) =>
+                link.href.startsWith("#") ? (
+                  <a
+                    key={link.href}
+                    className={index === 0 ? "active" : undefined}
+                    href={link.href}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link key={link.href} href={link.href}>
+                    {link.label}
+                  </Link>
+                ),
+              )}
             </nav>
 
             <div className="hero-bar-actions">
-              <Link className="button button-small" href="/contact">
+              <Link
+                className="button button-small hero-contact-button"
+                href="/contact"
+              >
                 聯絡表單 <span aria-hidden="true">↗</span>
               </Link>
+              <MobileNav
+                links={navLinks}
+                lineUrl={content.lineUrl}
+                brandName={content.brandName}
+              />
             </div>
           </header>
 

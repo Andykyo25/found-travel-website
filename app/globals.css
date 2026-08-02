@@ -291,6 +291,119 @@ img {
   color: var(--coral-deep);
 }
 
+/* ---------- 手機漢堡選單 ---------- */
+
+/* 桌機隱藏，膠囊導覽接手；≤900px 才出現。 */
+.hero-menu-button {
+  display: none;
+  width: 46px;
+  height: 46px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+}
+
+.hero-menu-button span {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.mobile-nav {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.mobile-nav-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 22, 20, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.mobile-nav-panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(340px, 88vw);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 24px calc(24px + env(safe-area-inset-bottom));
+  background: var(--paper);
+  box-shadow: -18px 0 50px rgba(20, 30, 26, 0.24);
+  overflow-y: auto;
+}
+
+.mobile-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mobile-nav-brand {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mobile-nav-close {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.mobile-nav-close:hover {
+  border-color: var(--coral);
+  color: var(--coral-deep);
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  padding-block: 8px;
+}
+
+.mobile-nav-links a {
+  padding: 15px 4px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mobile-nav-links a:hover {
+  color: var(--coral-deep);
+}
+
+.mobile-nav-cta {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.mobile-nav-cta .button {
+  width: 100%;
+}
+
 .hero-center {
   flex: 1;
   display: flex;
@@ -1758,8 +1871,16 @@ img {
     display: none;
   }
 
+  .hero-menu-button {
+    display: flex;
+  }
+
   .hero-bar {
     grid-template-columns: 1fr auto;
+  }
+
+  .hero-bar-actions {
+    align-items: center;
   }
 
   .travel-tools-panel {
@@ -1819,10 +1940,9 @@ img {
 }
 
 @media (max-width: 620px) {
-  .hero-bar-actions .button {
-    min-height: 40px;
-    padding-inline: 14px;
-    font-size: 12px;
+  /* 窄螢幕只留漢堡，聯絡表單改由選單內的 CTA 提供。 */
+  .hero-contact-button {
+    display: none;
   }
 
   .brand {
