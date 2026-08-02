@@ -2,94 +2,22 @@
 
 import { useState } from "react";
 import type {
-  Destination,
   SiteContent,
   Trip,
   TripDeparture,
   TripDocumentType,
 } from "@/lib/site-content";
+import { parseDepartureDate } from "@/lib/trip-filters";
+import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
 
-type Status =
-  | { kind: "idle"; message: string }
-  | { kind: "saving"; message: string }
-  | { kind: "success"; message: string }
-  | { kind: "error"; message: string };
+type TripFilter = "all" | "featured" | "other" | "todo";
 
-const destinationPresets: Array<{
-  label: string;
-  value: Destination;
-}> = [
-  {
-    label: "東京・日圓",
-    value: {
-      city: "東京",
-      timezone: "Asia/Tokyo",
-      currency: "JPY",
-      latitude: 35.6762,
-      longitude: 139.6503,
-    },
-  },
-  {
-    label: "札幌・日圓",
-    value: {
-      city: "札幌",
-      timezone: "Asia/Tokyo",
-      currency: "JPY",
-      latitude: 43.0618,
-      longitude: 141.3545,
-    },
-  },
-  {
-    label: "峇里島・印尼盾",
-    value: {
-      city: "峇里島",
-      timezone: "Asia/Makassar",
-      currency: "IDR",
-      latitude: -8.4095,
-      longitude: 115.1889,
-    },
-  },
-  {
-    label: "首爾・韓元",
-    value: {
-      city: "首爾",
-      timezone: "Asia/Seoul",
-      currency: "KRW",
-      latitude: 37.5665,
-      longitude: 126.978,
-    },
-  },
-  {
-    label: "巴黎・歐元",
-    value: {
-      city: "巴黎",
-      timezone: "Europe/Paris",
-      currency: "EUR",
-      latitude: 48.8566,
-      longitude: 2.3522,
-    },
-  },
+const filterOptions: Array<{ id: TripFilter; label: string }> = [
+  { id: "all", label: "全部" },
+  { id: "featured", label: "精選" },
+  { id: "other", label: "其他" },
+  { id: "todo", label: "待補資料" },
 ];
-
-function Field({
-  label,
-  hint,
-  children,
-  wide = false,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-  wide?: boolean;
-}) {
-  return (
-    <label className={`field${wide ? " field-wide" : ""}`}>
-      <span>{label}</span>
-      {hint ? <small>{hint}</small> : null}
-      {children}
-    </label>
-  );
-}
 
 function createTrip(): Trip {
   return {
@@ -150,12 +78,7 @@ function formatDepartureDate(value: string) {
 
   const monthNumber = Number(month);
   const dayNumber = Number(day);
-  if (
-    monthNumber < 1 ||
-    monthNumber > 12 ||
-    dayNumber < 1 ||
-    dayNumber > 31
-  ) {
+  if (monthNumber < 1 || monthNumber > 12 || dayNumber < 1 || dayNumber > 31) {
     return value;
   }
 
@@ -172,20 +95,41 @@ function formatDeparturePrice(value: string) {
   return Number(digits).toLocaleString("en-US");
 }
 
-export function StudioEditor({
+// 讓業務不用逐一展開就看得出哪幾團還沒補齊。
+// todayTime 由伺服端算好傳進來，避免前後端各自取當天日期造成 hydration 不一致。
+function tripIssues(trip: Trip, todayTime: number) {
+  const issues: string[] = [];
+  if (!trip.documentUrl) issues.push("缺行程資料");
+
+  if (trip.departures.length === 0) {
+    issues.push("缺團期");
+  } else {
+    const hasUpcoming = trip.departures.some((departure) => {
+      const parsed = parseDepartureDate(departure.date);
+      // 日期打成自由文字時無法判斷，一律當作還有效。
+      return !parsed || parsed.time >= todayTime;
+    });
+    if (!hasUpcoming) issues.push("團期已過");
+  }
+
+  return issues;
+}
+
+export function TripsEditor({
   initialContent,
   initialUpdatedAt,
+  todayTime,
 }: {
   initialContent: SiteContent;
   initialUpdatedAt: string | null;
+  todayTime: number;
 }) {
-  const [draft, setDraft] = useState(initialContent);
-  const [baseUpdatedAt, setBaseUpdatedAt] = useState(initialUpdatedAt);
+  const { draft, setDraft, status, setStatus, markChanged, save } =
+    useSiteContentDraft(initialContent, initialUpdatedAt);
+
+  const [keyword, setKeyword] = useState("");
+  const [filter, setFilter] = useState<TripFilter>("all");
   const [uploadingTripId, setUploadingTripId] = useState<string | null>(null);
-  const [status, setStatus] = useState<Status>({
-    kind: "idle",
-    message: "尚未有變更",
-  });
   const [openTripIds, setOpenTripIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -194,10 +138,6 @@ export function StudioEditor({
           : [],
       ),
   );
-
-  const markChanged = () => {
-    setStatus({ kind: "idle", message: "有尚未儲存的變更" });
-  };
 
   const toggleTripOpen = (id: string) => {
     setOpenTripIds((current) => {
@@ -208,12 +148,6 @@ export function StudioEditor({
     });
   };
 
-  const setAllTripsOpen = (open: boolean) => {
-    setOpenTripIds(
-      open ? new Set(draft.trips.map((trip) => trip.id)) : new Set(),
-    );
-  };
-
   const toggleFeatured = (index: number) => {
     setDraft((current) => ({
       ...current,
@@ -221,14 +155,6 @@ export function StudioEditor({
         tripIndex === index ? { ...trip, featured: !trip.featured } : trip,
       ),
     }));
-    markChanged();
-  };
-
-  const updateRoot = <K extends keyof SiteContent>(
-    key: K,
-    value: SiteContent[K],
-  ) => {
-    setDraft((current) => ({ ...current, [key]: value }));
     markChanged();
   };
 
@@ -254,7 +180,12 @@ export function StudioEditor({
       ...current,
       trips: current.trips.map((trip, tripIndex) =>
         tripIndex === index
-          ? { ...trip, documentType, documentUrl: "", documentName: "查看完整行程" }
+          ? {
+              ...trip,
+              documentType,
+              documentUrl: "",
+              documentName: "查看完整行程",
+            }
           : trip,
       ),
     }));
@@ -263,15 +194,10 @@ export function StudioEditor({
 
   const addTrip = () => {
     const trip = createTrip();
-    setDraft((current) => ({
-      ...current,
-      trips: [...current.trips, trip],
-    }));
-    setOpenTripIds((current) => {
-      const next = new Set(current);
-      next.add(trip.id);
-      return next;
-    });
+    setDraft((current) => ({ ...current, trips: [...current.trips, trip] }));
+    setOpenTripIds((current) => new Set(current).add(trip.id));
+    setKeyword("");
+    setFilter("all");
     setStatus({
       kind: "idle",
       message: "已新增空白行程，填寫完成後請記得儲存",
@@ -412,51 +338,40 @@ export function StudioEditor({
     }
   };
 
-  const save = async () => {
-    setStatus({ kind: "saving", message: "儲存中…" });
-    try {
-      const response = await fetch("/api/studio/content", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...draft, _baseUpdatedAt: baseUpdatedAt }),
-      });
-      const result = (await response.json()) as {
-        content?: SiteContent;
-        savedAt?: string;
-        error?: string;
-      };
-
-      if (!response.ok || !result.content) {
-        throw new Error(result.error ?? "儲存失敗");
-      }
-
-      setDraft(result.content);
-      setBaseUpdatedAt(result.savedAt ?? null);
-      setStatus({
-        kind: "success",
-        message: "已儲存，重新整理網站即可看到最新內容",
-      });
-    } catch (error) {
-      setStatus({
-        kind: "error",
-        message: error instanceof Error ? error.message : "儲存失敗",
-      });
-    }
-  };
-
-  const destinationValue = Math.max(
-    0,
-    destinationPresets.findIndex(
-      ({ value }) =>
-        value.city === draft.destination.city &&
-        value.currency === draft.destination.currency,
-    ),
-  );
+  const needle = keyword.trim().toLowerCase();
+  // 保留原始索引，所有增刪與排序操作都以完整陣列為準。
+  const visibleTrips = draft.trips
+    .map((trip, index) => ({ trip, index, issues: tripIssues(trip, todayTime) }))
+    .filter(({ trip, issues }) => {
+      if (filter === "featured" && !trip.featured) return false;
+      if (filter === "other" && trip.featured) return false;
+      if (filter === "todo" && issues.length === 0) return false;
+      if (!needle) return true;
+      return [trip.title, trip.region, trip.badge, trip.days, trip.price]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
 
   const featuredCount = draft.trips.filter((trip) => trip.featured).length;
-  const allTripsOpen =
-    draft.trips.length > 0 &&
-    draft.trips.every((trip) => openTripIds.has(trip.id));
+  const todoCount = draft.trips.filter(
+    (trip) => tripIssues(trip, todayTime).length > 0,
+  ).length;
+  const filtering = needle !== "" || filter !== "all";
+  const allVisibleOpen =
+    visibleTrips.length > 0 &&
+    visibleTrips.every(({ trip }) => openTripIds.has(trip.id));
+
+  const setAllVisibleOpen = (open: boolean) => {
+    setOpenTripIds((current) => {
+      const next = new Set(current);
+      for (const { trip } of visibleTrips) {
+        if (open) next.add(trip.id);
+        else next.delete(trip.id);
+      }
+      return next;
+    });
+  };
 
   return (
     <form
@@ -469,76 +384,15 @@ export function StudioEditor({
       <section className="studio-section studio-guide">
         <h2>業務上架流程</h2>
         <div className="studio-guide-grid">
-          <span><b>1</b> 新增行程</span>
-          <span><b>2</b> 上傳行程 PDF／Drive 並填出發日期</span>
-          <span><b>3</b> 儲存並更新網站</span>
-        </div>
-      </section>
-
-      <section className="studio-section">
-        <h2>首頁主內容</h2>
-        <p>商標與首頁影片已固定使用公司提供的正式素材。</p>
-        <div className="field-grid">
-          <Field label="公告文字">
-            <input
-              value={draft.announcement}
-              onChange={(event) =>
-                updateRoot("announcement", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="主標上方小字">
-            <input
-              value={draft.heroKicker}
-              onChange={(event) => updateRoot("heroKicker", event.target.value)}
-            />
-          </Field>
-          <Field label="首頁主標" wide>
-            <textarea
-              value={draft.heroTitle}
-              onChange={(event) => updateRoot("heroTitle", event.target.value)}
-            />
-          </Field>
-          <Field label="首頁介紹" wide>
-            <textarea
-              value={draft.heroText}
-              onChange={(event) => updateRoot("heroText", event.target.value)}
-            />
-          </Field>
-          <Field
-            label="首頁大圖網址或網站路徑"
-            hint="顯示在首頁最上方的滿版背景照。留空會自動使用第一個行程的封面圖。建議用寬幅橫圖（如 1920×1080）。"
-            wide
-          >
-            <input
-              placeholder="留空 = 自動使用第一個行程的封面圖"
-              value={draft.heroImage}
-              onChange={(event) => updateRoot("heroImage", event.target.value)}
-            />
-          </Field>
-          <Field label="影片區標題" wide>
-            <input
-              value={draft.videoTitle}
-              onChange={(event) => updateRoot("videoTitle", event.target.value)}
-            />
-          </Field>
-          <Field label="小工具顯示地點" wide>
-            <select
-              value={String(destinationValue)}
-              onChange={(event) => {
-                const preset =
-                  destinationPresets[Number(event.target.value)] ??
-                  destinationPresets[0];
-                updateRoot("destination", preset.value);
-              }}
-            >
-              {destinationPresets.map((preset, index) => (
-                <option value={String(index)} key={preset.label}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <span>
+            <b>1</b> 新增行程
+          </span>
+          <span>
+            <b>2</b> 上傳行程 PDF／Drive 並填出發日期
+          </span>
+          <span>
+            <b>3</b> 儲存並更新網站
+          </span>
         </div>
       </section>
 
@@ -549,20 +403,12 @@ export function StudioEditor({
             <p>
               共 {draft.trips.length} 筆 ・ 精選 {featuredCount} ・ 其他{" "}
               {draft.trips.length - featuredCount}
+              {todoCount > 0 ? ` ・ 待補資料 ${todoCount}` : ""}
               。首頁行程區會把「精選」排在前面，「其他」接在後面；一次先顯示 6
               筆，其餘收在「看更多行程」。
             </p>
           </div>
           <div className="studio-heading-actions">
-            {draft.trips.length > 1 ? (
-              <button
-                className="button button-secondary button-small"
-                type="button"
-                onClick={() => setAllTripsOpen(!allTripsOpen)}
-              >
-                {allTripsOpen ? "全部收合" : "全部展開"}
-              </button>
-            ) : null}
             <button
               className="button button-small"
               type="button"
@@ -573,14 +419,75 @@ export function StudioEditor({
           </div>
         </div>
 
-        {draft.trips.length === 0 ? (
-          <div className="empty-trips">
-            尚未建立行程，請按「新增行程」開始。
+        {draft.trips.length > 0 ? (
+          <div className="trip-toolbar">
+            <input
+              className="trip-search"
+              type="search"
+              placeholder="搜尋行程名稱、地區或分類"
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+              aria-label="搜尋行程"
+            />
+            <div className="trip-filter-pills" role="group" aria-label="行程篩選">
+              {filterOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`trip-filter-pill${
+                    filter === option.id ? " active" : ""
+                  }`}
+                  aria-pressed={filter === option.id}
+                  onClick={() => setFilter(option.id)}
+                >
+                  {option.label}
+                  {option.id === "todo" && todoCount > 0 ? (
+                    <small>{todoCount}</small>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+            {visibleTrips.length > 1 ? (
+              <button
+                className="button button-secondary button-small"
+                type="button"
+                onClick={() => setAllVisibleOpen(!allVisibleOpen)}
+              >
+                {allVisibleOpen ? "全部收合" : "全部展開"}
+              </button>
+            ) : null}
           </div>
         ) : null}
 
+        {draft.trips.length === 0 ? (
+          <div className="empty-trips">尚未建立行程，請按「新增行程」開始。</div>
+        ) : null}
+
+        {draft.trips.length > 0 && visibleTrips.length === 0 ? (
+          <div className="empty-trips">
+            沒有符合條件的行程。
+            <button
+              className="link-button"
+              type="button"
+              onClick={() => {
+                setKeyword("");
+                setFilter("all");
+              }}
+            >
+              清除篩選
+            </button>
+          </div>
+        ) : null}
+
+        {filtering && visibleTrips.length > 0 ? (
+          <p className="trip-filter-note">
+            篩選中顯示 {visibleTrips.length} / {draft.trips.length}{" "}
+            筆。上下移動排序已暫停，請先清除篩選再調整順序。
+          </p>
+        ) : null}
+
         <div className="studio-trip-list">
-          {draft.trips.map((trip, index) => (
+          {visibleTrips.map(({ trip, index, issues }) => (
             <div
               className={`studio-trip${openTripIds.has(trip.id) ? " open" : ""}`}
               key={trip.id}
@@ -600,6 +507,11 @@ export function StudioEditor({
                   {!trip.featured ? (
                     <span className="studio-trip-tag">其他</span>
                   ) : null}
+                  {issues.map((issue) => (
+                    <span className="studio-trip-issue" key={issue}>
+                      {issue}
+                    </span>
+                  ))}
                 </button>
                 <div className="studio-trip-controls">
                   <button
@@ -619,7 +531,8 @@ export function StudioEditor({
                     <button
                       type="button"
                       onClick={() => moveTrip(index, -1)}
-                      disabled={index === 0}
+                      disabled={filtering || index === 0}
+                      title={filtering ? "篩選中無法調整順序" : undefined}
                       aria-label={`將${trip.title}往前移`}
                     >
                       ↑
@@ -627,7 +540,8 @@ export function StudioEditor({
                     <button
                       type="button"
                       onClick={() => moveTrip(index, 1)}
-                      disabled={index === draft.trips.length - 1}
+                      disabled={filtering || index === draft.trips.length - 1}
+                      title={filtering ? "篩選中無法調整順序" : undefined}
                       aria-label={`將${trip.title}往後移`}
                     >
                       ↓
@@ -646,132 +560,141 @@ export function StudioEditor({
               {openTripIds.has(trip.id) ? (
                 <div className="studio-trip-body">
                   <div className="field-grid">
-              <Field label="行程名稱">
-                <input
-                  required
-                  value={trip.title}
-                  onChange={(event) =>
-                    updateTrip(index, "title", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="天數">
-                <input
-                  required
-                  value={trip.days}
-                  onChange={(event) =>
-                    updateTrip(index, "days", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="分類標籤">
-                <input
-                  required
-                  value={trip.badge}
-                  onChange={(event) =>
-                    updateTrip(index, "badge", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="地區小字">
-                <input
-                  required
-                  value={trip.region}
-                  onChange={(event) =>
-                    updateTrip(index, "region", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="起始價格">
-                <input
-                  required
-                  value={trip.price}
-                  onChange={(event) =>
-                    updateTrip(index, "price", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="封面圖片網址或網站路徑">
-                <input
-                  required
-                  value={trip.image}
-                  onChange={(event) =>
-                    updateTrip(index, "image", event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="行程簡介" wide>
-                <textarea
-                  required
-                  value={trip.summary}
-                  onChange={(event) =>
-                    updateTrip(index, "summary", event.target.value)
-                  }
-                />
-              </Field>
-            </div>
+                    <Field label="行程名稱">
+                      <input
+                        required
+                        value={trip.title}
+                        onChange={(event) =>
+                          updateTrip(index, "title", event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="天數">
+                      <input
+                        required
+                        value={trip.days}
+                        onChange={(event) =>
+                          updateTrip(index, "days", event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="分類標籤">
+                      <input
+                        required
+                        value={trip.badge}
+                        onChange={(event) =>
+                          updateTrip(index, "badge", event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="地區小字">
+                      <input
+                        required
+                        value={trip.region}
+                        onChange={(event) =>
+                          updateTrip(index, "region", event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="起始價格">
+                      <input
+                        required
+                        value={trip.price}
+                        onChange={(event) =>
+                          updateTrip(index, "price", event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="封面圖片網址或網站路徑">
+                      <input
+                        required
+                        value={trip.image}
+                        onChange={(event) =>
+                          updateTrip(index, "image", event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="行程簡介" wide>
+                      <textarea
+                        required
+                        value={trip.summary}
+                        onChange={(event) =>
+                          updateTrip(index, "summary", event.target.value)
+                        }
+                      />
+                    </Field>
+                  </div>
 
-            <div className="document-editor">
-              <h4>完整行程資料</h4>
-              <div className="document-type-switch" role="group" aria-label="行程資料來源">
-                <button
-                  type="button"
-                  className={trip.documentType === "pdf" ? "active" : ""}
-                  onClick={() => changeDocumentType(index, "pdf")}
-                >
-                  上傳 PDF
-                </button>
-                <button
-                  type="button"
-                  className={trip.documentType === "drive" ? "active" : ""}
-                  onClick={() => changeDocumentType(index, "drive")}
-                >
-                  Google Drive 網址
-                </button>
-              </div>
+                  <div className="document-editor">
+                    <h4>完整行程資料</h4>
+                    <div
+                      className="document-type-switch"
+                      role="group"
+                      aria-label="行程資料來源"
+                    >
+                      <button
+                        type="button"
+                        className={trip.documentType === "pdf" ? "active" : ""}
+                        onClick={() => changeDocumentType(index, "pdf")}
+                      >
+                        上傳 PDF
+                      </button>
+                      <button
+                        type="button"
+                        className={trip.documentType === "drive" ? "active" : ""}
+                        onClick={() => changeDocumentType(index, "drive")}
+                      >
+                        Google Drive 網址
+                      </button>
+                    </div>
 
-              {trip.documentType === "pdf" ? (
-                <div className="pdf-upload">
-                  <label className="file-picker">
-                    <span>
-                      {uploadingTripId === trip.id
-                        ? "正在上傳…"
-                        : trip.documentUrl
-                          ? `已上傳：${trip.documentName}`
-                          : "選擇 PDF 檔案"}
-                    </span>
-                    <input
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      disabled={uploadingTripId === trip.id}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) void uploadPdf(index, file);
-                        event.target.value = "";
-                      }}
-                    />
-                  </label>
-                  <small>單一檔案上限 25 MB；上傳完成後請按最下方儲存按鈕。</small>
-                </div>
-              ) : (
-                <div className="field-grid">
-                  <Field
-                    label="Google Drive 分享網址"
-                    hint="請先把檔案權限設為「知道連結的任何人都可查看」"
-                    wide
-                  >
-                    <input
-                      type="url"
-                      placeholder="https://drive.google.com/..."
-                      value={trip.documentUrl}
-                      onChange={(event) =>
-                        updateTrip(index, "documentUrl", event.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-              )}
-
+                    {trip.documentType === "pdf" ? (
+                      <div className="pdf-upload">
+                        <label className="file-picker">
+                          <span>
+                            {uploadingTripId === trip.id
+                              ? "正在上傳…"
+                              : trip.documentUrl
+                                ? `已上傳：${trip.documentName}`
+                                : "選擇 PDF 檔案"}
+                          </span>
+                          <input
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            disabled={uploadingTripId === trip.id}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) void uploadPdf(index, file);
+                              event.target.value = "";
+                            }}
+                          />
+                        </label>
+                        <small>
+                          單一檔案上限 25 MB；上傳完成後請按最下方儲存按鈕。
+                        </small>
+                      </div>
+                    ) : (
+                      <div className="field-grid">
+                        <Field
+                          label="Google Drive 分享網址"
+                          hint="請先把檔案權限設為「知道連結的任何人都可查看」"
+                          wide
+                        >
+                          <input
+                            type="url"
+                            placeholder="https://drive.google.com/..."
+                            value={trip.documentUrl}
+                            onChange={(event) =>
+                              updateTrip(
+                                index,
+                                "documentUrl",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </Field>
+                      </div>
+                    )}
                   </div>
 
                   <div className="departure-editor">
@@ -779,7 +702,7 @@ export function StudioEditor({
                       <div>
                         <h4>出發日期表</h4>
                         <small>
-                          顯示於前台「查看出發時間」頁，沒有日期時前台不顯示該按鈕。日期輸入
+                          顯示於前台「查看出發時間」頁與「出發團期總表」，沒有日期時前台不顯示該按鈕。日期輸入
                           20260402 會自動轉成 2026/04/02，價格輸入 26800
                           會自動加上逗號；未填日期的列儲存時會略過。
                         </small>
@@ -874,8 +797,7 @@ export function StudioEditor({
                                   moveDeparture(index, departureIndex, 1)
                                 }
                                 disabled={
-                                  departureIndex ===
-                                  trip.departures.length - 1
+                                  departureIndex === trip.departures.length - 1
                                 }
                                 aria-label="將日期往下移"
                               >
@@ -895,9 +817,7 @@ export function StudioEditor({
                         ))}
                       </div>
                     ) : (
-                      <div className="departure-empty">
-                        尚未填寫出發日期。
-                      </div>
+                      <div className="departure-empty">尚未填寫出發日期。</div>
                     )}
                   </div>
                 </div>
@@ -907,92 +827,7 @@ export function StudioEditor({
         </div>
       </section>
 
-      <section className="studio-section">
-        <h2>公司與聯絡資訊</h2>
-        <p>公司登記資料會顯示於網站頁尾；LINE 連結是主要洽詢管道。</p>
-        <div className="field-grid">
-          <Field label="公司名稱" wide>
-            <input
-              value={draft.companyName}
-              onChange={(event) =>
-                updateRoot("companyName", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="旅行業執照">
-            <input
-              value={draft.businessLicense}
-              onChange={(event) =>
-                updateRoot("businessLicense", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="品保協會編號">
-            <input
-              value={draft.qualityLicense}
-              onChange={(event) =>
-                updateRoot("qualityLicense", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="統一編號">
-            <input
-              value={draft.taxId}
-              onChange={(event) => updateRoot("taxId", event.target.value)}
-            />
-          </Field>
-          <Field label="負責人">
-            <input
-              value={draft.representative}
-              onChange={(event) =>
-                updateRoot("representative", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="公司地址" wide>
-            <input
-              value={draft.address}
-              onChange={(event) => updateRoot("address", event.target.value)}
-            />
-          </Field>
-          <Field label="聯絡區標題" wide>
-            <input
-              value={draft.contactTitle}
-              onChange={(event) =>
-                updateRoot("contactTitle", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="聯絡區說明" wide>
-            <textarea
-              value={draft.contactText}
-              onChange={(event) =>
-                updateRoot("contactText", event.target.value)
-              }
-            />
-          </Field>
-          <Field label="LINE 網址" wide>
-            <input
-              type="url"
-              value={draft.lineUrl}
-              onChange={(event) => updateRoot("lineUrl", event.target.value)}
-            />
-          </Field>
-        </div>
-      </section>
-
-      <div className="studio-actions">
-        <span className={`studio-status ${status.kind}`}>
-          {status.message}
-        </span>
-        <button
-          className="button"
-          type="submit"
-          disabled={status.kind === "saving" || Boolean(uploadingTripId)}
-        >
-          {status.kind === "saving" ? "處理中…" : "儲存並更新網站"}
-        </button>
-      </div>
+      <StudioSaveBar status={status} busy={Boolean(uploadingTripId)} />
     </form>
   );
 }

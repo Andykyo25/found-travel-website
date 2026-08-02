@@ -1498,6 +1498,110 @@ img {
   flex: 0 0 auto;
 }
 
+/* ---------- 行程管理工具列 ---------- */
+
+.trip-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.trip-search {
+  flex: 1 1 220px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 10px 18px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.trip-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.trip-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.trip-filter-pill:hover {
+  border-color: var(--coral);
+  color: var(--coral-deep);
+}
+
+.trip-filter-pill.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.trip-filter-pill small {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fdece4;
+  color: #a33a2b;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.trip-filter-pill.active small {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.trip-filter-note {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fff4e8;
+  color: #96551f;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+/* 收合狀態就看得到缺什麼，不用逐一展開檢查。 */
+.studio-trip-issue {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fdece4;
+  color: #a33a2b;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.link-button {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--coral-deep);
+  font-size: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .studio-trip-list {
   display: grid;
   gap: 12px;

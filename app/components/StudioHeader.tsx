@@ -1,8 +1,19 @@
 import Link from "next/link";
 
 const tabs = [
-  { id: "content", href: "/studio", label: "行程內容", title: "行程內容管理" },
-  { id: "contacts", href: "/studio/contacts", label: "聯絡諮詢", title: "聯絡諮詢" },
+  { id: "trips", href: "/studio", label: "行程管理", title: "行程管理" },
+  {
+    id: "contacts",
+    href: "/studio/contacts",
+    label: "聯絡諮詢",
+    title: "聯絡諮詢",
+  },
+  {
+    id: "settings",
+    href: "/studio/settings",
+    label: "網站設定",
+    title: "網站設定",
+  },
 ] as const;
 
 export type StudioTabId = (typeof tabs)[number]["id"];

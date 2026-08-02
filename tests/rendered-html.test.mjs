@@ -9,6 +9,8 @@ test("the finished travel site replaces all starter content", async () => {
     content,
     packageJson,
     studioPage,
+    studioSettingsPage,
+    tripsEditor,
     auth,
     railway,
     datesPage,
@@ -24,6 +26,8 @@ test("the finished travel site replaces all starter content", async () => {
     readFile(new URL("../lib/site-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/studio/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/studio/settings/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/TripsEditor.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/studio-auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../railway.json", import.meta.url), "utf8"),
     readFile(new URL("../app/dates/[tripId]/page.tsx", import.meta.url), "utf8"),
@@ -75,6 +79,10 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(studioContactsPage, /requireStudioUser/);
   assert.match(studioContactsPage, /ContactRequestTable/);
   assert.match(studioPage, /requireStudioUser/);
+  assert.match(studioPage, /TripsEditor/);
+  assert.match(studioSettingsPage, /requireStudioUser/);
+  assert.match(studioSettingsPage, /SiteSettingsEditor/);
+  assert.match(tripsEditor, /待補資料/);
   assert.match(auth, /STUDIO_ADMIN_EMAIL/);
   assert.match(auth, /STUDIO_USERS/);
   assert.doesNotMatch(auth, /ChatGPT/);

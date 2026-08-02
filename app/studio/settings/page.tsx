@@ -1,30 +1,28 @@
-import { requireStudioUser } from "@/lib/studio-auth";
+import { SiteSettingsEditor } from "@/app/components/SiteSettingsEditor";
+import { StudioHeader } from "@/app/components/StudioHeader";
 import { getSiteContentWithMeta } from "@/lib/site-content";
-import { taipeiTodayTime } from "@/lib/trip-filters";
-import { StudioHeader } from "../components/StudioHeader";
-import { TripsEditor } from "../components/TripsEditor";
+import { requireStudioUser } from "@/lib/studio-auth";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "行程管理",
+  title: "網站設定",
   robots: {
     index: false,
     follow: false,
   },
 };
 
-export default async function StudioTripsPage() {
+export default async function StudioSettingsPage() {
   const user = await requireStudioUser();
   const { content, meta } = await getSiteContentWithMeta();
 
   return (
     <main className="studio-shell">
-      <StudioHeader email={user.email} active="trips" />
-      <TripsEditor
+      <StudioHeader email={user.email} active="settings" />
+      <SiteSettingsEditor
         initialContent={content}
         initialUpdatedAt={meta.updatedAt}
-        todayTime={taipeiTodayTime()}
       />
     </main>
   );
