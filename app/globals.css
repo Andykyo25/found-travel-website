@@ -185,12 +185,17 @@ img {
 
 /* ---------- 首頁滿版主視覺 ---------- */
 
+/* 主視覺是浮在頁面上的圓角卡片，四周留白讓底色透出來。 */
 .hero-full {
   position: relative;
-  min-height: min(88vh, 800px);
+  width: calc(100% - 36px);
+  margin: 16px auto 0;
+  min-height: min(86vh, 780px);
   display: flex;
   overflow: hidden;
+  border-radius: 32px;
   background: #0f2226;
+  box-shadow: 0 24px 60px rgba(20, 30, 26, 0.16);
 }
 
 .hero-media {
@@ -1739,6 +1744,12 @@ img {
     font-size: 11px;
   }
 
+  .hero-full {
+    width: calc(100% - 24px);
+    margin-top: 12px;
+    border-radius: 26px;
+  }
+
   .hero-inner {
     width: min(100% - 36px, 720px);
   }
@@ -1824,7 +1835,10 @@ img {
   }
 
   .hero-full {
+    width: calc(100% - 16px);
     min-height: 0;
+    margin-top: 8px;
+    border-radius: 20px;
   }
 
   .hero-title {
