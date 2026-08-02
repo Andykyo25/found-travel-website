@@ -8,6 +8,7 @@ export const metadata = {
   title: "聯絡表單",
   description:
     "留下聯絡方式與想去的地方，找到了旅行社的業務顧問會在您方便的時段主動與您聯繫。",
+  alternates: { canonical: "/contact" },
 };
 
 export default async function ContactPage() {

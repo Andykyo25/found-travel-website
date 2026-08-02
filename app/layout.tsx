@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { getSiteOrigin } from "@/lib/site-url";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = await headers();
-  const host =
-    requestHeaders.get("x-forwarded-host") ??
-    requestHeaders.get("host") ??
-    "found-travel.local";
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
-  const metadataBase = new URL(`${protocol}://${host}`);
+  // metadataBase 由請求標頭推導，各頁的相對 canonical 會依此展開成絕對網址。
+  const metadataBase = new URL(await getSiteOrigin());
 
   return {
     metadataBase,

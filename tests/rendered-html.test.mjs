@@ -20,6 +20,9 @@ test("the finished travel site replaces all starter content", async () => {
     studioContactsPage,
     packageCard,
     departureBoard,
+    robotsRoute,
+    sitemapRoute,
+    monthPage,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -40,6 +43,12 @@ test("the finished travel site replaces all starter content", async () => {
     ),
     readFile(new URL("../app/components/PackageCard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/dates/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/robots.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/sitemap.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/dates/month/[month]/page.tsx", import.meta.url),
+      "utf8",
+    ),
   ]);
 
   assert.match(page, /精選行程/);
@@ -57,8 +66,12 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(packageCard, /dates\//);
   assert.match(page, /href="\/dates"/);
   assert.match(departureBoard, /upcomingDepartureRows/);
-  assert.match(departureBoard, /groupDeparturesByMonth/);
-  assert.match(departureBoard, /generateMetadata/);
+  assert.match(robotsRoute, /isTemporaryHost/);
+  assert.match(robotsRoute, /\/studio/);
+  assert.match(sitemapRoute, /dates\/month\//);
+  assert.match(monthPage, /generateMetadata/);
+  assert.match(monthPage, /canonical/);
+  assert.match(datesPage, /canonical/);
   assert.match(datesPage, /notFound/);
   assert.match(datesPage, /出發日期/);
   assert.match(content, /00161819/);

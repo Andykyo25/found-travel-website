@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   readSiteContentObject,
   writeSiteContentObject,
@@ -394,7 +395,9 @@ type StoredSiteContent = Partial<SiteContent> & {
   _updatedBy?: unknown;
 };
 
-export async function getSiteContentWithMeta(): Promise<{
+// cache()：同一個請求裡 generateMetadata 與頁面本身都會取內容，
+// 沒有這層包裝就會對 Bucket 讀兩次。
+export const getSiteContentWithMeta = cache(async function getSiteContentWithMeta(): Promise<{
   content: SiteContent;
   meta: SiteContentMeta;
 }> {
@@ -414,7 +417,7 @@ export async function getSiteContentWithMeta(): Promise<{
   } catch {
     return { content: defaultSiteContent, meta: emptyMeta };
   }
-}
+});
 
 export async function getSiteContent(): Promise<SiteContent> {
   return (await getSiteContentWithMeta()).content;

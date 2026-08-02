@@ -14,6 +14,12 @@ import { TripFilterBar } from "./components/TripFilterBar";
 
 export const dynamic = "force-dynamic";
 
+// 首頁的篩選狀態都在 query string 上（?month=、?budget=、?category=、?all=），
+// canonical 一律指回 /，避免那些組合被當成一堆重複頁面。
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 const visibleTripLimit = 6;
 
 // 桌機膠囊導覽與手機漢堡選單共用這一份，避免兩邊漏改。

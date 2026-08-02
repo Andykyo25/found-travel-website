@@ -5,15 +5,31 @@ import { getSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "出發日期",
-};
+type PageProps = { params: Promise<{ tripId: string }> };
 
-export default async function TripDatesPage({
-  params,
-}: {
-  params: Promise<{ tripId: string }>;
-}) {
+// 每個行程要有自己的標題與描述。原本全站共用「出發日期」一個標題，
+// 對搜尋引擎來說十條行程等於十個無法區分的重複頁面。
+export async function generateMetadata({ params }: PageProps) {
+  const { tripId } = await params;
+  const content = await getSiteContent();
+  const trip = content.trips.find((item) => item.id === tripId);
+  if (!trip) return { title: "找不到這條行程" };
+
+  const description = `${trip.title}（${trip.region}・${trip.days}）的出發日期與團費。${trip.summary}`;
+
+  return {
+    title: `${trip.title} 出發日期與團費`,
+    description: description.slice(0, 160),
+    alternates: { canonical: `/dates/${trip.id}` },
+    openGraph: {
+      title: `${trip.title} 出發日期與團費`,
+      description: description.slice(0, 160),
+      images: trip.image ? [trip.image] : undefined,
+    },
+  };
+}
+
+export default async function TripDatesPage({ params }: PageProps) {
   const { tripId } = await params;
   const content = await getSiteContent();
   const trip = content.trips.find((item) => item.id === tripId);
