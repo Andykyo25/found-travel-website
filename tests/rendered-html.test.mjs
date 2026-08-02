@@ -16,6 +16,8 @@ test("the finished travel site replaces all starter content", async () => {
     contactApi,
     contactNotify,
     studioContactsPage,
+    packageCard,
+    departureBoard,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -32,6 +34,8 @@ test("the finished travel site replaces all starter content", async () => {
       new URL("../app/studio/contacts/page.tsx", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../app/components/PackageCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dates/page.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /精選行程/);
@@ -45,7 +49,12 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(content, /OR5AYhI/);
   assert.match(content, /documentType/);
   assert.match(content, /departures/);
-  assert.match(page, /查看出發時間/);
+  assert.match(packageCard, /出發時間/);
+  assert.match(packageCard, /dates\//);
+  assert.match(page, /href="\/dates"/);
+  assert.match(departureBoard, /upcomingDepartureRows/);
+  assert.match(departureBoard, /groupDeparturesByMonth/);
+  assert.match(departureBoard, /generateMetadata/);
   assert.match(datesPage, /notFound/);
   assert.match(datesPage, /出發日期/);
   assert.match(content, /00161819/);

@@ -73,6 +73,7 @@ export default async function Home({
                 首頁
               </a>
               <a href="#journeys">精選行程</a>
+              <Link href="/dates">出發團期</Link>
               <a href="#film">旅行靈感</a>
               <a href="#about">關於我們</a>
             </nav>
@@ -159,16 +160,16 @@ export default async function Home({
           </div>
         )}
 
-        {hasMore ? (
-          <div className="packages-more">
-            <Link
-              className="explore-more"
-              href={tripFilterHref(filters, true)}
-            >
+        <div className="packages-more">
+          {hasMore ? (
+            <Link className="explore-more" href={tripFilterHref(filters, true)}>
               看更多行程 <span aria-hidden="true">→</span>
             </Link>
-          </div>
-        ) : null}
+          ) : null}
+          <Link className="explore-more" href="/dates">
+            查看全部出發團期 <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </section>
 
       <section className="film-section section-shell" id="film">
@@ -273,6 +274,7 @@ export default async function Home({
         </div>
         <div className="footer-links">
           <a href="#journeys">精選行程</a>
+          <Link href="/dates">出發團期</Link>
           <a href="#about">關於我們</a>
           <Link href="/contact">聯絡表單</Link>
           <a href="/studio">內容管理</a>

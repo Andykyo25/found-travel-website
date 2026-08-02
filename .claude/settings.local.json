@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python -c ' *)",
       "Bash(python \"C:/Users/User/AppData/Local/Temp/claude/C--Users-User-Documents-AI-found-travel-website/dd98148e-888f-4287-86f3-9fa47fbbd476/scratchpad/cutout.py\")",
-      "Bash(awk '{o+=gsub\\(/{/,\"{\"\\); c+=gsub\\(/}/,\"}\"\\)} END{print \"css braces open=\"o\" close=\"c\" diff=\"o-c}' app/globals.css)"
+      "Bash(awk '{o+=gsub\\(/{/,\"{\"\\); c+=gsub\\(/}/,\"}\"\\)} END{print \"css braces open=\"o\" close=\"c\" diff=\"o-c}' app/globals.css)",
+      "Bash(wsl -e bash -lc 'cd /mnt/c/Users/User/Documents/AI/found-travel-website && npm run build 2>&1 | tail -45')"
     ]
   }
 }

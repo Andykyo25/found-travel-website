@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import {
   contactTimeSlots,
@@ -74,9 +75,9 @@ export function ContactForm({ lineUrl }: { lineUrl: string }) {
           <a className="button" href={lineUrl} target="_blank" rel="noreferrer">
             LINE 聯絡顧問 <span aria-hidden="true">↗</span>
           </a>
-          <a className="button button-secondary" href="/">
+          <Link className="button button-secondary" href="/">
             回到首頁
-          </a>
+          </Link>
         </div>
       </div>
     );

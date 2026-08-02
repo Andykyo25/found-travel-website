@@ -139,6 +139,140 @@ export function filterTrips(trips: Trip[], filters: TripFilters) {
   });
 }
 
+// ---------- 全站團期總表 ----------
+
+export type DepartureRow = {
+  tripId: string;
+  tripTitle: string;
+  region: string;
+  days: string;
+  badge: string;
+  documentUrl: string;
+  departureId: string;
+  date: string;
+  price: string;
+  monthId: string;
+  // UTC 毫秒；日期看不懂時給 Infinity，排序時自然落在最後面。
+  time: number;
+};
+
+export function parseDepartureDate(value: string) {
+  const matched = value.match(/(\d{4})\D{0,2}(\d{1,2})(?:\D{0,2}(\d{1,2}))?/);
+  if (!matched) return null;
+
+  const year = Number(matched[1]);
+  const month = Number(matched[2]);
+  const day = matched[3] ? Number(matched[3]) : 1;
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+  return { year, month, day, time: Date.UTC(year, month - 1, day) };
+}
+
+// 伺服器時區可能是 UTC，出發日要以台北當天為準才不會少一天。
+export function taipeiTodayTime() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .formatToParts(new Date())
+    .reduce<Record<string, string>>((all, part) => {
+      all[part.type] = part.value;
+      return all;
+    }, {});
+
+  return Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+  );
+}
+
+export function departureRows(trips: Trip[]): DepartureRow[] {
+  const rows: DepartureRow[] = [];
+
+  for (const trip of trips) {
+    for (const departure of trip.departures) {
+      const parsed = parseDepartureDate(departure.date);
+      rows.push({
+        tripId: trip.id,
+        tripTitle: trip.title,
+        region: trip.region,
+        days: trip.days,
+        badge: trip.badge,
+        documentUrl: trip.documentUrl,
+        departureId: departure.id,
+        date: departure.date,
+        price: departure.price,
+        monthId: parsed
+          ? `${parsed.year}-${String(parsed.month).padStart(2, "0")}`
+          : "",
+        time: parsed ? parsed.time : Number.POSITIVE_INFINITY,
+      });
+    }
+  }
+
+  return rows.sort((left, right) => left.time - right.time);
+}
+
+// 已經出發過的團期不再顯示；日期格式看不懂的一律保留，交給業務判斷。
+export function upcomingDepartureRows(rows: DepartureRow[]) {
+  const today = taipeiTodayTime();
+  return rows.filter((row) => !Number.isFinite(row.time) || row.time >= today);
+}
+
+export type DepartureMonthOption = {
+  id: string;
+  label: string;
+  shortLabel: string;
+  count: number;
+};
+
+export function departureMonthOptions(
+  rows: DepartureRow[],
+): DepartureMonthOption[] {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.monthId) continue;
+    counts.set(row.monthId, (counts.get(row.monthId) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([id, count]) => {
+      const [year, month] = id.split("-");
+      return {
+        id,
+        label: `${year} 年 ${Number(month)} 月`,
+        shortLabel: `${year}/${Number(month)}`,
+        count,
+      };
+    });
+}
+
+export function groupDeparturesByMonth(rows: DepartureRow[]) {
+  const groups: Array<{ id: string; label: string; rows: DepartureRow[] }> = [];
+
+  for (const row of rows) {
+    const id = row.monthId;
+    const last = groups[groups.length - 1];
+    if (last && last.id === id) {
+      last.rows.push(row);
+      continue;
+    }
+
+    const [year, month] = id.split("-");
+    groups.push({
+      id,
+      label: id ? `${year} 年 ${Number(month)} 月` : "日期待確認",
+      rows: [row],
+    });
+  }
+
+  return groups;
+}
+
 export function tripFilterHref(filters: TripFilters, showAll: boolean) {
   const params = new URLSearchParams();
   if (filters.month) params.set("month", filters.month);

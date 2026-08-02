@@ -27,8 +27,8 @@ export default async function TripDatesPage({
           <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
           <span>{content.brandName}</span>
         </Link>
-        <Link className="button button-secondary button-small" href="/#journeys">
-          回行程列表
+        <Link className="button button-secondary button-small" href="/dates">
+          全部團期
         </Link>
       </header>
 
