@@ -104,23 +104,24 @@ export async function saveContactRequest(
 
 export const contactRequestListLimit = 300;
 
-// storageReady 為 false 代表尚未設定 Railway Bucket（例如本機預覽）。
+export type ContactRequestLoadStatus = "ready" | "unconfigured" | "error";
+
 export async function getContactRequests(): Promise<{
   requests: ContactRequest[];
-  storageReady: boolean;
+  loadStatus: ContactRequestLoadStatus;
 }> {
   try {
     const stored = await listContactRequestObjects(contactRequestListLimit);
-    if (!stored) return { requests: [], storageReady: false };
+    if (!stored) return { requests: [], loadStatus: "unconfigured" };
 
     const requests = stored
       .map(normalizeContactRequest)
       .filter((request): request is ContactRequest => request !== null)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 
-    return { requests, storageReady: true };
+    return { requests, loadStatus: "ready" };
   } catch (error) {
     console.error("Unable to list contact requests", error);
-    return { requests: [], storageReady: true };
+    return { requests: [], loadStatus: "error" };
   }
 }

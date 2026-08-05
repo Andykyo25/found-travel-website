@@ -5,6 +5,7 @@ import {
   contactTimeSlotLabel,
   type ContactRequest,
 } from "@/lib/contact-fields";
+import { escapeCsvCell } from "@/lib/csv";
 
 // 固定用台北時間並自行組字串，避免伺服端與瀏覽器格式不一致造成 hydration 警告。
 const taipeiParts = new Intl.DateTimeFormat("en-GB", {
@@ -28,10 +29,6 @@ function formatReceivedAt(iso: string) {
   return `${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
-function csvCell(value: string) {
-  return `"${value.replace(/"/g, '""')}"`;
-}
-
 function downloadCsv(requests: ContactRequest[]) {
   const header = ["時間日期", "聯絡人", "行動電話", "希望聯繫時段", "內容"];
   const rows = requests.map((request) => [
@@ -43,7 +40,7 @@ function downloadCsv(requests: ContactRequest[]) {
   ]);
 
   const body = [header, ...rows]
-    .map((row) => row.map(csvCell).join(","))
+    .map((row) => row.map(escapeCsvCell).join(","))
     .join("\r\n");
 
   // 前置 BOM，Excel 開啟才不會把中文顯示成亂碼。

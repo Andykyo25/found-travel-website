@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const upstreamTimeoutMs = 8000;
+
 const weatherLabels: Record<number, string> = {
   0: "晴朗",
   1: "大致晴朗",
@@ -56,9 +58,11 @@ export async function GET(request: NextRequest) {
     const [weatherResponse, exchangeResponse] = await Promise.all([
       fetch(weatherUrl, {
         headers: { "user-agent": "Found Travel Website" },
+        signal: AbortSignal.timeout(upstreamTimeoutMs),
       }),
       fetch(exchangeUrl, {
         headers: { "user-agent": "Found Travel Website" },
+        signal: AbortSignal.timeout(upstreamTimeoutMs),
       }),
     ]);
 
@@ -88,6 +92,10 @@ export async function GET(request: NextRequest) {
         weatherLabel: weatherLabels[code] ?? "天氣多變",
         rate,
         updatedAt: new Date().toISOString(),
+        sources: {
+          weather: "Open-Meteo",
+          exchange: "ExchangeRate-API",
+        },
       },
       {
         headers: {
@@ -95,18 +103,17 @@ export async function GET(request: NextRequest) {
         },
       },
     );
-  } catch {
+  } catch (error) {
+    console.error("Unable to load live travel data", error);
     return NextResponse.json(
       {
-        temperature: 26,
-        weatherLabel: "晴時多雲",
-        rate: currency === "JPY" ? 4.78 : 1,
-        updatedAt: new Date().toISOString(),
+        error: "即時旅遊資料目前無法取得",
       },
       {
+        status: 503,
         headers: {
-          "Cache-Control": "public, max-age=120",
-          "X-Travel-Data": "fallback",
+          "Cache-Control": "no-store",
+          "X-Travel-Data": "unavailable",
         },
       },
     );

@@ -19,7 +19,7 @@ export const metadata = {
 
 export default async function StudioContactsPage() {
   const user = await requireStudioUser();
-  const { requests, storageReady } = await getContactRequests();
+  const { requests, loadStatus } = await getContactRequests();
   const notifyReady = isContactNotifyConfigured();
 
   return (
@@ -41,10 +41,15 @@ export default async function StudioContactsPage() {
             </div>
           </div>
 
-          {!storageReady ? (
+          {loadStatus === "unconfigured" ? (
             <div className="contact-table-empty">
               尚未啟用 Railway Storage Bucket，因此無法讀取聯絡表單資料。
             </div>
+          ) : loadStatus === "error" ? (
+            <p className="studio-warning" role="alert">
+              Railway Storage Bucket 目前無法讀取，因此無法確認是否有新的聯絡表單。
+              請稍後重新整理；在恢復前，請勿將此頁視為「目前沒有詢問」。
+            </p>
           ) : (
             <>
               {!notifyReady ? (

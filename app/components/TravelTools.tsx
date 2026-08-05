@@ -12,7 +12,23 @@ type TravelData = {
   weatherLabel: string;
   rate: number;
   updatedAt: string;
+  sources: {
+    weather: string;
+    exchange: string;
+  };
 };
+
+type TravelDataState =
+  | {
+      requestKey: string;
+      status: "loading" | "unavailable";
+      data: null;
+    }
+  | {
+      requestKey: string;
+      status: "ready";
+      data: TravelData;
+    };
 
 export function TravelTools({ destination }: { destination: Destination }) {
   const [selectedId, setSelectedId] = useState(() =>
@@ -21,9 +37,19 @@ export function TravelTools({ destination }: { destination: Destination }) {
   const selected =
     travelDestinations.find((option) => option.id === selectedId) ??
     travelDestinations[0];
+  const requestKey = `${selected.latitude}:${selected.longitude}:${selected.currency}`;
 
   const [now, setNow] = useState(() => new Date());
-  const [data, setData] = useState<TravelData | null>(null);
+  const [dataState, setDataState] = useState<TravelDataState>({
+    requestKey,
+    status: "loading",
+    data: null,
+  });
+  const activeDataState: TravelDataState =
+    dataState.requestKey === requestKey
+      ? dataState
+      : { requestKey, status: "loading", data: null };
+  const { data, status: dataStatus } = activeDataState;
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 30_000);
@@ -32,7 +58,6 @@ export function TravelTools({ destination }: { destination: Destination }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setData(null);
     const params = new URLSearchParams({
       latitude: String(selected.latitude),
       longitude: String(selected.longitude),
@@ -44,11 +69,18 @@ export function TravelTools({ destination }: { destination: Destination }) {
         if (!response.ok) throw new Error("travel data unavailable");
         return response.json() as Promise<TravelData>;
       })
-      .then(setData)
-      .catch(() => undefined);
+      .then((result) => {
+        setDataState({ requestKey, status: "ready", data: result });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setDataState({ requestKey, status: "unavailable", data: null });
+      });
 
     return () => controller.abort();
-  }, [selected.currency, selected.latitude, selected.longitude]);
+  }, [requestKey, selected.currency, selected.latitude, selected.longitude]);
 
   const localTime = useMemo(
     () =>
@@ -60,6 +92,14 @@ export function TravelTools({ destination }: { destination: Destination }) {
       }).format(now),
     [selected.timezone, now],
   );
+
+  const fetchedAt = data
+    ? new Intl.DateTimeFormat("zh-TW", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(new Date(data.updatedAt))
+    : "";
 
   return (
     <section className="travel-tools-panel" aria-label="旅遊目的地即時資訊">
@@ -97,8 +137,15 @@ export function TravelTools({ destination }: { destination: Destination }) {
             <strong>
               {data
                 ? `${Math.round(data.temperature)}°C　${data.weatherLabel}`
-                : "正在取得…"}
+                : dataStatus === "unavailable"
+                  ? "暫時無法取得"
+                  : "正在取得…"}
             </strong>
+            {data ? (
+              <span className="tool-note">
+                ・{data.sources.weather}　{fetchedAt} 取得
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="tool">
@@ -108,9 +155,17 @@ export function TravelTools({ destination }: { destination: Destination }) {
           <div aria-live="polite">
             <small>當地貨幣匯率</small>
             <strong>
-              1 TWD = {data ? data.rate.toFixed(2) : "—"} {selected.currency}
+              {data
+                ? `1 TWD = ${data.rate.toFixed(2)} ${selected.currency}`
+                : dataStatus === "unavailable"
+                  ? "暫時無法取得"
+                  : "正在取得…"}
             </strong>
-            <span className="tool-note">・即時參考值</span>
+            {data ? (
+              <span className="tool-note">
+                ・{data.sources.exchange}　{fetchedAt} 取得
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="tool">

@@ -17,6 +17,8 @@ test("the finished travel site replaces all starter content", async () => {
     contactPage,
     contactApi,
     contactNotify,
+    travelToolsApi,
+    travelTools,
     studioContactsPage,
     packageCard,
     departureBoard,
@@ -37,6 +39,14 @@ test("the finished travel site replaces all starter content", async () => {
     readFile(new URL("../app/contact/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/contact/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/contact-notify.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/api/travel-tools/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/components/TravelTools.tsx", import.meta.url),
+      "utf8",
+    ),
     readFile(
       new URL("../app/studio/contacts/page.tsx", import.meta.url),
       "utf8",
@@ -89,7 +99,12 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(contactApi, /notifyContactRequest/);
   assert.match(contactNotify, /api\.line\.me\/v2\/bot\/message\/push/);
   assert.match(contactNotify, /CONTACT_WEBHOOK_URL/);
+  assert.match(travelToolsApi, /status: 503/);
+  assert.match(travelToolsApi, /X-Travel-Data.*unavailable/s);
+  assert.doesNotMatch(travelToolsApi, /temperature: 26|rate: currency/);
+  assert.match(travelTools, /暫時無法取得/);
   assert.match(studioContactsPage, /requireStudioUser/);
+  assert.match(studioContactsPage, /loadStatus === "error"/);
   assert.match(studioContactsPage, /ContactRequestTable/);
   assert.match(studioPage, /requireStudioUser/);
   assert.match(studioPage, /TripsEditor/);
