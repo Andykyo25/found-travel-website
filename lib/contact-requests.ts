@@ -4,9 +4,11 @@ import {
   contactTimeSlots,
   type ContactRequest,
   type ContactTimeSlotId,
+  type ManagedContactRequest,
 } from "@/lib/contact-fields";
 import {
   listContactRequestObjects,
+  type StoredContactRequestObject,
   writeContactRequestObject,
 } from "@/lib/railway-storage";
 
@@ -63,7 +65,10 @@ export function parseContactRequestInput(
   };
 }
 
-function normalizeContactRequest(value: unknown): ContactRequest | null {
+function normalizeContactRequest(
+  stored: StoredContactRequestObject,
+): ManagedContactRequest | null {
+  const { key: storageKey, value } = stored;
   if (typeof value !== "object" || !value) return null;
   const source = value as Record<string, unknown>;
 
@@ -87,6 +92,7 @@ function normalizeContactRequest(value: unknown): ContactRequest | null {
     ),
     message: typeof source.message === "string" ? source.message : "",
     createdAt,
+    storageKey,
   };
 }
 
@@ -107,7 +113,7 @@ export const contactRequestListLimit = 300;
 export type ContactRequestLoadStatus = "ready" | "unconfigured" | "error";
 
 export async function getContactRequests(): Promise<{
-  requests: ContactRequest[];
+  requests: ManagedContactRequest[];
   loadStatus: ContactRequestLoadStatus;
 }> {
   try {
@@ -116,7 +122,7 @@ export async function getContactRequests(): Promise<{
 
     const requests = stored
       .map(normalizeContactRequest)
-      .filter((request): request is ContactRequest => request !== null)
+      .filter((request): request is ManagedContactRequest => request !== null)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 
     return { requests, loadStatus: "ready" };

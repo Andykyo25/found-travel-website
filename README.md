@@ -98,6 +98,15 @@ CONTACT_WEBHOOK_URL=自動化服務提供的 Webhook 網址
 - `SECRET_ACCESS_KEY` 或 `BUCKET_SECRET_ACCESS_KEY`
 - `REGION` 或 `BUCKET_REGION`
 
+## 詢問單與 PDF 清理
+
+- 後台 `/studio/contacts` 每筆詢問單都有刪除按鈕。刪除前會再次確認，
+  成功後會永久移除 Bucket 內對應的 JSON，無法復原。
+- 每次儲存行程或網站設定時，系統會自動檢查 `trip-pdfs/`：
+  已從發布內容移除的 PDF 會立即刪除；從未發布的上傳檔會先保留 24 小時，
+  超過緩衝時間且仍未被任何行程使用時才清理。
+- PDF 清理失敗不會回滾已發布的內容，後台會顯示提示，並在下次儲存時重試。
+
 ## 本地預覽
 
 需要 Node.js 22.13 以上版本。

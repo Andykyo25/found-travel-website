@@ -2354,6 +2354,48 @@ img {
   line-height: 1.7;
 }
 
+.contact-cell-actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.contact-delete-button {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(184, 54, 47, 0.34);
+  border-radius: 999px;
+  background: #fff;
+  color: #a33a2b;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.contact-delete-button:hover:not(:disabled) {
+  border-color: #a33a2b;
+  background: #a33a2b;
+  color: #fff;
+}
+
+.contact-delete-button:disabled {
+  cursor: wait;
+  opacity: 0.52;
+}
+
+.contact-delete-error {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: #fff0ee;
+  color: #9b3028;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .contact-table-empty {
   padding: 44px 20px;
   border: 1px dashed var(--line);

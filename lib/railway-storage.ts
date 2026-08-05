@@ -1,6 +1,8 @@
 import "server-only";
 
 import {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   ListObjectsV2Command,
   NoSuchKey,
@@ -8,9 +10,14 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {
+  isContactRequestKey,
+  orphanedTripPdfDecision,
+} from "@/lib/storage-keys";
 
 const contentKey = "content/site-content.json";
 const contactPrefix = "contact-requests/";
+const tripPdfPrefix = "trip-pdfs/";
 let cachedClient: S3Client | null = null;
 
 type StorageConfig = {
@@ -136,10 +143,29 @@ export async function writeContactRequestObject(id: string, value: unknown) {
   );
 }
 
+export async function deleteContactRequestObject(key: string) {
+  if (!isContactRequestKey(key)) throw new Error("Invalid contact request key");
+
+  const storage = getClient();
+  if (!storage) throw new Error("Railway Storage Bucket is unavailable");
+
+  await storage.client.send(
+    new DeleteObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: key,
+    }),
+  );
+}
+
+export type StoredContactRequestObject = {
+  key: string;
+  value: unknown;
+};
+
 // 回傳未經驗證的原始物件，由 lib/contact-requests.ts 負責正規化。
 export async function listContactRequestObjects(
   limit: number,
-): Promise<unknown[] | null> {
+): Promise<StoredContactRequestObject[] | null> {
   const storage = getClient();
   if (!storage) return null;
 
@@ -154,7 +180,7 @@ export async function listContactRequestObjects(
       }),
     );
     for (const object of page.Contents ?? []) {
-      if (object.Key) keys.push(object.Key);
+      if (isContactRequestKey(object.Key)) keys.push(object.Key);
     }
     continuationToken = page.IsTruncated
       ? page.NextContinuationToken
@@ -173,14 +199,16 @@ export async function listContactRequestObjects(
         );
         if (!result.Body) return null;
         const raw = await result.Body.transformToString("utf-8");
-        return JSON.parse(raw) as unknown;
+        return { key, value: JSON.parse(raw) as unknown };
       } catch {
         return null;
       }
     }),
   );
 
-  return loaded.filter((item) => item !== null);
+  return loaded.filter(
+    (item): item is StoredContactRequestObject => item !== null,
+  );
 }
 
 export async function uploadTripPdf(
@@ -191,7 +219,7 @@ export async function uploadTripPdf(
   const storage = getClient();
   if (!storage) throw new Error("Railway Storage Bucket is unavailable");
 
-  const key = `trip-pdfs/${Date.now()}-${crypto.randomUUID()}.pdf`;
+  const key = `${tripPdfPrefix}${Date.now()}-${crypto.randomUUID()}.pdf`;
   await storage.client.send(
     new PutObjectCommand({
       Bucket: storage.config.bucket,
@@ -207,6 +235,74 @@ export async function uploadTripPdf(
   );
 
   return key;
+}
+
+export type TripPdfCleanupResult = {
+  deleted: number;
+  protectedRecent: number;
+};
+
+// 已從發布內容移除的 PDF 可立即刪除；其他從未發布的上傳檔保留 24 小時，
+// 避免另一位管理員剛上傳、尚未按下儲存時被誤判為孤兒檔案。
+export async function cleanupOrphanedTripPdfs({
+  referencedKeys,
+  immediatelyRemoveKeys = new Set<string>(),
+  now = Date.now(),
+}: {
+  referencedKeys: ReadonlySet<string>;
+  immediatelyRemoveKeys?: ReadonlySet<string>;
+  now?: number;
+}): Promise<TripPdfCleanupResult> {
+  const storage = getClient();
+  if (!storage) throw new Error("Railway Storage Bucket is unavailable");
+
+  const deleteKeys: string[] = [];
+  let protectedRecent = 0;
+  let continuationToken: string | undefined;
+
+  do {
+    const page = await storage.client.send(
+      new ListObjectsV2Command({
+        Bucket: storage.config.bucket,
+        Prefix: tripPdfPrefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
+
+    for (const object of page.Contents ?? []) {
+      const decision = orphanedTripPdfDecision({
+        key: object.Key,
+        lastModified: object.LastModified,
+        referencedKeys,
+        immediatelyRemoveKeys,
+        now,
+      });
+      if (decision === "delete") deleteKeys.push(object.Key!);
+      if (decision === "protect-recent") protectedRecent += 1;
+    }
+
+    continuationToken = page.IsTruncated
+      ? page.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  for (let index = 0; index < deleteKeys.length; index += 1000) {
+    const keys = deleteKeys.slice(index, index + 1000);
+    const result = await storage.client.send(
+      new DeleteObjectsCommand({
+        Bucket: storage.config.bucket,
+        Delete: {
+          Objects: keys.map((Key) => ({ Key })),
+          Quiet: true,
+        },
+      }),
+    );
+    if (result.Errors?.length) {
+      throw new Error(`Unable to delete ${result.Errors.length} orphan PDFs`);
+    }
+  }
+
+  return { deleted: deleteKeys.length, protectedRecent };
 }
 
 export async function createTripPdfUrl(key: string) {

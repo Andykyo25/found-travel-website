@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   contactTimeSlotLabel,
   type ContactRequest,
+  type ManagedContactRequest,
 } from "@/lib/contact-fields";
 import { escapeCsvCell } from "@/lib/csv";
 
@@ -59,14 +60,17 @@ function downloadCsv(requests: ContactRequest[]) {
 export function ContactRequestTable({
   requests,
 }: {
-  requests: ContactRequest[];
+  requests: ManagedContactRequest[];
 }) {
   const [keyword, setKeyword] = useState("");
+  const [items, setItems] = useState(requests);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const filtered = useMemo(() => {
     const needle = keyword.trim().toLowerCase();
-    if (!needle) return requests;
-    return requests.filter((request) =>
+    if (!needle) return items;
+    return items.filter((request) =>
       [
         request.name,
         request.mobile,
@@ -77,7 +81,42 @@ export function ContactRequestTable({
         .toLowerCase()
         .includes(needle),
     );
-  }, [requests, keyword]);
+  }, [items, keyword]);
+
+  const deleteRequest = async (request: ManagedContactRequest) => {
+    if (
+      !window.confirm(
+        `確定刪除「${request.name}」於 ${formatReceivedAt(request.createdAt)} 送出的詢問單嗎？此操作無法復原。`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingKey(request.storageKey);
+    setDeleteError("");
+
+    try {
+      const response = await fetch("/api/studio/contacts", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key: request.storageKey }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(result.error ?? "刪除失敗");
+      }
+
+      setItems((current) =>
+        current.filter((item) => item.storageKey !== request.storageKey),
+      );
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : "刪除失敗，請稍後再試",
+      );
+    } finally {
+      setDeletingKey(null);
+    }
+  };
 
   return (
     <>
@@ -93,8 +132,8 @@ export function ContactRequestTable({
         <div className="contact-toolbar-actions">
           <span className="contact-count">
             {keyword.trim()
-              ? `符合 ${filtered.length} / 共 ${requests.length} 筆`
-              : `共 ${requests.length} 筆`}
+              ? `符合 ${filtered.length} / 共 ${items.length} 筆`
+              : `共 ${items.length} 筆`}
           </span>
           <button
             className="button button-secondary button-small"
@@ -107,9 +146,15 @@ export function ContactRequestTable({
         </div>
       </div>
 
+      {deleteError ? (
+        <p className="contact-delete-error" role="alert">
+          {deleteError}
+        </p>
+      ) : null}
+
       {filtered.length === 0 ? (
         <div className="contact-table-empty">
-          {requests.length === 0
+          {items.length === 0
             ? "目前還沒有客人填寫聯絡表單。"
             : "沒有符合搜尋條件的資料。"}
         </div>
@@ -123,6 +168,7 @@ export function ContactRequestTable({
                 <th>行動電話</th>
                 <th>希望聯繫時段</th>
                 <th>內容</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -149,6 +195,17 @@ export function ContactRequestTable({
                     </span>
                   </td>
                   <td className="contact-cell-message">{request.message}</td>
+                  <td className="contact-cell-actions">
+                    <button
+                      className="contact-delete-button"
+                      type="button"
+                      disabled={deletingKey !== null}
+                      onClick={() => void deleteRequest(request)}
+                      aria-label={`刪除${request.name}的詢問單`}
+                    >
+                      {deletingKey === request.storageKey ? "刪除中…" : "刪除"}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

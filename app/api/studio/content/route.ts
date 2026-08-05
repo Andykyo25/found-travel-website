@@ -6,10 +6,23 @@ import {
 import {
   getSiteContentWithMeta,
   saveSiteContent,
+  type SiteContent,
 } from "@/lib/site-content";
+import { cleanupOrphanedTripPdfs } from "@/lib/railway-storage";
+import { tripPdfKeyFromDocumentUrl } from "@/lib/storage-keys";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+function referencedTripPdfKeys(content: SiteContent) {
+  const keys = new Set<string>();
+  for (const trip of content.trips) {
+    if (trip.documentType !== "pdf") continue;
+    const key = tripPdfKeyFromDocumentUrl(trip.documentUrl);
+    if (key) keys.add(key);
+  }
+  return keys;
+}
 
 export async function PUT(request: NextRequest) {
   if (!isSameOriginRequest(request)) {
@@ -36,7 +49,7 @@ export async function PUT(request: NextRequest) {
       : null;
 
   try {
-    const { meta } = await getSiteContentWithMeta();
+    const { content: previousContent, meta } = await getSiteContentWithMeta();
     if (meta.updatedAt && meta.updatedAt !== baseUpdatedAt) {
       return NextResponse.json(
         {
@@ -47,9 +60,35 @@ export async function PUT(request: NextRequest) {
     }
 
     const saved = await saveSiteContent(body, user.email);
+    const previousPdfKeys = referencedTripPdfKeys(previousContent);
+    const referencedPdfKeys = referencedTripPdfKeys(saved.content);
+    const retiredPdfKeys = new Set(
+      [...previousPdfKeys].filter((key) => !referencedPdfKeys.has(key)),
+    );
+
+    let pdfCleanup = {
+      deleted: 0,
+      protectedRecent: 0,
+      failed: false,
+    };
+    try {
+      pdfCleanup = {
+        ...(await cleanupOrphanedTripPdfs({
+          referencedKeys: referencedPdfKeys,
+          immediatelyRemoveKeys: retiredPdfKeys,
+        })),
+        failed: false,
+      };
+    } catch (error) {
+      // 網站內容已經成功儲存，清理失敗不應讓管理員誤以為內容沒有發布。
+      console.error("Unable to clean up orphaned trip PDFs", error);
+      pdfCleanup.failed = true;
+    }
+
     return NextResponse.json({
       content: saved.content,
       savedAt: saved.updatedAt,
+      pdfCleanup,
     });
   } catch (error) {
     console.error("Unable to save site content", error);

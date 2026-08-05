@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTripPdfUrl } from "@/lib/railway-storage";
+import { isTripPdfKey } from "@/lib/storage-keys";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key") ?? "";
-  if (!/^trip-pdfs\/[A-Za-z0-9-]+\.pdf$/.test(key)) {
+  if (!isTripPdfKey(key)) {
     return NextResponse.json({ error: "無效的 PDF 連結" }, { status: 400 });
   }
 

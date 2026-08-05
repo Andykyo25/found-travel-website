@@ -17,6 +17,10 @@ test("the finished travel site replaces all starter content", async () => {
     contactPage,
     contactApi,
     contactNotify,
+    contactDeleteApi,
+    contactRequestTable,
+    studioContentApi,
+    railwayStorage,
     travelToolsApi,
     travelTools,
     studioContactsPage,
@@ -39,6 +43,19 @@ test("the finished travel site replaces all starter content", async () => {
     readFile(new URL("../app/contact/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/contact/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/contact-notify.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/api/studio/contacts/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/components/ContactRequestTable.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/api/studio/content/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../lib/railway-storage.ts", import.meta.url), "utf8"),
     readFile(
       new URL("../app/api/travel-tools/route.ts", import.meta.url),
       "utf8",
@@ -99,6 +116,13 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(contactApi, /notifyContactRequest/);
   assert.match(contactNotify, /api\.line\.me\/v2\/bot\/message\/push/);
   assert.match(contactNotify, /CONTACT_WEBHOOK_URL/);
+  assert.match(contactDeleteApi, /deleteContactRequestObject/);
+  assert.match(contactDeleteApi, /isSameOriginRequest/);
+  assert.match(contactRequestTable, /method: "DELETE"/);
+  assert.match(contactRequestTable, /window\.confirm/);
+  assert.match(studioContentApi, /cleanupOrphanedTripPdfs/);
+  assert.match(railwayStorage, /orphanedTripPdfDecision/);
+  assert.match(railwayStorage, /DeleteObjectsCommand/);
   assert.match(travelToolsApi, /status: 503/);
   assert.match(travelToolsApi, /X-Travel-Data.*unavailable/s);
   assert.doesNotMatch(travelToolsApi, /temperature: 26|rate: currency/);

@@ -66,6 +66,11 @@ export function useSiteContentDraft(
       const result = (await response.json()) as {
         content?: SiteContent;
         savedAt?: string;
+        pdfCleanup?: {
+          deleted: number;
+          protectedRecent: number;
+          failed: boolean;
+        };
         error?: string;
       };
 
@@ -75,9 +80,14 @@ export function useSiteContentDraft(
 
       setDraft(result.content);
       setBaseUpdatedAt(result.savedAt ?? null);
+      const cleanupMessage = result.pdfCleanup?.failed
+        ? "已儲存，但 PDF 清理暫時失敗；下次儲存時會再試一次"
+        : result.pdfCleanup?.deleted
+          ? `已儲存，並清理 ${result.pdfCleanup.deleted} 份未使用的 PDF`
+          : "已儲存，重新整理網站即可看到最新內容";
       setStatus({
         kind: "success",
-        message: "已儲存，重新整理網站即可看到最新內容",
+        message: cleanupMessage,
       });
     } catch (error) {
       setStatus({

@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "test": "npm run build && npm run test:unit",
-    "test:unit": "node --test --test-isolation=none tests/rendered-html.test.mjs tests/csv.test.mjs",
+    "test:unit": "node --test --test-isolation=none tests/rendered-html.test.mjs tests/csv.test.mjs tests/storage-keys.test.mjs",
     "lint": "eslint . --ignore-pattern .next --ignore-pattern dist"
   },
   "dependencies": {

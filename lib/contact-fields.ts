@@ -19,6 +19,10 @@ export type ContactRequest = {
   createdAt: string;
 };
 
+export type ManagedContactRequest = ContactRequest & {
+  storageKey: string;
+};
+
 export function contactTimeSlotLabel(id: ContactTimeSlotId) {
   return contactTimeSlots.find((slot) => slot.id === id)?.label ?? id;
 }
