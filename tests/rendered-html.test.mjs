@@ -25,6 +25,7 @@ test("the finished travel site replaces all starter content", async () => {
     travelTools,
     studioContactsPage,
     packageCard,
+    tripPlanCard,
     departureBoard,
     robotsRoute,
     sitemapRoute,
@@ -69,6 +70,10 @@ test("the finished travel site replaces all starter content", async () => {
       "utf8",
     ),
     readFile(new URL("../app/components/PackageCard.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/components/TripPlanCard.tsx", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../app/dates/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/robots.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/sitemap.ts", import.meta.url), "utf8"),
@@ -88,6 +93,11 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(content, /找到了旅行社/);
   assert.match(content, /OR5AYhI/);
   assert.match(content, /documentType/);
+  assert.match(content, /plans:/);
+  assert.match(content, /departureMode/);
+  assert.match(content, /Array\.isArray\(source\.plans\)/);
+  assert.match(content, /legacyDocumentType/);
+  assert.match(content, /source\.documentUrl/);
   assert.match(content, /departures/);
   assert.match(packageCard, /出發時間/);
   assert.match(packageCard, /dates\//);
@@ -100,6 +110,8 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(monthPage, /canonical/);
   assert.match(datesPage, /canonical/);
   assert.match(datesPage, /notFound/);
+  assert.match(datesPage, /TripPlanCard/);
+  assert.match(datesPage, /publishedTripPlans/);
   assert.match(datesPage, /出發日期/);
   assert.match(content, /00161819/);
   assert.match(content, /writeSiteContentObject/);
@@ -121,6 +133,7 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(contactRequestTable, /method: "DELETE"/);
   assert.match(contactRequestTable, /window\.confirm/);
   assert.match(studioContentApi, /cleanupOrphanedTripPdfs/);
+  assert.match(studioContentApi, /trip\.plans/);
   assert.match(railwayStorage, /orphanedTripPdfDecision/);
   assert.match(railwayStorage, /DeleteObjectsCommand/);
   assert.match(travelToolsApi, /status: 503/);
@@ -132,6 +145,13 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(studioContactsPage, /ContactRequestTable/);
   assert.match(studioPage, /requireStudioUser/);
   assert.match(studioPage, /TripsEditor/);
+  assert.match(tripsEditor, /addPlan/);
+  assert.match(tripsEditor, /togglePlanDeparture/);
+  assert.match(tripsEditor, /uploadPdf\(index, planIndex, file\)/);
+  assert.match(packageCard, /publishedTripPlans/);
+  assert.match(packageCard, /#plans/);
+  assert.match(tripPlanCard, /departuresForPlan/);
+  assert.match(tripPlanCard, /plan\.documentUrl/);
   assert.match(studioSettingsPage, /requireStudioUser/);
   assert.match(studioSettingsPage, /SiteSettingsEditor/);
   assert.match(tripsEditor, /待補資料/);

@@ -94,6 +94,14 @@ export function DepartureBoard({
                     >
                       行程內容
                     </a>
+                  ) : row.planCount > 1 ? (
+                    <Link
+                      className="board-link"
+                      href={`/dates/${row.tripId}#plans`}
+                      aria-label={`比較${row.tripTitle}的${row.planCount}個行程方案`}
+                    >
+                      {row.planCount} 個方案
+                    </Link>
                   ) : null}
                   <Link
                     className="board-link primary"

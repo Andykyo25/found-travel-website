@@ -5,6 +5,7 @@
 // 型別用 import type，編譯後會被完全移除，
 // 所以不會把 server-only 的 site-content 帶進瀏覽器。
 import type { Trip } from "@/lib/site-content";
+import { plansForDeparture } from "@/lib/trip-plans";
 
 export type TripFilters = {
   month: string;
@@ -148,6 +149,7 @@ export type DepartureRow = {
   days: string;
   badge: string;
   documentUrl: string;
+  planCount: number;
   departureId: string;
   date: string;
   price: string;
@@ -195,13 +197,15 @@ export function departureRows(trips: Trip[]): DepartureRow[] {
   for (const trip of trips) {
     for (const departure of trip.departures) {
       const parsed = parseDepartureDate(departure.date);
+      const plans = plansForDeparture(trip.plans, departure.id);
       rows.push({
         tripId: trip.id,
         tripTitle: trip.title,
         region: trip.region,
         days: trip.days,
         badge: trip.badge,
-        documentUrl: trip.documentUrl,
+        documentUrl: plans.length === 1 ? plans[0].documentUrl : "",
+        planCount: plans.length,
         departureId: departure.id,
         date: departure.date,
         price: departure.price,

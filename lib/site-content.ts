@@ -20,6 +20,21 @@ export type TripDeparture = {
   price: string;
 };
 
+export type TripPlanDepartureMode = "all" | "selected";
+
+export type TripPlan = {
+  id: string;
+  airline: string;
+  title: string;
+  summary: string;
+  price: string;
+  documentType: TripDocumentType;
+  documentUrl: string;
+  documentName: string;
+  departureMode: TripPlanDepartureMode;
+  departureIds: string[];
+};
+
 export type Trip = {
   id: string;
   featured: boolean;
@@ -30,9 +45,7 @@ export type Trip = {
   summary: string;
   price: string;
   image: string;
-  documentType: TripDocumentType;
-  documentUrl: string;
-  documentName: string;
+  plans: TripPlan[];
   departures: TripDeparture[];
 };
 
@@ -97,9 +110,20 @@ export const defaultSiteContent: SiteContent = {
         "住進喜歡的街區，以一日一重點的速度，走過東京與箱根的日常風景。",
       price: "NT$36,800 起",
       image: "/trips/tokyo.jpg",
-      documentType: "drive",
-      documentUrl: "",
-      documentName: "查看完整行程",
+      plans: [
+        {
+          id: "tokyo-standard",
+          airline: "航空方案",
+          title: "東京慢旅標準方案",
+          summary: "航班與完整內容請查看行程資料。",
+          price: "NT$36,800 起",
+          documentType: "drive",
+          documentUrl: "",
+          documentName: "查看完整行程",
+          departureMode: "all",
+          departureIds: [],
+        },
+      ],
       departures: [],
     },
     {
@@ -113,9 +137,20 @@ export const defaultSiteContent: SiteContent = {
         "把薰衣草田、丘陵公路與溫泉時間排進一趟不趕路的北國夏日。",
       price: "NT$58,900 起",
       image: "/trips/hokkaido.jpg",
-      documentType: "drive",
-      documentUrl: "",
-      documentName: "查看完整行程",
+      plans: [
+        {
+          id: "hokkaido-standard",
+          airline: "航空方案",
+          title: "北海道花野標準方案",
+          summary: "航班與完整內容請查看行程資料。",
+          price: "NT$58,900 起",
+          documentType: "drive",
+          documentUrl: "",
+          documentName: "查看完整行程",
+          departureMode: "all",
+          departureIds: [],
+        },
+      ],
       departures: [],
     },
     {
@@ -129,9 +164,20 @@ export const defaultSiteContent: SiteContent = {
         "從烏布稻田到海邊日落，在島嶼的香氣與慢節奏裡，把自己放回旅行。",
       price: "NT$42,500 起",
       image: "/trips/bali.jpg",
-      documentType: "drive",
-      documentUrl: "",
-      documentName: "查看完整行程",
+      plans: [
+        {
+          id: "bali-standard",
+          airline: "航空方案",
+          title: "峇里島療癒標準方案",
+          summary: "航班與完整內容請查看行程資料。",
+          price: "NT$42,500 起",
+          documentType: "drive",
+          documentUrl: "",
+          documentName: "查看完整行程",
+          departureMode: "all",
+          departureIds: [],
+        },
+      ],
       departures: [],
     },
   ],
@@ -196,7 +242,11 @@ export function normalizeSiteContent(value: unknown): SiteContent {
   const usedIds = new Set<string>();
   const trips = sourceTrips.flatMap((tripValue, index) => {
     if (!tripValue || typeof tripValue !== "object") return [];
-    const source = tripValue as Partial<Trip>;
+    const source = tripValue as Partial<Trip> & {
+      documentType?: unknown;
+      documentUrl?: unknown;
+      documentName?: unknown;
+    };
     const fallback =
       defaultSiteContent.trips[index] ?? defaultSiteContent.trips[0];
     const baseId = safeString(source.id, `trip-${index + 1}`, 80).replace(
@@ -210,9 +260,6 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       suffix += 1;
     }
     usedIds.add(id);
-
-    const documentType: TripDocumentType =
-      source.documentType === "pdf" ? "pdf" : "drive";
 
     const departuresSource = Array.isArray(source.departures)
       ? source.departures
@@ -248,6 +295,78 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       },
     );
 
+    const departureIdSet = new Set(departures.map((departure) => departure.id));
+    const legacyDocumentType: TripDocumentType =
+      source.documentType === "pdf" ? "pdf" : "drive";
+    const plansSource = Array.isArray(source.plans)
+      ? source.plans
+      : [
+          {
+            id: "plan-1",
+            airline: "航空方案",
+            title: "標準行程方案",
+            summary: "",
+            price: source.price,
+            documentType: legacyDocumentType,
+            documentUrl: source.documentUrl,
+            documentName: source.documentName,
+            departureMode: "all",
+            departureIds: [],
+          },
+        ];
+    const usedPlanIds = new Set<string>();
+    const plans = plansSource.flatMap((planValue, planIndex) => {
+      if (!planValue || typeof planValue !== "object") return [];
+      const plan = planValue as Partial<TripPlan>;
+      const fallbackPlan = fallback.plans[planIndex] ?? fallback.plans[0];
+      const planBaseId = safeString(plan.id, `plan-${planIndex + 1}`, 80).replace(
+        /[^A-Za-z0-9_-]/g,
+        "-",
+      );
+      let planId = planBaseId || `plan-${planIndex + 1}`;
+      let planSuffix = 2;
+      while (usedPlanIds.has(planId)) {
+        planId = `${planBaseId}-${planSuffix}`;
+        planSuffix += 1;
+      }
+      usedPlanIds.add(planId);
+
+      const documentType: TripDocumentType =
+        plan.documentType === "pdf" ? "pdf" : "drive";
+      const departureMode: TripPlanDepartureMode =
+        plan.departureMode === "selected" ? "selected" : "all";
+      const departureIds = Array.isArray(plan.departureIds)
+        ? [
+            ...new Set(
+              plan.departureIds.filter(
+                (departureId): departureId is string =>
+                  typeof departureId === "string" &&
+                  departureIdSet.has(departureId),
+              ),
+            ),
+          ]
+        : [];
+
+      return [
+        {
+          id: planId,
+          airline: safeString(plan.airline, fallbackPlan.airline, 80),
+          title: safeString(plan.title, fallbackPlan.title, 120),
+          summary: safeOptionalString(plan.summary, 400),
+          price: safeOptionalString(plan.price, 60),
+          documentType,
+          documentUrl: safeDocumentUrl(plan.documentUrl, documentType),
+          documentName: safeString(
+            plan.documentName,
+            "查看完整行程",
+            120,
+          ),
+          departureMode,
+          departureIds: departureMode === "selected" ? departureIds : [],
+        },
+      ];
+    });
+
     return [
       {
         id,
@@ -260,13 +379,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
         summary: safeString(source.summary, fallback.summary, 500),
         price: safeString(source.price, fallback.price, 60),
         image: safeString(source.image, fallback.image, 800),
-        documentType,
-        documentUrl: safeDocumentUrl(source.documentUrl, documentType),
-        documentName: safeString(
-          source.documentName,
-          "查看完整行程",
-          120,
-        ),
+        plans,
         departures,
       },
     ];

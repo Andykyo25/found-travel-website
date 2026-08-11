@@ -17,9 +17,11 @@ export const runtime = "nodejs";
 function referencedTripPdfKeys(content: SiteContent) {
   const keys = new Set<string>();
   for (const trip of content.trips) {
-    if (trip.documentType !== "pdf") continue;
-    const key = tripPdfKeyFromDocumentUrl(trip.documentUrl);
-    if (key) keys.add(key);
+    for (const plan of trip.plans) {
+      if (plan.documentType !== "pdf") continue;
+      const key = tripPdfKeyFromDocumentUrl(plan.documentUrl);
+      if (key) keys.add(key);
+    }
   }
   return keys;
 }

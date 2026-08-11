@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { TripDeparture } from "@/lib/site-content";
+import type { TripDeparture, TripPlan } from "@/lib/site-content";
+import { plansForDeparture, tripPlanLabel } from "@/lib/trip-plans";
 
 type SortKey = "date" | "price";
 
@@ -12,8 +13,10 @@ function numericValue(value: string) {
 
 export function DepartureTable({
   departures,
+  plans,
 }: {
   departures: TripDeparture[];
+  plans: TripPlan[];
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
 
@@ -46,7 +49,8 @@ export function DepartureTable({
           <thead>
             <tr>
               <th>出發日期</th>
-              <th>價格</th>
+              <th className="dates-price-heading">價格</th>
+              {plans.length > 0 ? <th>適用方案</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -54,6 +58,21 @@ export function DepartureTable({
               <tr key={departure.id}>
                 <td className="dates-date">{departure.date}</td>
                 <td className="dates-price">{departure.price || "—"}</td>
+                {plans.length > 0 ? (
+                  <td>
+                    {plansForDeparture(plans, departure.id).length > 0 ? (
+                      <span className="dates-plan-list">
+                        {plansForDeparture(plans, departure.id).map((plan) => (
+                          <a href={`#plan-${plan.id}`} key={plan.id}>
+                            {tripPlanLabel(plan)}
+                          </a>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="dates-plan-empty">方案請洽詢</span>
+                    )}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

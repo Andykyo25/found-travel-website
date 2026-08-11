@@ -4,7 +4,7 @@
 
 - 前台公開瀏覽，不需要 ChatGPT 或其他會員帳號
 - `/studio` 使用核准 Email 與密碼登入
-- 行程支援不限筆數、PDF 上傳或 Google Drive 分享連結
+- 行程支援不限筆數；同一行程可建立多個航空／內容方案，各自上傳 PDF 或設定 Google Drive 分享連結
 - 首頁使用公司 Logo、正式影片、天氣、當地時間與匯率工具
 - `/contact` 公開聯絡表單，送出後即時通知 LINE，並存進 `/studio/contacts`
 - Railway 連接 GitHub `main` 後，每次推送會自動重新部署
@@ -99,6 +99,13 @@ CONTACT_WEBHOOK_URL=自動化服務提供的 Webhook 網址
 - `REGION` 或 `BUCKET_REGION`
 
 ## 詢問單與 PDF 清理
+
+### 多方案行程
+
+- 後台可在同一行程新增多個方案，分別填寫航空公司、方案名稱、差異摘要與方案起價。
+- 每個方案都有獨立的 PDF／Google Drive 文件，並可選擇套用所有團期或指定部分團期。
+- 前台有兩個以上已發布方案時會顯示比較卡；團期表也會標示該日期可選的方案。
+- 舊版單一 `documentUrl` 行程在讀取時會自動轉為一個「標準行程方案」，不需先手動搬移資料。
 
 - 後台 `/studio/contacts` 每筆詢問單都有刪除按鈕。刪除前會再次確認，
   成功後會永久移除 Bucket 內對應的 JSON，無法復原。

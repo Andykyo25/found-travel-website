@@ -6,6 +6,8 @@ import type {
   Trip,
   TripDeparture,
   TripDocumentType,
+  TripPlan,
+  TripPlanDepartureMode,
 } from "@/lib/site-content";
 import { parseDepartureDate } from "@/lib/trip-filters";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
@@ -18,6 +20,24 @@ const filterOptions: Array<{ id: TripFilter; label: string }> = [
   { id: "other", label: "其他" },
   { id: "todo", label: "待補資料" },
 ];
+
+function createPlan(): TripPlan {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `plan-${Date.now()}`,
+    airline: "航空公司待填",
+    title: "新行程方案",
+    summary: "請簡短說明航班時間或行程內容的主要差異。",
+    price: "",
+    documentType: "pdf",
+    documentUrl: "",
+    documentName: "查看完整行程",
+    departureMode: "all",
+    departureIds: [],
+  };
+}
 
 function createTrip(): Trip {
   return {
@@ -33,9 +53,7 @@ function createTrip(): Trip {
     summary: "請填寫這趟旅程最吸引人的特色與適合對象。",
     price: "價格請洽詢",
     image: "/trips/tokyo.jpg",
-    documentType: "pdf",
-    documentUrl: "",
-    documentName: "查看完整行程",
+    plans: [createPlan()],
     departures: [],
   };
 }
@@ -99,7 +117,12 @@ function formatDeparturePrice(value: string) {
 // todayTime 由伺服端算好傳進來，避免前後端各自取當天日期造成 hydration 不一致。
 function tripIssues(trip: Trip, todayTime: number) {
   const issues: string[] = [];
-  if (!trip.documentUrl) issues.push("缺行程資料");
+  if (trip.plans.length === 0) issues.push("缺航空方案");
+  else if (!trip.plans.some((plan) => plan.documentUrl)) {
+    issues.push("缺行程資料");
+  } else if (trip.plans.some((plan) => !plan.documentUrl)) {
+    issues.push("方案待補");
+  }
 
   if (trip.departures.length === 0) {
     issues.push("缺團期");
@@ -129,7 +152,7 @@ export function TripsEditor({
 
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<TripFilter>("all");
-  const [uploadingTripId, setUploadingTripId] = useState<string | null>(null);
+  const [uploadingPlanKey, setUploadingPlanKey] = useState<string | null>(null);
   const [openTripIds, setOpenTripIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -172,24 +195,118 @@ export function TripsEditor({
     markChanged();
   };
 
-  const changeDocumentType = (
-    index: number,
-    documentType: TripDocumentType,
+  const updateTripPlans = (
+    tripIndex: number,
+    updater: (plans: TripPlan[]) => TripPlan[],
   ) => {
     setDraft((current) => ({
       ...current,
-      trips: current.trips.map((trip, tripIndex) =>
-        tripIndex === index
+      trips: current.trips.map((trip, index) =>
+        index === tripIndex ? { ...trip, plans: updater(trip.plans) } : trip,
+      ),
+    }));
+    markChanged();
+  };
+
+  const updatePlan = <K extends keyof TripPlan>(
+    tripIndex: number,
+    planIndex: number,
+    key: K,
+    value: TripPlan[K],
+  ) => {
+    updateTripPlans(tripIndex, (plans) =>
+      plans.map((plan, index) =>
+        index === planIndex ? { ...plan, [key]: value } : plan,
+      ),
+    );
+  };
+
+  const changeDocumentType = (
+    tripIndex: number,
+    planIndex: number,
+    documentType: TripDocumentType,
+  ) => {
+    updateTripPlans(tripIndex, (plans) =>
+      plans.map((plan, index) =>
+        index === planIndex
           ? {
-              ...trip,
+              ...plan,
               documentType,
               documentUrl: "",
               documentName: "查看完整行程",
             }
-          : trip,
+          : plan,
       ),
-    }));
-    markChanged();
+    );
+  };
+
+  const addPlan = (tripIndex: number) => {
+    updateTripPlans(tripIndex, (plans) => [...plans, createPlan()]);
+    setStatus({
+      kind: "idle",
+      message: "已新增行程方案，完成資料後請記得儲存",
+    });
+  };
+
+  const removePlan = (tripIndex: number, planIndex: number) => {
+    const plan = draft.trips[tripIndex]?.plans[planIndex];
+    if (
+      !plan ||
+      !window.confirm(
+        `確定刪除「${plan.airline}｜${plan.title}」方案嗎？儲存後該方案的 PDF 將進入清理流程。`,
+      )
+    ) {
+      return;
+    }
+    updateTripPlans(tripIndex, (plans) =>
+      plans.filter((_, index) => index !== planIndex),
+    );
+  };
+
+  const movePlan = (
+    tripIndex: number,
+    planIndex: number,
+    offset: -1 | 1,
+  ) => {
+    updateTripPlans(tripIndex, (plans) => {
+      const target = planIndex + offset;
+      if (target < 0 || target >= plans.length) return plans;
+      const next = [...plans];
+      [next[planIndex], next[target]] = [next[target], next[planIndex]];
+      return next;
+    });
+  };
+
+  const changePlanDepartureMode = (
+    tripIndex: number,
+    planIndex: number,
+    departureMode: TripPlanDepartureMode,
+  ) => {
+    const departureIds =
+      departureMode === "selected"
+        ? (draft.trips[tripIndex]?.departures.map((departure) => departure.id) ?? [])
+        : [];
+    updateTripPlans(tripIndex, (plans) =>
+      plans.map((plan, index) =>
+        index === planIndex ? { ...plan, departureMode, departureIds } : plan,
+      ),
+    );
+  };
+
+  const togglePlanDeparture = (
+    tripIndex: number,
+    planIndex: number,
+    departureId: string,
+  ) => {
+    updateTripPlans(tripIndex, (plans) =>
+      plans.map((plan, index) => {
+        if (index !== planIndex) return plan;
+        const departureIds = plan.departureIds.includes(departureId)
+          ? plan.departureIds.filter((id) => id !== departureId)
+          : [...plan.departureIds, departureId];
+        return { ...plan, departureIds };
+      }),
+    );
   };
 
   const addTrip = () => {
@@ -261,9 +378,27 @@ export function TripsEditor({
   };
 
   const removeDeparture = (tripIndex: number, departureIndex: number) => {
-    updateTripDepartures(tripIndex, (departures) =>
-      departures.filter((_, index) => index !== departureIndex),
-    );
+    const departureId = draft.trips[tripIndex]?.departures[departureIndex]?.id;
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, index) =>
+        index === tripIndex
+          ? {
+              ...trip,
+              departures: trip.departures.filter(
+                (_, index) => index !== departureIndex,
+              ),
+              plans: trip.plans.map((plan) => ({
+                ...plan,
+                departureIds: departureId
+                  ? plan.departureIds.filter((id) => id !== departureId)
+                  : plan.departureIds,
+              })),
+            }
+          : trip,
+      ),
+    }));
+    markChanged();
   };
 
   const moveDeparture = (
@@ -283,15 +418,21 @@ export function TripsEditor({
     });
   };
 
-  const uploadPdf = async (index: number, file: File) => {
-    const trip = draft.trips[index];
-    if (!trip) return;
+  const uploadPdf = async (
+    tripIndex: number,
+    planIndex: number,
+    file: File,
+  ) => {
+    const trip = draft.trips[tripIndex];
+    const plan = trip?.plans[planIndex];
+    if (!trip || !plan) return;
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       setStatus({ kind: "error", message: "請選擇 PDF 檔案" });
       return;
     }
 
-    setUploadingTripId(trip.id);
+    const uploadKey = `${trip.id}:${plan.id}`;
+    setUploadingPlanKey(uploadKey);
     setStatus({ kind: "saving", message: `正在上傳 ${file.name}…` });
 
     try {
@@ -313,13 +454,20 @@ export function TripsEditor({
 
       setDraft((current) => ({
         ...current,
-        trips: current.trips.map((item, tripIndex) =>
-          tripIndex === index
+        trips: current.trips.map((item) =>
+          item.id === trip.id
             ? {
                 ...item,
-                documentType: "pdf",
-                documentUrl: result.url ?? "",
-                documentName: result.filename ?? file.name,
+                plans: item.plans.map((itemPlan) =>
+                  itemPlan.id === plan.id
+                    ? {
+                        ...itemPlan,
+                        documentType: "pdf",
+                        documentUrl: result.url ?? "",
+                        documentName: result.filename ?? file.name,
+                      }
+                    : itemPlan,
+                ),
               }
             : item,
         ),
@@ -334,7 +482,7 @@ export function TripsEditor({
         message: error instanceof Error ? error.message : "PDF 上傳失敗",
       });
     } finally {
-      setUploadingTripId(null);
+      setUploadingPlanKey(null);
     }
   };
 
@@ -347,7 +495,14 @@ export function TripsEditor({
       if (filter === "other" && trip.featured) return false;
       if (filter === "todo" && issues.length === 0) return false;
       if (!needle) return true;
-      return [trip.title, trip.region, trip.badge, trip.days, trip.price]
+      return [
+        trip.title,
+        trip.region,
+        trip.badge,
+        trip.days,
+        trip.price,
+        ...trip.plans.flatMap((plan) => [plan.airline, plan.title]),
+      ]
         .join(" ")
         .toLowerCase()
         .includes(needle);
@@ -388,7 +543,7 @@ export function TripsEditor({
             <b>1</b> 新增行程
           </span>
           <span>
-            <b>2</b> 上傳行程 PDF／Drive 並填出發日期
+            <b>2</b> 建立航空／行程方案並上傳 PDF／Drive
           </span>
           <span>
             <b>3</b> 儲存並更新網站
@@ -625,74 +780,246 @@ export function TripsEditor({
                     </Field>
                   </div>
 
-                  <div className="document-editor">
-                    <h4>完整行程資料</h4>
-                    <div
-                      className="document-type-switch"
-                      role="group"
-                      aria-label="行程資料來源"
-                    >
+                  <div className="plan-editor">
+                    <div className="plan-editor-heading">
+                      <div>
+                        <h4>航空／行程方案</h4>
+                        <small>
+                          每一份 PDF 或 Drive 行程建立成獨立方案，並標示航空公司、差異與適用團期。
+                        </small>
+                      </div>
                       <button
+                        className="button button-secondary button-small"
                         type="button"
-                        className={trip.documentType === "pdf" ? "active" : ""}
-                        onClick={() => changeDocumentType(index, "pdf")}
+                        onClick={() => addPlan(index)}
                       >
-                        上傳 PDF
-                      </button>
-                      <button
-                        type="button"
-                        className={trip.documentType === "drive" ? "active" : ""}
-                        onClick={() => changeDocumentType(index, "drive")}
-                      >
-                        Google Drive 網址
+                        ＋新增方案
                       </button>
                     </div>
 
-                    {trip.documentType === "pdf" ? (
-                      <div className="pdf-upload">
-                        <label className="file-picker">
-                          <span>
-                            {uploadingTripId === trip.id
-                              ? "正在上傳…"
-                              : trip.documentUrl
-                                ? `已上傳：${trip.documentName}`
-                                : "選擇 PDF 檔案"}
-                          </span>
-                          <input
-                            type="file"
-                            accept=".pdf,application/pdf"
-                            disabled={uploadingTripId === trip.id}
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              if (file) void uploadPdf(index, file);
-                              event.target.value = "";
-                            }}
-                          />
-                        </label>
-                        <small>
-                          單一檔案上限 25 MB；上傳完成後請按最下方儲存按鈕。
-                        </small>
+                    {trip.plans.length > 0 ? (
+                      <div className="plan-editor-list">
+                        {trip.plans.map((plan, planIndex) => {
+                          const uploadKey = `${trip.id}:${plan.id}`;
+                          const selectedDepartureCount =
+                            plan.departureMode === "all"
+                              ? trip.departures.length
+                              : plan.departureIds.length;
+
+                          return (
+                            <div
+                              className="plan-editor-card"
+                              id={`studio-plan-${plan.id}`}
+                              key={plan.id}
+                            >
+                              <div className="plan-editor-card-heading">
+                                <div>
+                                  <span>方案 {planIndex + 1}</span>
+                                  <strong>
+                                    {plan.airline || "航空公司待填"}｜
+                                    {plan.title || "方案名稱待填"}
+                                  </strong>
+                                </div>
+                                <div className="trip-editor-actions">
+                                  <button
+                                    type="button"
+                                    onClick={() => movePlan(index, planIndex, -1)}
+                                    disabled={planIndex === 0}
+                                    aria-label={`將方案 ${planIndex + 1} 往上移`}
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => movePlan(index, planIndex, 1)}
+                                    disabled={planIndex === trip.plans.length - 1}
+                                    aria-label={`將方案 ${planIndex + 1} 往下移`}
+                                  >
+                                    ↓
+                                  </button>
+                                  <button
+                                    className="danger"
+                                    type="button"
+                                    onClick={() => removePlan(index, planIndex)}
+                                  >
+                                    刪除
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="field-grid plan-fields">
+                                <Field label="航空公司">
+                                  <input
+                                    required
+                                    placeholder="例如：長榮航空"
+                                    value={plan.airline}
+                                    onChange={(event) =>
+                                      updatePlan(index, planIndex, "airline", event.target.value)
+                                    }
+                                  />
+                                </Field>
+                                <Field label="方案名稱">
+                                  <input
+                                    required
+                                    placeholder="例如：早去晚回精選版"
+                                    value={plan.title}
+                                    onChange={(event) =>
+                                      updatePlan(index, planIndex, "title", event.target.value)
+                                    }
+                                  />
+                                </Field>
+                                <Field
+                                  label="方案起價（選填）"
+                                  hint="留空時顯示行程的共用起價。"
+                                >
+                                  <input
+                                    placeholder="例如：29,900 起"
+                                    value={plan.price}
+                                    onChange={(event) =>
+                                      updatePlan(index, planIndex, "price", event.target.value)
+                                    }
+                                  />
+                                </Field>
+                                <Field label="方案差異摘要" wide>
+                                  <textarea
+                                    required
+                                    placeholder="說明航班時間、住宿或行程內容差異。"
+                                    value={plan.summary}
+                                    onChange={(event) =>
+                                      updatePlan(index, planIndex, "summary", event.target.value)
+                                    }
+                                  />
+                                </Field>
+                              </div>
+
+                              <div className="plan-document-editor">
+                                <div
+                                  className="document-type-switch"
+                                  role="group"
+                                  aria-label={`方案 ${planIndex + 1} 行程資料來源`}
+                                >
+                                  <button
+                                    type="button"
+                                    aria-pressed={plan.documentType === "pdf"}
+                                    className={plan.documentType === "pdf" ? "active" : ""}
+                                    onClick={() => changeDocumentType(index, planIndex, "pdf")}
+                                  >
+                                    上傳 PDF
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-pressed={plan.documentType === "drive"}
+                                    className={plan.documentType === "drive" ? "active" : ""}
+                                    onClick={() => changeDocumentType(index, planIndex, "drive")}
+                                  >
+                                    Drive 網址
+                                  </button>
+                                </div>
+
+                                {plan.documentType === "pdf" ? (
+                                  <div className="pdf-upload">
+                                    <label className="file-picker">
+                                      <span>
+                                        {uploadingPlanKey === uploadKey
+                                          ? "正在上傳…"
+                                          : plan.documentUrl
+                                            ? `已上傳：${plan.documentName}`
+                                            : "選擇 PDF 檔案"}
+                                      </span>
+                                      <input
+                                        type="file"
+                                        accept=".pdf,application/pdf"
+                                        disabled={uploadingPlanKey === uploadKey}
+                                        onChange={(event) => {
+                                          const file = event.target.files?.[0];
+                                          if (file) void uploadPdf(index, planIndex, file);
+                                          event.target.value = "";
+                                        }}
+                                      />
+                                    </label>
+                                    <small>
+                                      單一檔案上限 25 MB；上傳完成後請按最下方儲存按鈕。
+                                    </small>
+                                  </div>
+                                ) : (
+                                  <Field
+                                    label="Google Drive 分享網址"
+                                    hint="請先把檔案權限設為「知道連結的任何人都可查看」"
+                                    wide
+                                  >
+                                    <input
+                                      type="url"
+                                      placeholder="https://drive.google.com/..."
+                                      value={plan.documentUrl}
+                                      onChange={(event) =>
+                                        updatePlan(index, planIndex, "documentUrl", event.target.value)
+                                      }
+                                    />
+                                  </Field>
+                                )}
+                              </div>
+
+                              <div className="plan-departure-editor">
+                                <div className="plan-departure-heading">
+                                  <strong>適用團期</strong>
+                                  <small>
+                                    {trip.departures.length === 0
+                                      ? "請先在下方新增團期"
+                                      : `目前套用 ${selectedDepartureCount} 個團期`}
+                                  </small>
+                                </div>
+                                <div
+                                  className="plan-departure-mode"
+                                  role="group"
+                                  aria-label={`方案 ${planIndex + 1} 適用團期`}
+                                >
+                                  <button
+                                    type="button"
+                                    aria-pressed={plan.departureMode === "all"}
+                                    className={plan.departureMode === "all" ? "active" : ""}
+                                    onClick={() =>
+                                      changePlanDepartureMode(index, planIndex, "all")
+                                    }
+                                  >
+                                    適用所有團期
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-pressed={plan.departureMode === "selected"}
+                                    className={plan.departureMode === "selected" ? "active" : ""}
+                                    onClick={() =>
+                                      changePlanDepartureMode(index, planIndex, "selected")
+                                    }
+                                  >
+                                    指定部分團期
+                                  </button>
+                                </div>
+
+                                {plan.departureMode === "selected" &&
+                                trip.departures.length > 0 ? (
+                                  <div className="plan-departure-options">
+                                    {trip.departures.map((departure) => (
+                                      <label key={departure.id}>
+                                        <input
+                                          type="checkbox"
+                                          checked={plan.departureIds.includes(departure.id)}
+                                          onChange={() =>
+                                            togglePlanDeparture(index, planIndex, departure.id)
+                                          }
+                                        />
+                                        <span>{departure.date || "日期待填"}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
-                      <div className="field-grid">
-                        <Field
-                          label="Google Drive 分享網址"
-                          hint="請先把檔案權限設為「知道連結的任何人都可查看」"
-                          wide
-                        >
-                          <input
-                            type="url"
-                            placeholder="https://drive.google.com/..."
-                            value={trip.documentUrl}
-                            onChange={(event) =>
-                              updateTrip(
-                                index,
-                                "documentUrl",
-                                event.target.value,
-                              )
-                            }
-                          />
-                        </Field>
+                      <div className="plan-editor-empty">
+                        尚未建立方案。請新增方案後再上傳行程文件。
                       </div>
                     )}
                   </div>
@@ -827,7 +1154,7 @@ export function TripsEditor({
         </div>
       </section>
 
-      <StudioSaveBar status={status} busy={Boolean(uploadingTripId)} />
+      <StudioSaveBar status={status} busy={Boolean(uploadingPlanKey)} />
     </form>
   );
 }

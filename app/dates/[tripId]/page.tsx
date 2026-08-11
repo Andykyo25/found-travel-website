@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DepartureTable } from "@/app/components/DepartureTable";
+import { TripPlanCard } from "@/app/components/TripPlanCard";
 import { getSiteContent } from "@/lib/site-content";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
+import { publishedTripPlans } from "@/lib/trip-plans";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,7 @@ export default async function TripDatesPage({ params }: PageProps) {
   const content = await getSiteContent();
   const trip = content.trips.find((item) => item.id === tripId);
   if (!trip) notFound();
+  const plans = publishedTripPlans(trip);
 
   return (
     <main className="dates-shell">
@@ -60,30 +63,58 @@ export default async function TripDatesPage({ params }: PageProps) {
           <span>{trip.days}</span>
         </p>
 
-        {trip.departures.length > 0 ? (
-          <DepartureTable departures={trip.departures} />
-        ) : (
-          <div className="dates-empty">
-            出發日期規劃中，歡迎透過 LINE 詢問最新團期。
-          </div>
-        )}
+        {plans.length > 0 ? (
+          <section className="trip-plans-section" id="plans">
+            <div className="trip-plans-intro">
+              <p className="eyebrow">
+                <span />
+                TRAVEL OPTIONS
+              </p>
+              <h2>{plans.length > 1 ? "選擇適合你的行程方案" : "完整行程方案"}</h2>
+              <p>
+                {plans.length > 1
+                  ? "不同航空公司、航班時間與行程內容分開呈現，先比較差異再查看完整資料。"
+                  : "查看航空安排、適用團期與完整行程資料。"}
+              </p>
+            </div>
+            <div className="trip-plan-grid">
+              {plans.map((plan, index) => (
+                <TripPlanCard
+                  key={plan.id}
+                  plan={plan}
+                  departures={trip.departures}
+                  fallbackPrice={trip.price}
+                  index={index}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
-        <p className="dates-footnote">
-          日期與價格為即時參考，實際以業務顧問回覆為準。
-        </p>
+        <section className="trip-departures-section">
+          <div className="trip-departures-heading">
+            <h2>出發日期與團費</h2>
+            <p>
+              {plans.length > 0
+                ? "可點選方案標籤回到對應的完整行程資料。"
+                : "實際團位與價格請洽業務顧問確認。"}
+            </p>
+          </div>
+          {trip.departures.length > 0 ? (
+            <DepartureTable departures={trip.departures} plans={plans} />
+          ) : (
+            <div className="dates-empty">
+              出發日期規劃中，歡迎透過 LINE 詢問最新團期。
+            </div>
+          )}
+
+          <p className="dates-footnote">
+            日期與價格為即時參考，實際以業務顧問回覆為準。
+          </p>
+        </section>
       </section>
 
       <section className="dates-actions">
-        {trip.documentUrl ? (
-          <a
-            className="button button-secondary"
-            href={trip.documentUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            查看行程內容 <span aria-hidden="true">↗</span>
-          </a>
-        ) : null}
         <a
           className="button"
           href={content.lineUrl}

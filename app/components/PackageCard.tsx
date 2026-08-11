@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Trip } from "@/lib/site-content";
 import { nextDepartureLabel } from "@/lib/trip-filters";
+import { publishedTripPlans } from "@/lib/trip-plans";
 
 function PinIcon() {
   return (
@@ -77,6 +78,8 @@ export function PackageCard({
   trip: Trip;
   priority?: boolean;
 }) {
+  const plans = publishedTripPlans(trip);
+
   return (
     <article className="package-card">
       <div className="package-image">
@@ -127,18 +130,28 @@ export function PackageCard({
       <div className="package-footer">
         <div className="package-price">
           <strong>{trip.price}</strong>
-          <small>{trip.days}行程</small>
+          <small>
+            {trip.days}行程{plans.length > 1 ? `・${plans.length} 個方案` : ""}
+          </small>
         </div>
-        {trip.documentUrl ? (
+        {plans.length === 1 ? (
           <a
             className="package-book"
-            href={trip.documentUrl}
+            href={plans[0].documentUrl}
             target="_blank"
             rel="noreferrer"
             aria-label={`查看${trip.title}行程內容`}
           >
             查看行程
           </a>
+        ) : plans.length > 1 ? (
+          <Link
+            className="package-book"
+            href={`/dates/${trip.id}#plans`}
+            aria-label={`比較${trip.title}的${plans.length}個行程方案`}
+          >
+            查看 {plans.length} 個方案
+          </Link>
         ) : (
           <Link
             className="package-book"
