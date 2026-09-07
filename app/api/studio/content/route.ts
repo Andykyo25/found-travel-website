@@ -1,30 +1,13 @@
+import { validateTripDates } from "@/lib/trip-validation";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getStudioUserFromRequest,
   isSameOriginRequest,
 } from "@/lib/studio-auth";
-import {
-  getSiteContentWithMeta,
-  saveSiteContent,
-  type SiteContent,
-} from "@/lib/site-content";
-import { cleanupOrphanedTripPdfs } from "@/lib/railway-storage";
-import { tripPdfKeyFromDocumentUrl } from "@/lib/storage-keys";
+import { getSiteContentWithMeta, saveSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-function referencedTripPdfKeys(content: SiteContent) {
-  const keys = new Set<string>();
-  for (const trip of content.trips) {
-    for (const plan of trip.plans) {
-      if (plan.documentType !== "pdf") continue;
-      const key = tripPdfKeyFromDocumentUrl(plan.documentUrl);
-      if (key) keys.add(key);
-    }
-  }
-  return keys;
-}
 
 export async function PUT(request: NextRequest) {
   if (!isSameOriginRequest(request)) {
@@ -42,6 +25,9 @@ export async function PUT(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "內容格式不正確" }, { status: 400 });
   }
+
+  const invalid = validateTripDates(body);
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
   const baseUpdatedAt =
     typeof body === "object" &&
@@ -61,38 +47,32 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const saved = await saveSiteContent(body, user.email);
-    const previousPdfKeys = referencedTripPdfKeys(previousContent);
-    const referencedPdfKeys = referencedTripPdfKeys(saved.content);
-    const retiredPdfKeys = new Set(
-      [...previousPdfKeys].filter((key) => !referencedPdfKeys.has(key)),
-    );
-
-    let pdfCleanup = {
-      deleted: 0,
-      protectedRecent: 0,
-      failed: false,
-    };
-    try {
-      pdfCleanup = {
-        ...(await cleanupOrphanedTripPdfs({
-          referencedKeys: referencedPdfKeys,
-          immediatelyRemoveKeys: retiredPdfKeys,
-        })),
-        failed: false,
-      };
-    } catch (error) {
-      // 網站內容已經成功儲存，清理失敗不應讓管理員誤以為內容沒有發布。
-      console.error("Unable to clean up orphaned trip PDFs", error);
-      pdfCleanup.failed = true;
-    }
-
+    const saved = await saveSiteContent(body, user.email, meta.etag, {
+      ...previousContent,
+      _updatedAt: meta.updatedAt,
+      _updatedBy: meta.updatedBy,
+    });
+    // Keep retired PDFs so history snapshots and concurrent drafts remain restorable.
+    const pdfCleanup = { deleted: 0, protectedRecent: 0, failed: false };
     return NextResponse.json({
       content: saved.content,
       savedAt: saved.updatedAt,
       pdfCleanup,
     });
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      ["PreconditionFailed", "ConditionalRequestConflict"].includes(
+        String(error.name),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "內容已由其他管理員更新，請重新整理後再儲存" },
+        { status: 409 },
+      );
+    }
     console.error("Unable to save site content", error);
     return NextResponse.json(
       { error: "暫時無法儲存，請稍後再試" },

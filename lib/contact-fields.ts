@@ -17,6 +17,13 @@ export type ContactRequest = {
   preferredTimes: ContactTimeSlotId[];
   message: string;
   createdAt: string;
+  notification?: {
+    state: "pending" | "sending" | "delivered" | "failed";
+    attempts: number;
+    nextAttemptAt: number;
+    line: boolean;
+    webhook: boolean;
+  };
 };
 
 export type ManagedContactRequest = ContactRequest & {

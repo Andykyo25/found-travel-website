@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import {
-  contactTimeSlots,
-  type ContactTimeSlotId,
-} from "@/lib/contact-fields";
+import { contactTimeSlots, type ContactTimeSlotId } from "@/lib/contact-fields";
 
 type Status =
   | { kind: "idle" }
@@ -13,11 +10,17 @@ type Status =
   | { kind: "error"; message: string }
   | { kind: "success" };
 
-export function ContactForm({ lineUrl }: { lineUrl: string }) {
+export function ContactForm({
+  lineUrl,
+  initialMessage = "",
+}: {
+  lineUrl: string;
+  initialMessage?: string;
+}) {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [preferredTimes, setPreferredTimes] = useState<ContactTimeSlotId[]>([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessage);
   const [company, setCompany] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
@@ -68,7 +71,7 @@ export function ContactForm({ lineUrl }: { lineUrl: string }) {
         </span>
         <h2>已收到您的諮詢</h2>
         <p>
-          我們已將您的需求轉給業務顧問，會在您希望的時段主動與您聯繫。
+          您的需求已成功收件，顧問會依您希望的時段安排聯繫。
           若有急件，也歡迎直接透過 LINE 找我們。
         </p>
         <div className="contact-success-actions">

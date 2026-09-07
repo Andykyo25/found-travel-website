@@ -1,10 +1,17 @@
 import "server-only";
 
 import { headers } from "next/headers";
+import { configuredSiteOrigin } from "./site-origin";
 
 // 網站還沒有正式網域，因此一律從請求標頭推導 origin，
 // 買了 domain 接上 Railway 之後不需要改任何程式。
 export async function getSiteOrigin() {
+  return (
+    configuredSiteOrigin(process.env.SITE_URL) ?? (await getRequestOrigin())
+  );
+}
+
+export async function getRequestOrigin() {
   const requestHeaders = await headers();
   const host =
     requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim() ??

@@ -36,11 +36,20 @@ test("the finished travel site replaces all starter content", async () => {
     readFile(new URL("../lib/site-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/studio/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/studio/settings/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/TripsEditor.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/studio/settings/page.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/components/TripsEditor.tsx", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../lib/studio-auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../railway.json", import.meta.url), "utf8"),
-    readFile(new URL("../app/dates/[tripId]/page.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/dates/[tripId]/page.tsx", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../app/contact/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/contact/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/contact-notify.ts", import.meta.url), "utf8"),
@@ -69,7 +78,10 @@ test("the finished travel site replaces all starter content", async () => {
       new URL("../app/studio/contacts/page.tsx", import.meta.url),
       "utf8",
     ),
-    readFile(new URL("../app/components/PackageCard.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/components/PackageCard.tsx", import.meta.url),
+      "utf8",
+    ),
     readFile(
       new URL("../app/components/TripPlanCard.tsx", import.meta.url),
       "utf8",
@@ -125,15 +137,16 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(page, /href="\/contact"/);
   assert.match(contactPage, /ContactForm/);
   assert.match(contactApi, /parseContactRequestInput/);
-  assert.match(contactApi, /notifyContactRequest/);
+  assert.match(contactApi, /deliverContact/);
   assert.match(contactNotify, /api\.line\.me\/v2\/bot\/message\/push/);
   assert.match(contactNotify, /CONTACT_WEBHOOK_URL/);
   assert.match(contactDeleteApi, /deleteContactRequestObject/);
   assert.match(contactDeleteApi, /isSameOriginRequest/);
   assert.match(contactRequestTable, /method: "DELETE"/);
   assert.match(contactRequestTable, /window\.confirm/);
-  assert.match(studioContentApi, /cleanupOrphanedTripPdfs/);
-  assert.match(studioContentApi, /trip\.plans/);
+  assert.match(railwayStorage, /IfMatch/);
+  assert.match(railwayStorage, /content-history/);
+  assert.match(studioContentApi, /status: 409/);
   assert.match(railwayStorage, /orphanedTripPdfDecision/);
   assert.match(railwayStorage, /DeleteObjectsCommand/);
   assert.match(travelToolsApi, /status: 503/);
@@ -147,9 +160,9 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(studioPage, /TripsEditor/);
   assert.match(tripsEditor, /addPlan/);
   assert.match(tripsEditor, /togglePlanDeparture/);
-  assert.match(tripsEditor, /uploadPdf\(index, planIndex, file\)/);
+  assert.match(tripsEditor, /uploadPdf\(\s*index,\s*planIndex,\s*file,?\s*\)/);
   assert.match(packageCard, /publishedTripPlans/);
-  assert.match(packageCard, /#plans/);
+
   assert.match(tripPlanCard, /departuresForPlan/);
   assert.match(tripPlanCard, /plan\.documentUrl/);
   assert.match(studioSettingsPage, /requireStudioUser/);
@@ -162,6 +175,8 @@ test("the finished travel site replaces all starter content", async () => {
 
   await access(new URL("../.next/standalone/server.js", import.meta.url));
   await assert.rejects(
-    access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)),
+    access(
+      new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url),
+    ),
   );
 });

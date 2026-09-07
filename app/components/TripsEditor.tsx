@@ -9,7 +9,7 @@ import type {
   TripPlan,
   TripPlanDepartureMode,
 } from "@/lib/site-content";
-import { parseDepartureDate } from "@/lib/trip-filters";
+import { parseDepartureDate, formatDepartureDate } from "@/lib/trip-values";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
 
 type TripFilter = "all" | "featured" | "other" | "todo";
@@ -69,42 +69,6 @@ function createDeparture(): TripDeparture {
   };
 }
 
-function formatDepartureDate(value: string) {
-  const digits = value.trim();
-  if (!/^\d{6,8}$/.test(digits)) return value;
-
-  const year = digits.slice(0, 4);
-  const rest = digits.slice(4);
-  let month = "";
-  let day = "";
-  if (rest.length === 4) {
-    month = rest.slice(0, 2);
-    day = rest.slice(2);
-  } else if (rest.length === 2) {
-    month = rest.slice(0, 1);
-    day = rest.slice(1);
-  } else {
-    const twoDigitMonth = Number(rest.slice(0, 2));
-    if (twoDigitMonth >= 1 && twoDigitMonth <= 12) {
-      month = rest.slice(0, 2);
-      day = rest.slice(2);
-    } else {
-      month = rest.slice(0, 1);
-      day = rest.slice(1);
-    }
-  }
-
-  const monthNumber = Number(month);
-  const dayNumber = Number(day);
-  if (monthNumber < 1 || monthNumber > 12 || dayNumber < 1 || dayNumber > 31) {
-    return value;
-  }
-
-  return `${year}/${String(monthNumber).padStart(2, "0")}/${String(
-    dayNumber,
-  ).padStart(2, "0")}`;
-}
-
 function formatDeparturePrice(value: string) {
   const trimmed = value.trim();
   if (!/^[0-9,]+$/.test(trimmed)) return value;
@@ -130,8 +94,10 @@ function tripIssues(trip: Trip, todayTime: number) {
     const hasUpcoming = trip.departures.some((departure) => {
       const parsed = parseDepartureDate(departure.date);
       // 日期打成自由文字時無法判斷，一律當作還有效。
-      return !parsed || parsed.time >= todayTime;
+      return parsed !== null && parsed.time >= todayTime;
     });
+    if (trip.departures.some((d) => !parseDepartureDate(d.date)))
+      issues.push("日期無效");
     if (!hasUpcoming) issues.push("團期已過");
   }
 
@@ -263,11 +229,7 @@ export function TripsEditor({
     );
   };
 
-  const movePlan = (
-    tripIndex: number,
-    planIndex: number,
-    offset: -1 | 1,
-  ) => {
+  const movePlan = (tripIndex: number, planIndex: number, offset: -1 | 1) => {
     updateTripPlans(tripIndex, (plans) => {
       const target = planIndex + offset;
       if (target < 0 || target >= plans.length) return plans;
@@ -284,7 +246,9 @@ export function TripsEditor({
   ) => {
     const departureIds =
       departureMode === "selected"
-        ? (draft.trips[tripIndex]?.departures.map((departure) => departure.id) ?? [])
+        ? (draft.trips[tripIndex]?.departures.map(
+            (departure) => departure.id,
+          ) ?? [])
         : [];
     updateTripPlans(tripIndex, (plans) =>
       plans.map((plan, index) =>
@@ -489,7 +453,11 @@ export function TripsEditor({
   const needle = keyword.trim().toLowerCase();
   // 保留原始索引，所有增刪與排序操作都以完整陣列為準。
   const visibleTrips = draft.trips
-    .map((trip, index) => ({ trip, index, issues: tripIssues(trip, todayTime) }))
+    .map((trip, index) => ({
+      trip,
+      index,
+      issues: tripIssues(trip, todayTime),
+    }))
     .filter(({ trip, issues }) => {
       if (filter === "featured" && !trip.featured) return false;
       if (filter === "other" && trip.featured) return false;
@@ -584,7 +552,11 @@ export function TripsEditor({
               onChange={(event) => setKeyword(event.target.value)}
               aria-label="搜尋行程"
             />
-            <div className="trip-filter-pills" role="group" aria-label="行程篩選">
+            <div
+              className="trip-filter-pills"
+              role="group"
+              aria-label="行程篩選"
+            >
               {filterOptions.map((option) => (
                 <button
                   key={option.id}
@@ -615,7 +587,9 @@ export function TripsEditor({
         ) : null}
 
         {draft.trips.length === 0 ? (
-          <div className="empty-trips">尚未建立行程，請按「新增行程」開始。</div>
+          <div className="empty-trips">
+            尚未建立行程，請按「新增行程」開始。
+          </div>
         ) : null}
 
         {draft.trips.length > 0 && visibleTrips.length === 0 ? (
@@ -785,7 +759,8 @@ export function TripsEditor({
                       <div>
                         <h4>航空／行程方案</h4>
                         <small>
-                          每一份 PDF 或 Drive 行程建立成獨立方案，並標示航空公司、差異與適用團期。
+                          每一份 PDF 或 Drive
+                          行程建立成獨立方案，並標示航空公司、差異與適用團期。
                         </small>
                       </div>
                       <button
@@ -823,7 +798,9 @@ export function TripsEditor({
                                 <div className="trip-editor-actions">
                                   <button
                                     type="button"
-                                    onClick={() => movePlan(index, planIndex, -1)}
+                                    onClick={() =>
+                                      movePlan(index, planIndex, -1)
+                                    }
                                     disabled={planIndex === 0}
                                     aria-label={`將方案 ${planIndex + 1} 往上移`}
                                   >
@@ -831,8 +808,12 @@ export function TripsEditor({
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => movePlan(index, planIndex, 1)}
-                                    disabled={planIndex === trip.plans.length - 1}
+                                    onClick={() =>
+                                      movePlan(index, planIndex, 1)
+                                    }
+                                    disabled={
+                                      planIndex === trip.plans.length - 1
+                                    }
                                     aria-label={`將方案 ${planIndex + 1} 往下移`}
                                   >
                                     ↓
@@ -854,7 +835,12 @@ export function TripsEditor({
                                     placeholder="例如：長榮航空"
                                     value={plan.airline}
                                     onChange={(event) =>
-                                      updatePlan(index, planIndex, "airline", event.target.value)
+                                      updatePlan(
+                                        index,
+                                        planIndex,
+                                        "airline",
+                                        event.target.value,
+                                      )
                                     }
                                   />
                                 </Field>
@@ -864,7 +850,12 @@ export function TripsEditor({
                                     placeholder="例如：早去晚回精選版"
                                     value={plan.title}
                                     onChange={(event) =>
-                                      updatePlan(index, planIndex, "title", event.target.value)
+                                      updatePlan(
+                                        index,
+                                        planIndex,
+                                        "title",
+                                        event.target.value,
+                                      )
                                     }
                                   />
                                 </Field>
@@ -876,7 +867,12 @@ export function TripsEditor({
                                     placeholder="例如：29,900 起"
                                     value={plan.price}
                                     onChange={(event) =>
-                                      updatePlan(index, planIndex, "price", event.target.value)
+                                      updatePlan(
+                                        index,
+                                        planIndex,
+                                        "price",
+                                        event.target.value,
+                                      )
                                     }
                                   />
                                 </Field>
@@ -886,7 +882,12 @@ export function TripsEditor({
                                     placeholder="說明航班時間、住宿或行程內容差異。"
                                     value={plan.summary}
                                     onChange={(event) =>
-                                      updatePlan(index, planIndex, "summary", event.target.value)
+                                      updatePlan(
+                                        index,
+                                        planIndex,
+                                        "summary",
+                                        event.target.value,
+                                      )
                                     }
                                   />
                                 </Field>
@@ -901,16 +902,36 @@ export function TripsEditor({
                                   <button
                                     type="button"
                                     aria-pressed={plan.documentType === "pdf"}
-                                    className={plan.documentType === "pdf" ? "active" : ""}
-                                    onClick={() => changeDocumentType(index, planIndex, "pdf")}
+                                    className={
+                                      plan.documentType === "pdf"
+                                        ? "active"
+                                        : ""
+                                    }
+                                    onClick={() =>
+                                      changeDocumentType(
+                                        index,
+                                        planIndex,
+                                        "pdf",
+                                      )
+                                    }
                                   >
                                     上傳 PDF
                                   </button>
                                   <button
                                     type="button"
                                     aria-pressed={plan.documentType === "drive"}
-                                    className={plan.documentType === "drive" ? "active" : ""}
-                                    onClick={() => changeDocumentType(index, planIndex, "drive")}
+                                    className={
+                                      plan.documentType === "drive"
+                                        ? "active"
+                                        : ""
+                                    }
+                                    onClick={() =>
+                                      changeDocumentType(
+                                        index,
+                                        planIndex,
+                                        "drive",
+                                      )
+                                    }
                                   >
                                     Drive 網址
                                   </button>
@@ -929,16 +950,24 @@ export function TripsEditor({
                                       <input
                                         type="file"
                                         accept=".pdf,application/pdf"
-                                        disabled={uploadingPlanKey === uploadKey}
+                                        disabled={
+                                          uploadingPlanKey === uploadKey
+                                        }
                                         onChange={(event) => {
                                           const file = event.target.files?.[0];
-                                          if (file) void uploadPdf(index, planIndex, file);
+                                          if (file)
+                                            void uploadPdf(
+                                              index,
+                                              planIndex,
+                                              file,
+                                            );
                                           event.target.value = "";
                                         }}
                                       />
                                     </label>
                                     <small>
-                                      單一檔案上限 25 MB；上傳完成後請按最下方儲存按鈕。
+                                      單一檔案上限 25
+                                      MB；上傳完成後請按最下方儲存按鈕。
                                     </small>
                                   </div>
                                 ) : (
@@ -952,7 +981,12 @@ export function TripsEditor({
                                       placeholder="https://drive.google.com/..."
                                       value={plan.documentUrl}
                                       onChange={(event) =>
-                                        updatePlan(index, planIndex, "documentUrl", event.target.value)
+                                        updatePlan(
+                                          index,
+                                          planIndex,
+                                          "documentUrl",
+                                          event.target.value,
+                                        )
                                       }
                                     />
                                   </Field>
@@ -976,19 +1010,37 @@ export function TripsEditor({
                                   <button
                                     type="button"
                                     aria-pressed={plan.departureMode === "all"}
-                                    className={plan.departureMode === "all" ? "active" : ""}
+                                    className={
+                                      plan.departureMode === "all"
+                                        ? "active"
+                                        : ""
+                                    }
                                     onClick={() =>
-                                      changePlanDepartureMode(index, planIndex, "all")
+                                      changePlanDepartureMode(
+                                        index,
+                                        planIndex,
+                                        "all",
+                                      )
                                     }
                                   >
                                     適用所有團期
                                   </button>
                                   <button
                                     type="button"
-                                    aria-pressed={plan.departureMode === "selected"}
-                                    className={plan.departureMode === "selected" ? "active" : ""}
+                                    aria-pressed={
+                                      plan.departureMode === "selected"
+                                    }
+                                    className={
+                                      plan.departureMode === "selected"
+                                        ? "active"
+                                        : ""
+                                    }
                                     onClick={() =>
-                                      changePlanDepartureMode(index, planIndex, "selected")
+                                      changePlanDepartureMode(
+                                        index,
+                                        planIndex,
+                                        "selected",
+                                      )
                                     }
                                   >
                                     指定部分團期
@@ -1002,12 +1054,20 @@ export function TripsEditor({
                                       <label key={departure.id}>
                                         <input
                                           type="checkbox"
-                                          checked={plan.departureIds.includes(departure.id)}
+                                          checked={plan.departureIds.includes(
+                                            departure.id,
+                                          )}
                                           onChange={() =>
-                                            togglePlanDeparture(index, planIndex, departure.id)
+                                            togglePlanDeparture(
+                                              index,
+                                              planIndex,
+                                              departure.id,
+                                            )
                                           }
                                         />
-                                        <span>{departure.date || "日期待填"}</span>
+                                        <span>
+                                          {departure.date || "日期待填"}
+                                        </span>
                                       </label>
                                     ))}
                                   </div>
@@ -1031,7 +1091,7 @@ export function TripsEditor({
                         <small>
                           顯示於前台「查看出發時間」頁與「出發團期總表」，沒有日期時前台不顯示該按鈕。日期輸入
                           20260402 會自動轉成 2026/04/02，價格輸入 26800
-                          會自動加上逗號；未填日期的列儲存時會略過。
+                          會自動加上逗號；日期無效或空白的列必須修正或移除後才能儲存。
                         </small>
                       </div>
                       <button
@@ -1049,38 +1109,54 @@ export function TripsEditor({
                           className="departure-row departure-row-head"
                           aria-hidden="true"
                         >
-                          <span>出發日期</span>
+                          <span>出發日期／團期備註</span>
                           <span>價格</span>
                           <span />
                         </div>
                         {trip.departures.map((departure, departureIndex) => (
                           <div className="departure-row" key={departure.id}>
-                            <input
-                              aria-label="出發日期"
-                              placeholder="2026/09/09"
-                              value={departure.date}
-                              onChange={(event) =>
-                                updateDeparture(
-                                  index,
-                                  departureIndex,
-                                  "date",
-                                  event.target.value,
-                                )
-                              }
-                              onBlur={(event) => {
-                                const formatted = formatDepartureDate(
-                                  event.target.value,
-                                );
-                                if (formatted !== event.target.value) {
+                            <div>
+                              <input
+                                aria-label="出發日期"
+                                placeholder="2026/09/09"
+                                value={departure.date}
+                                onChange={(event) =>
                                   updateDeparture(
                                     index,
                                     departureIndex,
                                     "date",
-                                    formatted,
-                                  );
+                                    event.target.value,
+                                  )
                                 }
-                              }}
-                            />
+                                onBlur={(event) => {
+                                  const formatted = formatDepartureDate(
+                                    event.target.value,
+                                  );
+                                  if (formatted !== event.target.value) {
+                                    updateDeparture(
+                                      index,
+                                      departureIndex,
+                                      "date",
+                                      formatted,
+                                    );
+                                  }
+                                }}
+                              />
+                              <input
+                                aria-label="團期備註"
+                                placeholder="例如：長榮早去晚回／升等住宿"
+                                value={departure.note ?? ""}
+                                maxLength={120}
+                                onChange={(event) =>
+                                  updateDeparture(
+                                    index,
+                                    departureIndex,
+                                    "note",
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            </div>
                             <input
                               aria-label="價格"
                               placeholder="26,900"

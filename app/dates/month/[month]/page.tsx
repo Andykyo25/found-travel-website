@@ -77,6 +77,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
       </section>
 
       <DepartureBoard
+        key={month}
         rows={rows}
         months={months}
         activeMonth={month}
@@ -84,7 +85,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
       />
 
       <DepartureBoardCta lineUrl={content.lineUrl} />
-    
+
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );

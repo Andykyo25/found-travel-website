@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { notifyContactRequest } from "@/lib/contact-notify";
-import type { ContactRequest } from "@/lib/contact-fields";
+import { after } from "next/server";
+import { deliverContact } from "@/lib/contact-delivery";
+import type { ManagedContactRequest } from "@/lib/contact-fields";
 import {
   parseContactRequestInput,
   saveContactRequest,
 } from "@/lib/contact-requests";
 import { isRailwayStorageConfigured } from "@/lib/railway-storage";
-import { getSiteContent } from "@/lib/site-content";
 import { isSameOriginRequest } from "@/lib/studio-auth";
 
 export const dynamic = "force-dynamic";
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let saved: ContactRequest;
+  let saved: ManagedContactRequest;
   try {
     saved = await saveContactRequest(parsed.request);
   } catch (error) {
@@ -106,13 +106,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  try {
-    const { brandName } = await getSiteContent();
-    await notifyContactRequest(saved, brandName);
-  } catch (error) {
-    // 通知失敗不影響客人，資料已經存下來了。
-    console.error("Unable to notify contact request", error);
-  }
+  after(async () => {
+    try {
+      await deliverContact(saved.storageKey);
+    } catch (error) {
+      console.error("Contact queued for retry", error);
+    }
+  });
 
   return NextResponse.json({ ok: true });
 }

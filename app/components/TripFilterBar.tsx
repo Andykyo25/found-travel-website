@@ -60,14 +60,17 @@ function WalletIcon() {
 
 export function TripFilterBar({
   months,
+  regions = [],
   filters,
   tone = "light",
 }: {
   months: MonthOption[];
+  regions?: string[];
   filters: TripFilters;
   tone?: "light" | "on-image";
 }) {
   const router = useRouter();
+  const [region, setRegion] = useState(filters.region ?? "");
   const [month, setMonth] = useState(filters.month);
   const [budget, setBudget] = useState(filters.budget);
 
@@ -76,9 +79,25 @@ export function TripFilterBar({
       className={`trip-filter-bar${tone === "on-image" ? " on-image" : ""}`}
       onSubmit={(event) => {
         event.preventDefault();
-        router.push(tripFilterHref({ ...filters, month, budget }, false));
+        router.push(
+          tripFilterHref({ ...filters, month, budget, region }, false),
+        );
       }}
     >
+      {regions.length > 0 ? (
+        <label className="trip-filter-field">
+          <select
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            aria-label="目的地"
+          >
+            <option value="">目的地</option>
+            {regions.map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <label className="trip-filter-field">
         <CalendarIcon />
         <select

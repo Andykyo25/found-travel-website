@@ -1,3 +1,6 @@
+"use client";
+import { useState } from "react";
+import { formatDepartureDate, formatPrice } from "@/lib/trip-values";
 import Link from "next/link";
 import {
   groupDeparturesByMonth,
@@ -16,12 +19,35 @@ export function DepartureBoard({
   activeMonth: string;
   totalCount: number;
 }) {
-  const groups = groupDeparturesByMonth(rows);
-  const tripCount = new Set(rows.map((row) => row.tripId)).size;
+  const [category, setCategory] = useState("");
+  const [page, setPage] = useState(1);
+  const categories = [...new Set(rows.map((row) => row.region))];
+  const filtered = rows.filter((row) => !category || row.region === category);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / 24));
+  const activePage = Math.min(page, pageCount);
+  const groups = groupDeparturesByMonth(
+    filtered.slice((activePage - 1) * 24, activePage * 24),
+  );
+  const tripCount = new Set(filtered.map((row) => row.tripId)).size;
   const activeLabel = months.find((option) => option.id === activeMonth)?.label;
 
   return (
     <>
+      <label className="board-filter">
+        目的地{" "}
+        <select
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">全部目的地</option>
+          {categories.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </select>
+      </label>
       <nav className="month-pills" aria-label="依出發月份篩選">
         <Link
           className={`month-pill${activeMonth ? "" : " active"}`}
@@ -46,14 +72,14 @@ export function DepartureBoard({
 
       <p className="board-summary">
         {activeLabel ? `${activeLabel}共 ` : "共 "}
-        <strong>{rows.length}</strong> 個團期 ・ {tripCount} 條行程
+        <strong>{filtered.length}</strong> 個團期 ・ {tripCount} 條行程
       </p>
 
       {groups.map((group) => (
         <section className="board-group" key={group.id || "unknown"}>
           <h2 className="board-group-title">
             {group.label}
-            <small>{group.rows.length} 個團期</small>
+            <small>本頁 {group.rows.length} 個團期</small>
           </h2>
 
           <div className="board-rows">
@@ -62,7 +88,9 @@ export function DepartureBoard({
                 className="board-row"
                 key={`${row.tripId}-${row.departureId}`}
               >
-                <div className="board-date">{row.date}</div>
+                <div className="board-date">
+                  {formatDepartureDate(row.date)}
+                </div>
 
                 <div className="board-trip">
                   <h3>
@@ -73,17 +101,24 @@ export function DepartureBoard({
                     <span>{row.days}</span>
                     <span className="board-badge">{row.badge}</span>
                   </p>
+                  {row.details ? <p>{row.details}</p> : null}
                 </div>
 
                 <div className="board-price">
                   {row.price ? (
-                    <strong>{row.price}</strong>
+                    <strong>{formatPrice(row.price)}</strong>
                   ) : (
                     <span className="board-price-ask">價格洽詢</span>
                   )}
                 </div>
 
                 <div className="board-actions">
+                  <Link
+                    className="board-link primary"
+                    href={`/contact?trip=${encodeURIComponent(row.tripId)}&departure=${encodeURIComponent(row.departureId)}`}
+                  >
+                    詢問此團期
+                  </Link>
                   {row.documentUrl ? (
                     <a
                       className="board-link"
@@ -104,7 +139,7 @@ export function DepartureBoard({
                     </Link>
                   ) : null}
                   <Link
-                    className="board-link primary"
+                    className="board-link"
                     href={`/dates/${row.tripId}`}
                     aria-label={`查看${row.tripTitle}全部團期`}
                   >
@@ -116,6 +151,27 @@ export function DepartureBoard({
           </div>
         </section>
       ))}
+      {pageCount > 1 ? (
+        <nav className="board-pagination" aria-label="團期分頁">
+          <button
+            className="button button-secondary button-small"
+            disabled={activePage === 1}
+            onClick={() => setPage(activePage - 1)}
+          >
+            上一頁
+          </button>
+          <span role="status">
+            第 {activePage} / {pageCount} 頁
+          </span>
+          <button
+            className="button button-secondary button-small"
+            disabled={activePage === pageCount}
+            onClick={() => setPage(activePage + 1)}
+          >
+            下一頁
+          </button>
+        </nav>
+      ) : null}
     </>
   );
 }

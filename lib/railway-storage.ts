@@ -84,7 +84,10 @@ export function isRailwayStorageConfigured() {
   return Boolean(getStorageConfig());
 }
 
-export async function readSiteContentObject<T>(): Promise<T | null> {
+export async function readSiteContentObject<T>(): Promise<{
+  value: T;
+  etag: string;
+} | null> {
   const storage = getClient();
   if (!storage) return null;
 
@@ -95,8 +98,12 @@ export async function readSiteContentObject<T>(): Promise<T | null> {
         Key: contentKey,
       }),
     );
-    if (!result.Body) return null;
-    return JSON.parse(await result.Body.transformToString("utf-8")) as T;
+    if (!result.Body || !result.ETag)
+      throw new Error("Incomplete content response");
+    return {
+      value: JSON.parse(await result.Body.transformToString("utf-8")) as T,
+      etag: result.ETag,
+    };
   } catch (error) {
     if (
       error instanceof NoSuchKey ||
@@ -111,9 +118,26 @@ export async function readSiteContentObject<T>(): Promise<T | null> {
   }
 }
 
-export async function writeSiteContentObject(value: unknown) {
+export async function writeSiteContentObject(
+  value: unknown,
+  etag: string | null,
+  previous?: unknown,
+) {
   const storage = getClient();
   if (!storage) throw new Error("Railway Storage Bucket is unavailable");
+
+  // Independent immutable snapshots survive overwrites and do not require bucket versioning.
+  if (previous)
+    await storage.client.send(
+      new PutObjectCommand({
+        Bucket: storage.config.bucket,
+        Key: `content-history/${Date.now()}-${crypto.randomUUID()}.json`,
+        Body: JSON.stringify(previous),
+        ContentType: "application/json",
+        CacheControl: "no-store",
+        IfNoneMatch: "*",
+      }),
+    );
 
   await storage.client.send(
     new PutObjectCommand({
@@ -122,6 +146,7 @@ export async function writeSiteContentObject(value: unknown) {
       Body: JSON.stringify(value),
       ContentType: "application/json; charset=utf-8",
       CacheControl: "no-store",
+      ...(etag ? { IfMatch: etag } : { IfNoneMatch: "*" }),
     }),
   );
 }
@@ -132,15 +157,56 @@ export async function writeContactRequestObject(id: string, value: unknown) {
   const storage = getClient();
   if (!storage) throw new Error("Railway Storage Bucket is unavailable");
 
+  const key = `${contactPrefix}${Date.now()}-${id}.json`;
   await storage.client.send(
     new PutObjectCommand({
       Bucket: storage.config.bucket,
-      Key: `${contactPrefix}${Date.now()}-${id}.json`,
+      Key: key,
       Body: JSON.stringify(value),
       ContentType: "application/json; charset=utf-8",
       CacheControl: "no-store",
     }),
   );
+  return key;
+}
+
+export async function readContactForNotification(key: string) {
+  if (!isContactRequestKey(key)) throw new Error("Invalid contact key");
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  const result = await storage.client.send(
+    new GetObjectCommand({ Bucket: storage.config.bucket, Key: key }),
+  );
+  if (!result.Body || !result.ETag)
+    throw new Error("Incomplete contact response");
+  return {
+    value: JSON.parse(
+      await result.Body.transformToString(),
+    ) as import("./contact-fields").ContactRequest,
+    etag: result.ETag,
+  };
+}
+
+export async function updateContactNotification(
+  key: string,
+  value: unknown,
+  etag: string,
+) {
+  if (!isContactRequestKey(key)) throw new Error("Invalid contact key");
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  const result = await storage.client.send(
+    new PutObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: key,
+      Body: JSON.stringify(value),
+      ContentType: "application/json",
+      CacheControl: "no-store",
+      IfMatch: etag,
+    }),
+  );
+  if (!result.ETag) throw new Error("Missing contact version");
+  return result.ETag;
 }
 
 export async function deleteContactRequestObject(key: string) {
@@ -188,23 +254,28 @@ export async function listContactRequestObjects(
   } while (continuationToken);
 
   const newestFirst = keys.sort().reverse().slice(0, limit);
-  const loaded = await Promise.all(
-    newestFirst.map(async (key) => {
-      try {
-        const result = await storage.client.send(
-          new GetObjectCommand({
-            Bucket: storage.config.bucket,
-            Key: key,
-          }),
-        );
-        if (!result.Body) return null;
-        const raw = await result.Body.transformToString("utf-8");
-        return { key, value: JSON.parse(raw) as unknown };
-      } catch {
-        return null;
-      }
-    }),
-  );
+  const loaded: Array<StoredContactRequestObject | null> = [];
+  for (let offset = 0; offset < newestFirst.length; offset += 10) {
+    loaded.push(
+      ...(await Promise.all(
+        newestFirst.slice(offset, offset + 10).map(async (key) => {
+          try {
+            const result = await storage.client.send(
+              new GetObjectCommand({
+                Bucket: storage.config.bucket,
+                Key: key,
+              }),
+            );
+            if (!result.Body) return null;
+            const raw = await result.Body.transformToString("utf-8");
+            return { key, value: JSON.parse(raw) as unknown };
+          } catch {
+            return null;
+          }
+        }),
+      )),
+    );
+  }
 
   return loaded.filter(
     (item): item is StoredContactRequestObject => item !== null,

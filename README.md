@@ -6,7 +6,7 @@
 - `/studio` 使用核准 Email 與密碼登入
 - 行程支援不限筆數；同一行程可建立多個航空／內容方案，各自上傳 PDF 或設定 Google Drive 分享連結
 - 首頁使用公司 Logo、正式影片、天氣、當地時間與匯率工具
-- `/contact` 公開聯絡表單，送出後即時通知 LINE，並存進 `/studio/contacts`
+- `/contact` 公開聯絡表單，先存檔，再發送通知；失敗可重試，並在 `/studio/contacts` 查看狀態
 - Railway 連接 GitHub `main` 後，每次推送會自動重新部署
 
 ## Railway 第一次設定
@@ -59,7 +59,7 @@ bob@example.com:另一組密碼8字元
 客人在前台 `/contact` 送出「聯絡人／行動電話／希望聯繫時段／內容」後：
 
 1. 表單存進 Railway Bucket 的 `contact-requests/`，每筆一個檔案。
-2. 業務群組收到 LINE 通知。
+2. 網站於回應後發送 LINE／Webhook 通知，記錄各管道的結果。
 3. 業務登入 `/studio` 切到 **聯絡諮詢** 分頁即可看到全部表單，並可匯出 CSV。
 
 通知需要在網站 Service 的 Variables 設定，以下兩種擇一（兩種都設會同時送）：
@@ -81,7 +81,16 @@ CONTACT_WEBHOOK_URL=自動化服務提供的 Webhook 網址
 ```
 
 網站會以 POST 送出 JSON，其中 `text` 欄位已經是排版好的通知訊息，
-另外也附上 `name`、`mobile`、`preferredTimes`、`message`、`createdAt` 供自行組版。
+另外也附上 `id`、`name`、`mobile`、`preferredTimes`、`message`、`createdAt` 供自行組版。
+
+網站程序每分鐘檢查待送記錄，一次最多處理 10 筆；單輪最多嘗試 5 次，
+失敗後以 1、2、4、8 分鐘間隔重試。服務停機時暫停，重新啟動後繼續。
+後台可手動補送；已成功的管道不會再次發送。舊表單不會自動補送。
+LINE 使用固定 retry key，Webhook 帶有 `Idempotency-Key`，接收端需依此鍵去重；
+網路中斷可能導致「對方已收件、本站尚未確認」，因此無法保證只送達一次。
+通知處理使用 Bucket ETag 條件寫入及兩分鐘租約，避免多個程序同時處理。
+若最後一次嘗試期間服務中斷，可於租約到期後從後台補送。
+目前每輪會掃描詢問單；資料量成長後宜改用資料庫索引與獨立佇列。
 
 兩者都未設定時，表單仍會正常收件並存檔，只是群組不會收到即時通知，
 後台聯絡諮詢分頁會顯示提醒。
@@ -98,7 +107,7 @@ CONTACT_WEBHOOK_URL=自動化服務提供的 Webhook 網址
 - `SECRET_ACCESS_KEY` 或 `BUCKET_SECRET_ACCESS_KEY`
 - `REGION` 或 `BUCKET_REGION`
 
-## 詢問單與 PDF 清理
+## 詢問單、內容歷史與 PDF 保留
 
 ### 多方案行程
 
@@ -109,14 +118,34 @@ CONTACT_WEBHOOK_URL=自動化服務提供的 Webhook 網址
 
 - 後台 `/studio/contacts` 每筆詢問單都有刪除按鈕。刪除前會再次確認，
   成功後會永久移除 Bucket 內對應的 JSON，無法復原。
-- 每次儲存行程或網站設定時，系統會自動檢查 `trip-pdfs/`：
-  已從發布內容移除的 PDF 會立即刪除；從未發布的上傳檔會先保留 24 小時，
-  超過緩衝時間且仍未被任何行程使用時才清理。
-- PDF 清理失敗不會回滾已發布的內容，後台會顯示提示，並在下次儲存時重試。
+- 每次儲存會先將前一版內容存到 `content-history/`，再以 ETag 條件寫入發布內容。
+  同時編輯發生衝突會回覆 409，請重新載入最新內容後再編輯。
+- PDF 不再於儲存時自動刪除，避免破壞歷史內容或其他人的草稿。
+  清理前需核對發布內容、歷史版本和仍在編輯的草稿；歷史與 PDF 目前無自動保留期限。
+- 歷史檔是原始 JSON，尚未提供一鍵復原介面。Bucket 讀取失敗時，後台禁止儲存；
+  前台優先顯示該程序最後成功讀取的內容，沒有快取時顯示可重試的錯誤頁。
+- 部署環境必須支援 S3 `If-Match`／`If-None-Match` 條件寫入；本機以模擬服務驗證並發，
+  正式 Railway 相容性仍需在獨立測試物件驗證，請勿用正式內容做競爭寫入測試。
+
+## 團期與前台流程
+
+- 日期接受完整年月日（例如 `2026/09/08`、`20260908`），會驗證實際日曆日期。
+  錯誤日期必須修正或移除後才能發布；系統不猜測原本要填的日期。
+- 同一天有不同價格時，請填寫團期備註或指定可區別的方案。
+- 前台依台北日期排除過期與無效團期，支援目的地、月份及預算篩選，總表每頁 24 筆。
+- 行程卡先進入介紹與團期頁；諮詢連結帶入行程、日期、備註、參考價格或所選方案。
+
+## 網址與搜尋引擎
+
+目前使用 `https://found-travel-website-production.up.railway.app`，`SITE_URL` 保持空白。
+Railway 臨時網域維持禁止搜尋引擎索引。日後取得正式網域並完成 Railway DNS／TLS 設定後，
+將 `SITE_URL` 設成 HTTPS origin（例如 `https://travel.example.com`，不含路徑）。
+並確認 `RAILWAY_PUBLIC_DOMAIN` 為原 Railway 主機名稱；公開頁面會轉向正式網域，
+API 與後台路徑維持原有路由。
 
 ## 本地預覽
 
-需要 Node.js 22.13 以上版本。
+需要 Node.js 24 以上版本，與 Docker 和 CI 一致。
 
 ```bash
 npm install
@@ -131,10 +160,9 @@ npm run dev
 ## 品質檢查
 
 ```bash
-npm run build
 npm test
 npm run lint
 ```
 
-GitHub Actions 會在每次推送及 Pull Request 自動執行建置與測試。Railway 可
+GitHub Actions 會在每次推送及 Pull Request 自動執行建置、測試與 lint。Railway 可
 開啟 **Wait for CI**，確認 GitHub Actions 成功後再自動發布。

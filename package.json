@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "test": "npm run build && npm run test:unit",
-    "test:unit": "node --test --test-isolation=none tests/rendered-html.test.mjs tests/csv.test.mjs tests/storage-keys.test.mjs tests/trip-plans.test.mjs",
+    "test:unit": "node --import ./tests/register-hooks.mjs --test --test-isolation=none tests/rendered-html.test.mjs tests/csv.test.mjs tests/storage-keys.test.mjs tests/trip-plans.test.mjs tests/trip-values.test.mjs tests/notification-policy.test.mjs tests/storage-concurrency.test.mjs tests/contact-delivery.test.mjs",
     "lint": "eslint . --ignore-pattern .next --ignore-pattern dist"
   },
   "dependencies": {

@@ -1,3 +1,9 @@
+import {
+  formatDepartureDate,
+  formatPrice,
+  upcomingDepartures,
+} from "@/lib/trip-values";
+import { publishedTripPlans, tripPlanLabel } from "@/lib/trip-plans";
 import Link from "next/link";
 import { ContactForm } from "@/app/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
@@ -12,8 +18,38 @@ export const metadata = {
   alternates: { canonical: "/contact" },
 };
 
-export default async function ContactPage() {
-  const content = await getSiteContent();
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [content, params] = await Promise.all([getSiteContent(), searchParams]);
+  const trip = content.trips.find((t) => t.id === params.trip);
+  const departure =
+    trip &&
+    upcomingDepartures(trip.departures).find((d) => d.id === params.departure);
+  const plan =
+    trip &&
+    publishedTripPlans(trip).find(
+      (p) =>
+        p.id === params.plan &&
+        (!departure ||
+          p.departureMode === "all" ||
+          p.departureIds.includes(departure.id)),
+    );
+  const initialMessage = trip
+    ? [
+        `想諮詢：${trip.title}`,
+        departure ? `出發日期：${formatDepartureDate(departure.date)}` : "",
+        departure?.note ? `團期備註：${departure.note}` : "",
+        departure?.price ? `參考價格：${formatPrice(departure.price)}` : "",
+        plan ? `方案：${tripPlanLabel(plan)}` : "",
+        "同行人數：",
+        "其他需求：",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
 
   return (
     <main className="contact-shell">
@@ -35,11 +71,15 @@ export default async function ContactPage() {
         </p>
         <h1>留下聯絡方式，讓顧問來找你。</h1>
         <p className="contact-card-lede">
-          填寫下方表單後，業務顧問會收到通知，並在您希望的時段與您聯繫。
+          填寫下方表單後，我們會保存您的需求，並安排顧問於您希望的時段與您聯繫。
           想先聊聊也可以直接用 LINE 找我們。
         </p>
 
-        <ContactForm lineUrl={content.lineUrl} />
+        <ContactForm
+          key={initialMessage}
+          lineUrl={content.lineUrl}
+          initialMessage={initialMessage}
+        />
       </section>
 
       <section className="contact-aside">
@@ -58,7 +98,7 @@ export default async function ContactPage() {
           改用 LINE 諮詢 <span aria-hidden="true">↗</span>
         </a>
       </section>
-    
+
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );

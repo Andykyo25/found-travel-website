@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getSiteOrigin, isTemporaryHost } from "@/lib/site-url";
+import {
+  getRequestOrigin,
+  getSiteOrigin,
+  isTemporaryHost,
+} from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
 
   // 臨時網域（*.up.railway.app、本機）整站不開放索引，
   // 正式網域接上後這裡會自動改回允許，不需要改程式。
-  if (isTemporaryHost(origin)) {
+  if (isTemporaryHost(await getRequestOrigin())) {
     return {
       rules: [{ userAgent: "*", disallow: "/" }],
     };

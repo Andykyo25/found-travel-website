@@ -36,7 +36,7 @@ export function formatContactRequestMessage(
   ].join("\n");
 }
 
-async function pushLineMessage(text: string) {
+async function pushLineMessage(text: string, retryKey: string) {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN?.trim();
   const to = process.env.LINE_TARGET_ID?.trim();
   if (!token || !to) return false;
@@ -46,12 +46,19 @@ async function pushLineMessage(text: string) {
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
+      "x-line-retry-key": retryKey,
     },
     body: JSON.stringify({ to, messages: [{ type: "text", text }] }),
     signal: AbortSignal.timeout(notifyTimeoutMs),
   });
 
-  if (!response.ok) {
+  if (
+    !response.ok &&
+    !(
+      response.status === 409 &&
+      response.headers.has("x-line-accepted-request-id")
+    )
+  ) {
     throw new Error(
       `LINE push failed: ${response.status} ${await response.text()}`,
     );
@@ -65,9 +72,13 @@ async function postWebhook(request: ContactRequest, text: string) {
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "idempotency-key": request.id,
+    },
     body: JSON.stringify({
       text,
+      id: request.id,
       name: request.name,
       mobile: request.mobile,
       preferredTimes: request.preferredTimes.map(contactTimeSlotLabel),
@@ -99,8 +110,12 @@ export async function notifyContactRequest(
   const text = formatContactRequestMessage(request, brandName);
 
   const results = await Promise.allSettled([
-    pushLineMessage(text),
-    postWebhook(request, text),
+    request.notification?.line
+      ? Promise.resolve(true)
+      : pushLineMessage(text, request.id),
+    request.notification?.webhook
+      ? Promise.resolve(true)
+      : postWebhook(request, text),
   ]);
 
   let delivered = false;
@@ -112,5 +127,19 @@ export async function notifyContactRequest(
   if (!delivered && isContactNotifyConfigured()) {
     console.error("Contact notification was configured but not delivered");
   }
-  return delivered;
+  const line = results[0].status === "fulfilled" && results[0].value;
+  const webhook = results[1].status === "fulfilled" && results[1].value;
+  const lineRequired = Boolean(
+    process.env.LINE_CHANNEL_ACCESS_TOKEN?.trim() &&
+      process.env.LINE_TARGET_ID?.trim(),
+  );
+  const webhookRequired = Boolean(process.env.CONTACT_WEBHOOK_URL?.trim());
+  return {
+    line,
+    webhook,
+    delivered:
+      isContactNotifyConfigured() &&
+      (!lineRequired || line) &&
+      (!webhookRequired || webhook),
+  };
 }

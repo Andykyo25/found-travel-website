@@ -1,22 +1,26 @@
 "use client";
 
+import Link from "next/link";
+import {
+  parseDepartureDate,
+  priceValue,
+  formatDepartureDate,
+  formatPrice,
+} from "@/lib/trip-values";
 import { useMemo, useState } from "react";
 import type { TripDeparture, TripPlan } from "@/lib/site-content";
 import { plansForDeparture, tripPlanLabel } from "@/lib/trip-plans";
 
 type SortKey = "date" | "price";
 
-function numericValue(value: string) {
-  const digits = value.replace(/\D/g, "");
-  return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-}
-
 export function DepartureTable({
   departures,
   plans,
+  tripId,
 }: {
   departures: TripDeparture[];
   plans: TripPlan[];
+  tripId: string;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
 
@@ -24,8 +28,10 @@ export function DepartureTable({
     const list = [...departures];
     list.sort((left, right) =>
       sortKey === "date"
-        ? numericValue(left.date) - numericValue(right.date)
-        : numericValue(left.price) - numericValue(right.price),
+        ? (parseDepartureDate(left.date)?.time ?? Infinity) -
+          (parseDepartureDate(right.date)?.time ?? Infinity)
+        : (priceValue(left.price) ?? Infinity) -
+          (priceValue(right.price) ?? Infinity),
     );
     return list;
   }, [departures, sortKey]);
@@ -49,6 +55,7 @@ export function DepartureTable({
           <thead>
             <tr>
               <th>出發日期</th>
+              <th>諮詢</th>
               <th className="dates-price-heading">價格</th>
               {plans.length > 0 ? <th>適用方案</th> : null}
             </tr>
@@ -56,8 +63,21 @@ export function DepartureTable({
           <tbody>
             {sorted.map((departure) => (
               <tr key={departure.id}>
-                <td className="dates-date">{departure.date}</td>
-                <td className="dates-price">{departure.price || "—"}</td>
+                <td className="dates-date">
+                  {formatDepartureDate(departure.date)}
+                  {departure.note ? (
+                    <small className="departure-note">{departure.note}</small>
+                  ) : null}
+                </td>
+                <td>
+                  <Link
+                    className="board-link"
+                    href={`/contact?trip=${encodeURIComponent(tripId)}&departure=${encodeURIComponent(departure.id)}`}
+                  >
+                    詢問此團期
+                  </Link>
+                </td>
+                <td className="dates-price">{formatPrice(departure.price)}</td>
                 {plans.length > 0 ? (
                   <td>
                     {plansForDeparture(plans, departure.id).length > 0 ? (

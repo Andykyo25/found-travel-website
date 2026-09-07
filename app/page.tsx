@@ -1,3 +1,4 @@
+import { TravelImage } from "./components/TravelImage";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import {
@@ -55,10 +56,11 @@ export default async function Home({
 
   const months = monthOptions(content.trips);
   const categories = categoryOptions(content.trips);
+  const regions = [...new Set(content.trips.map((trip) => trip.region))];
   const heroImage =
     content.heroImage || orderedTrips[0]?.image || "/trips/tokyo.jpg";
   const hasFilters = Boolean(
-    filters.month || filters.budget || filters.category,
+    filters.month || filters.budget || filters.category || filters.region,
   );
 
   return (
@@ -69,8 +71,13 @@ export default async function Home({
       </div>
 
       <section className="hero-full" id="top">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="hero-media" src={heroImage} alt="" />
+        <TravelImage
+          className="hero-media"
+          src={heroImage}
+          alt=""
+          priority
+          sizes="100vw"
+        />
         <span className="hero-scrim" aria-hidden="true" />
 
         <div className="hero-inner">
@@ -120,20 +127,29 @@ export default async function Home({
 
           <div className="hero-center">
             <p className="hero-kicker">{content.heroKicker}</p>
-            <h1 className="hero-title">{content.heroTitle}</h1>
+            <h1 className="hero-title">
+              {(
+                content.heroTitle.match(/[^，,。\n]+[，,。]?/g) ?? [
+                  content.heroTitle,
+                ]
+              ).map((phrase, index) => (
+                <span className="hero-phrase" key={index}>
+                  {phrase.trim()}
+                </span>
+              ))}
+            </h1>
             <p className="hero-sub">{content.heroText}</p>
             {/* key 讓網址篩選條件改變時重新掛載，兩條搜尋列才不會顯示舊值。 */}
             <TripFilterBar
-              key={`hero-${filters.month}-${filters.budget}`}
+              key={`hero-${filters.month}-${filters.budget}-${filters.category}-${filters.region}`}
               months={months}
+              regions={regions}
               filters={filters}
               tone="on-image"
             />
           </div>
         </div>
       </section>
-
-      <TravelTools destination={content.destination} />
 
       <section className="packages section-shell" id="journeys">
         <div className="packages-head">
@@ -149,8 +165,9 @@ export default async function Home({
         </div>
 
         <TripFilterBar
-          key={`packages-${filters.month}-${filters.budget}`}
+          key={`packages-${filters.month}-${filters.budget}-${filters.category}-${filters.region}`}
           months={months}
+          regions={regions}
           filters={filters}
         />
 
@@ -204,6 +221,8 @@ export default async function Home({
           </Link>
         </div>
       </section>
+
+      <TravelTools destination={content.destination} />
 
       <section className="film-section section-shell" id="film">
         <div className="film-copy">
@@ -313,7 +332,7 @@ export default async function Home({
           <a href="/studio">內容管理</a>
         </div>
       </footer>
-    
+
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );

@@ -1,3 +1,4 @@
+import { deliverContact } from "@/lib/contact-delivery";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteContactRequestObject } from "@/lib/railway-storage";
 import { isContactRequestKey } from "@/lib/storage-keys";
@@ -27,7 +28,10 @@ export async function DELETE(request: NextRequest) {
   }
 
   if (!isContactRequestKey(body.key)) {
-    return NextResponse.json({ error: "無效的聯絡表單識別碼" }, { status: 400 });
+    return NextResponse.json(
+      { error: "無效的聯絡表單識別碼" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -38,6 +42,29 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(
       { error: "暫時無法刪除，請稍後再試" },
       { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request))
+    return NextResponse.json({ error: "無效的操作來源" }, { status: 403 });
+  if (!getStudioUserFromRequest(request))
+    return NextResponse.json({ error: "請先登入" }, { status: 401 });
+  try {
+    const body = await request.json();
+    if (!body || !isContactRequestKey(body.key))
+      return NextResponse.json(
+        { error: "無效的聯絡表單識別碼" },
+        { status: 400 },
+      );
+    const notification = await deliverContact(body.key, true);
+    return NextResponse.json({ notification });
+  } catch (error) {
+    console.error("Unable to retry contact notification", error);
+    return NextResponse.json(
+      { error: "通知未完成，請確認通知設定或稍後重試" },
+      { status: 503 },
     );
   }
 }

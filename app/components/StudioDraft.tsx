@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { validateTripDates } from "@/lib/trip-validation";
 import type { SiteContent } from "@/lib/site-content";
 
 export type Status =
@@ -56,6 +57,11 @@ export function useSiteContentDraft(
   };
 
   const save = async () => {
+    const invalid = validateTripDates(draft);
+    if (invalid) {
+      setStatus({ kind: "error", message: invalid });
+      return;
+    }
     setStatus({ kind: "saving", message: "儲存中…" });
     try {
       const response = await fetch("/api/studio/content", {

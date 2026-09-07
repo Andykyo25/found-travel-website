@@ -1,3 +1,5 @@
+import { TravelImage } from "./TravelImage";
+import { upcomingDepartures, formatPrice } from "@/lib/trip-values";
 import Link from "next/link";
 import type { Trip } from "@/lib/site-content";
 import { nextDepartureLabel } from "@/lib/trip-filters";
@@ -12,7 +14,14 @@ function PinIcon() {
         stroke="currentColor"
         strokeWidth="1.3"
       />
-      <circle cx="8" cy="5.9" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <circle
+        cx="8"
+        cy="5.9"
+        r="1.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
     </svg>
   );
 }
@@ -78,16 +87,16 @@ export function PackageCard({
   trip: Trip;
   priority?: boolean;
 }) {
+  const departures = upcomingDepartures(trip.departures);
   const plans = publishedTripPlans(trip);
 
   return (
     <article className="package-card">
       <div className="package-image">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <TravelImage
           src={trip.image}
           alt={`${trip.title}行程風景`}
-          loading={priority ? "eager" : "lazy"}
+          priority={priority}
         />
         <span className="package-badge">{trip.badge}</span>
       </div>
@@ -114,13 +123,13 @@ export function PackageCard({
         </span>
       </div>
 
-      {trip.departures.length > 0 ? (
+      {departures.length > 0 ? (
         <Link
           className="package-dates"
           href={`/dates/${trip.id}`}
           aria-label={`查看${trip.title}出發時間`}
         >
-          查看全部 {trip.departures.length} 個出發日{" "}
+          查看全部 {departures.length} 個出發日{" "}
           <span aria-hidden="true">→</span>
         </Link>
       ) : null}
@@ -129,38 +138,18 @@ export function PackageCard({
           讓同一列每張卡的價格與按鈕都對齊在底部。 */}
       <div className="package-footer">
         <div className="package-price">
-          <strong>{trip.price}</strong>
+          <strong>{formatPrice(trip.price, true)}</strong>
           <small>
             {trip.days}行程{plans.length > 1 ? `・${plans.length} 個方案` : ""}
           </small>
         </div>
-        {plans.length === 1 ? (
-          <a
-            className="package-book"
-            href={plans[0].documentUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`查看${trip.title}行程內容`}
-          >
-            查看行程
-          </a>
-        ) : plans.length > 1 ? (
-          <Link
-            className="package-book"
-            href={`/dates/${trip.id}#plans`}
-            aria-label={`比較${trip.title}的${plans.length}個行程方案`}
-          >
-            查看 {plans.length} 個方案
-          </Link>
-        ) : (
-          <Link
-            className="package-book"
-            href="/contact"
-            aria-label={`諮詢${trip.title}`}
-          >
-            立即諮詢
-          </Link>
-        )}
+        <Link
+          className="package-book"
+          href={`/dates/${trip.id}`}
+          aria-label={`查看${trip.title}行程內容`}
+        >
+          查看行程
+        </Link>
       </div>
     </article>
   );

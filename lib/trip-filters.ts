@@ -6,11 +6,20 @@
 // 所以不會把 server-only 的 site-content 帶進瀏覽器。
 import type { Trip } from "@/lib/site-content";
 import { plansForDeparture } from "@/lib/trip-plans";
+import {
+  parseDepartureDate,
+  taipeiTodayTime,
+  upcomingDepartures,
+  priceValue,
+  formatDepartureDate,
+} from "@/lib/trip-values";
+export { parseDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 
 export type TripFilters = {
   month: string;
   budget: string;
   category: string;
+  region?: string;
 };
 
 export const emptyTripFilters: TripFilters = {
@@ -27,10 +36,15 @@ export type BudgetBucket = {
 };
 
 export const budgetBuckets: BudgetBucket[] = [
-  { id: "b1", label: "NT$30,000 以下", min: 0, max: 30000 },
-  { id: "b2", label: "NT$30,000 - 50,000", min: 30000, max: 50000 },
-  { id: "b3", label: "NT$50,000 - 80,000", min: 50000, max: 80000 },
-  { id: "b4", label: "NT$80,000 以上", min: 80000, max: Number.POSITIVE_INFINITY },
+  { id: "b1", label: "未滿 NT$30,000", min: 0, max: 30000 },
+  { id: "b2", label: "NT$30,000–49,999", min: 30000, max: 50000 },
+  { id: "b3", label: "NT$50,000–79,999", min: 50000, max: 80000 },
+  {
+    id: "b4",
+    label: "NT$80,000 以上",
+    min: 80000,
+    max: Number.POSITIVE_INFINITY,
+  },
 ];
 
 export type MonthOption = {
@@ -38,30 +52,18 @@ export type MonthOption = {
   label: string;
 };
 
-// 「NT$36,800 起」→ 36800。取字串中最大的一組數字，
-// 避免被「2人成行」這類前綴數字影響。
+// 價格與航空、連假等備註分開解析。
 export function tripPriceValue(trip: Trip) {
-  const matches = trip.price.match(/\d[\d,]*/g);
-  if (!matches) return null;
-
-  const values = matches
-    .map((match) => Number(match.replace(/,/g, "")))
-    .filter((value) => Number.isFinite(value));
-  if (values.length === 0) return null;
-
-  return Math.max(...values);
+  return priceValue(trip.price);
 }
 
 // 出發日期格式由後台自動整理成 2026/04/02，
 // 這裡仍容許其他分隔符號，抓不到年月的就略過。
 export function departureMonthIds(trip: Trip) {
   const months = new Set<string>();
-  for (const departure of trip.departures) {
-    const matched = departure.date.match(/(\d{4})\D{0,2}(\d{1,2})/);
-    if (!matched) continue;
-    const month = Number(matched[2]);
-    if (month < 1 || month > 12) continue;
-    months.add(`${matched[1]}-${String(month).padStart(2, "0")}`);
+  for (const departure of upcomingDepartures(trip.departures)) {
+    const parsed = parseDepartureDate(departure.date)!;
+    months.add(`${parsed.year}-${String(parsed.month).padStart(2, "0")}`);
   }
   return months;
 }
@@ -89,23 +91,14 @@ export function categoryOptions(trips: Trip[]) {
 }
 
 export function nextDepartureLabel(trip: Trip) {
-  if (trip.departures.length === 0) return "團期洽詢";
-
-  const sortable = trip.departures
-    .map((departure) => ({
-      date: departure.date,
-      value: Number(departure.date.replace(/\D/g, "")),
-    }))
-    .filter((departure) => Number.isFinite(departure.value))
-    .sort((left, right) => left.value - right.value);
-
-  const earliest = sortable[0]?.date ?? trip.departures[0].date;
-  return trip.departures.length > 1
-    ? `${earliest} 起・${trip.departures.length} 個團期`
-    : earliest;
+  const departures = upcomingDepartures(trip.departures);
+  if (!departures.length) return "團期洽詢";
+  return `${formatDepartureDate(departures[0].date)} 起・${departures.length} 個團期`;
 }
 
-export function readTripFilters(params: Record<string, string | string[] | undefined>): TripFilters {
+export function readTripFilters(
+  params: Record<string, string | string[] | undefined>,
+): TripFilters {
   const read = (key: string) => {
     const value = params[key];
     const raw = Array.isArray(value) ? value[0] : value;
@@ -116,6 +109,7 @@ export function readTripFilters(params: Record<string, string | string[] | undef
     month: read("month"),
     budget: read("budget"),
     category: read("category"),
+    region: read("region"),
   };
 }
 
@@ -124,16 +118,36 @@ export function filterTrips(trips: Trip[], filters: TripFilters) {
 
   return trips.filter((trip) => {
     if (filters.category && trip.badge !== filters.category) return false;
+    if (filters.region && trip.region !== filters.region) return false;
 
     if (filters.month && !departureMonthIds(trip).has(filters.month)) {
       return false;
     }
 
     if (bucket) {
-      const price = tripPriceValue(trip);
-      // 價格寫成「請洽詢」這類沒有數字的行程，在指定預算時不列入。
-      if (price === null) return false;
-      if (price < bucket.min || price >= bucket.max) return false;
+      const applicable = upcomingDepartures(trip.departures).filter(
+        (departure) => {
+          const parsed = parseDepartureDate(departure.date)!;
+          return (
+            !filters.month ||
+            `${parsed.year}-${String(parsed.month).padStart(2, "0")}` ===
+              filters.month
+          );
+        },
+      );
+      const prices =
+        trip.departures.length > 0
+          ? applicable.map((departure) =>
+              priceValue(departure.price || trip.price),
+            )
+          : [tripPriceValue(trip)];
+      if (
+        !prices.some(
+          (price) =>
+            price !== null && price >= bucket.min && price < bucket.max,
+        )
+      )
+        return false;
     }
 
     return true;
@@ -151,45 +165,13 @@ export type DepartureRow = {
   documentUrl: string;
   planCount: number;
   departureId: string;
+  details: string;
   date: string;
   price: string;
   monthId: string;
   // UTC 毫秒；日期看不懂時給 Infinity，排序時自然落在最後面。
   time: number;
 };
-
-export function parseDepartureDate(value: string) {
-  const matched = value.match(/(\d{4})\D{0,2}(\d{1,2})(?:\D{0,2}(\d{1,2}))?/);
-  if (!matched) return null;
-
-  const year = Number(matched[1]);
-  const month = Number(matched[2]);
-  const day = matched[3] ? Number(matched[3]) : 1;
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-
-  return { year, month, day, time: Date.UTC(year, month - 1, day) };
-}
-
-// 伺服器時區可能是 UTC，出發日要以台北當天為準才不會少一天。
-export function taipeiTodayTime() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Taipei",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-    .formatToParts(new Date())
-    .reduce<Record<string, string>>((all, part) => {
-      all[part.type] = part.value;
-      return all;
-    }, {});
-
-  return Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-  );
-}
 
 export function departureRows(trips: Trip[]): DepartureRow[] {
   const rows: DepartureRow[] = [];
@@ -207,6 +189,12 @@ export function departureRows(trips: Trip[]): DepartureRow[] {
         documentUrl: plans.length === 1 ? plans[0].documentUrl : "",
         planCount: plans.length,
         departureId: departure.id,
+        details: [
+          departure.note,
+          ...plans.map((plan) => `${plan.airline}・${plan.title}`),
+        ]
+          .filter(Boolean)
+          .join(" / "),
         date: departure.date,
         price: departure.price,
         monthId: parsed
@@ -220,10 +208,10 @@ export function departureRows(trips: Trip[]): DepartureRow[] {
   return rows.sort((left, right) => left.time - right.time);
 }
 
-// 已經出發過的團期不再顯示；日期格式看不懂的一律保留，交給業務判斷。
+// 公開列表排除已出發和無法辨識的日期；原始資料留在後台供業務修正。
 export function upcomingDepartureRows(rows: DepartureRow[]) {
   const today = taipeiTodayTime();
-  return rows.filter((row) => !Number.isFinite(row.time) || row.time >= today);
+  return rows.filter((row) => Number.isFinite(row.time) && row.time >= today);
 }
 
 export type DepartureMonthOption = {
@@ -282,6 +270,7 @@ export function tripFilterHref(filters: TripFilters, showAll: boolean) {
   if (filters.month) params.set("month", filters.month);
   if (filters.budget) params.set("budget", filters.budget);
   if (filters.category) params.set("category", filters.category);
+  if (filters.region) params.set("region", filters.region);
   if (showAll) params.set("all", "1");
 
   const query = params.toString();

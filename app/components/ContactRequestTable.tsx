@@ -65,6 +65,7 @@ export function ContactRequestTable({
   const [keyword, setKeyword] = useState("");
   const [items, setItems] = useState(requests);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [retryingKey, setRetryingKey] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
   const filtered = useMemo(() => {
@@ -118,6 +119,31 @@ export function ContactRequestTable({
     }
   };
 
+  const retryNotification = async (request: ManagedContactRequest) => {
+    setRetryingKey(request.storageKey);
+    setDeleteError("");
+    try {
+      const response = await fetch("/api/studio/contacts", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key: request.storageKey }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "補送失敗");
+      setItems((items) =>
+        items.map((item) =>
+          item.storageKey === request.storageKey
+            ? { ...item, notification: result.notification }
+            : item,
+        ),
+      );
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "補送失敗");
+    } finally {
+      setRetryingKey(null);
+    }
+  };
+
   return (
     <>
       <div className="contact-table-toolbar">
@@ -168,6 +194,7 @@ export function ContactRequestTable({
                 <th>行動電話</th>
                 <th>希望聯繫時段</th>
                 <th>內容</th>
+                <th>通知</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -195,6 +222,29 @@ export function ContactRequestTable({
                     </span>
                   </td>
                   <td className="contact-cell-message">{request.message}</td>
+                  <td>
+                    <span>
+                      {request.notification
+                        ? {
+                            pending: "待通知",
+                            sending: "通知中",
+                            delivered: "已通知",
+                            failed: "通知失敗",
+                          }[request.notification.state]
+                        : "舊資料／未記錄"}
+                    </span>
+                    {request.notification?.state !== "delivered" ? (
+                      <button
+                        className="button button-secondary button-small"
+                        disabled={retryingKey !== null}
+                        onClick={() => void retryNotification(request)}
+                      >
+                        {retryingKey === request.storageKey
+                          ? "補送中…"
+                          : "補送通知"}
+                      </button>
+                    ) : null}
+                  </td>
                   <td className="contact-cell-actions">
                     <button
                       className="contact-delete-button"

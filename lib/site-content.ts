@@ -1,3 +1,4 @@
+import { formatDepartureDate } from "@/lib/trip-values";
 import { cache } from "react";
 import {
   readSiteContentObject,
@@ -18,6 +19,7 @@ export type TripDeparture = {
   id: string;
   date: string;
   price: string;
+  note?: string;
 };
 
 export type TripPlanDepartureMode = "all" | "selected";
@@ -106,8 +108,7 @@ export const defaultSiteContent: SiteContent = {
       region: "TOKYO・HAKONE",
       days: "5日",
       title: "東京慢旅 5日",
-      summary:
-        "住進喜歡的街區，以一日一重點的速度，走過東京與箱根的日常風景。",
+      summary: "住進喜歡的街區，以一日一重點的速度，走過東京與箱根的日常風景。",
       price: "NT$36,800 起",
       image: "/trips/tokyo.jpg",
       plans: [
@@ -133,8 +134,7 @@ export const defaultSiteContent: SiteContent = {
       region: "HOKKAIDO",
       days: "7日",
       title: "北海道花野 7日",
-      summary:
-        "把薰衣草田、丘陵公路與溫泉時間排進一趟不趕路的北國夏日。",
+      summary: "把薰衣草田、丘陵公路與溫泉時間排進一趟不趕路的北國夏日。",
       price: "NT$58,900 起",
       image: "/trips/hokkaido.jpg",
       plans: [
@@ -160,8 +160,7 @@ export const defaultSiteContent: SiteContent = {
       region: "BALI・UBUD",
       days: "6日",
       title: "峇里島療癒 6日",
-      summary:
-        "從烏布稻田到海邊日落，在島嶼的香氣與慢節奏裡，把自己放回旅行。",
+      summary: "從烏布稻田到海邊日落，在島嶼的香氣與慢節奏裡，把自己放回旅行。",
       price: "NT$42,500 起",
       image: "/trips/bali.jpg",
       plans: [
@@ -288,8 +287,9 @@ export function normalizeSiteContent(value: unknown): SiteContent {
         return [
           {
             id: departureId,
-            date,
+            date: formatDepartureDate(date),
             price: safeOptionalString(departure.price, 60),
+            note: safeOptionalString(departure.note, 120),
           },
         ];
       },
@@ -319,10 +319,11 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       if (!planValue || typeof planValue !== "object") return [];
       const plan = planValue as Partial<TripPlan>;
       const fallbackPlan = fallback.plans[planIndex] ?? fallback.plans[0];
-      const planBaseId = safeString(plan.id, `plan-${planIndex + 1}`, 80).replace(
-        /[^A-Za-z0-9_-]/g,
-        "-",
-      );
+      const planBaseId = safeString(
+        plan.id,
+        `plan-${planIndex + 1}`,
+        80,
+      ).replace(/[^A-Za-z0-9_-]/g, "-");
       let planId = planBaseId || `plan-${planIndex + 1}`;
       let planSuffix = 2;
       while (usedPlanIds.has(planId)) {
@@ -356,11 +357,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
           price: safeOptionalString(plan.price, 60),
           documentType,
           documentUrl: safeDocumentUrl(plan.documentUrl, documentType),
-          documentName: safeString(
-            plan.documentName,
-            "查看完整行程",
-            120,
-          ),
+          documentName: safeString(plan.documentName, "查看完整行程", 120),
           departureMode,
           departureIds: departureMode === "selected" ? departureIds : [],
         },
@@ -370,8 +367,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
     return [
       {
         id,
-        featured:
-          typeof source.featured === "boolean" ? source.featured : true,
+        featured: typeof source.featured === "boolean" ? source.featured : true,
         badge: safeString(source.badge, fallback.badge, 40),
         region: safeString(source.region, fallback.region, 60),
         days: safeString(source.days, fallback.days, 20),
@@ -406,21 +402,9 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       defaultSiteContent.announcement,
       100,
     ),
-    heroKicker: safeString(
-      input.heroKicker,
-      defaultSiteContent.heroKicker,
-      60,
-    ),
-    heroTitle: safeString(
-      input.heroTitle,
-      defaultSiteContent.heroTitle,
-      120,
-    ),
-    heroText: safeString(
-      input.heroText,
-      defaultSiteContent.heroText,
-      300,
-    ),
+    heroKicker: safeString(input.heroKicker, defaultSiteContent.heroKicker, 60),
+    heroTitle: safeString(input.heroTitle, defaultSiteContent.heroTitle, 120),
+    heroText: safeString(input.heroText, defaultSiteContent.heroText, 300),
     // 留空時前台會退回使用第一個行程的封面圖。
     heroImage: safeOptionalString(input.heroImage, 800),
     videoTitle: safeString(
@@ -501,6 +485,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
 export type SiteContentMeta = {
   updatedAt: string | null;
   updatedBy: string | null;
+  etag: string | null;
 };
 
 type StoredSiteContent = Partial<SiteContent> & {
@@ -510,42 +495,75 @@ type StoredSiteContent = Partial<SiteContent> & {
 
 // cache()：同一個請求裡 generateMetadata 與頁面本身都會取內容，
 // 沒有這層包裝就會對 Bucket 讀兩次。
-export const getSiteContentWithMeta = cache(async function getSiteContentWithMeta(): Promise<{
-  content: SiteContent;
-  meta: SiteContentMeta;
-}> {
-  const emptyMeta: SiteContentMeta = { updatedAt: null, updatedBy: null };
-  try {
-    const saved = await readSiteContentObject<StoredSiteContent>();
-    if (!saved) return { content: defaultSiteContent, meta: emptyMeta };
+export const getSiteContentWithMeta = cache(
+  async function getSiteContentWithMeta(): Promise<{
+    content: SiteContent;
+    meta: SiteContentMeta;
+  }> {
+    const emptyMeta: SiteContentMeta = {
+      updatedAt: null,
+      updatedBy: null,
+      etag: null,
+    };
+    const stored = await readSiteContentObject<StoredSiteContent>();
+    if (!stored) return { content: defaultSiteContent, meta: emptyMeta };
+    const saved = stored.value;
+    if (!saved || typeof saved !== "object" || !Array.isArray(saved.trips))
+      throw new Error("Invalid stored content");
+    const content = normalizeSiteContent(saved);
+    lastSuccessfulContent = content;
     return {
-      content: normalizeSiteContent(saved),
+      content,
       meta: {
+        etag: stored.etag,
         updatedAt:
           typeof saved._updatedAt === "string" ? saved._updatedAt : null,
         updatedBy:
           typeof saved._updatedBy === "string" ? saved._updatedBy : null,
       },
     };
-  } catch {
-    return { content: defaultSiteContent, meta: emptyMeta };
-  }
-});
+  },
+);
 
+let lastSuccessfulContent: SiteContent | null = null;
 export async function getSiteContent(): Promise<SiteContent> {
-  return (await getSiteContentWithMeta()).content;
+  try {
+    return (await getSiteContentWithMeta()).content;
+  } catch (error) {
+    console.error("Unable to read published content", error);
+    if (lastSuccessfulContent) return lastSuccessfulContent;
+    throw error;
+  }
 }
 
 export async function saveSiteContent(
   value: unknown,
   editorEmail: string,
+  etag: string | null,
+  previous: unknown,
 ): Promise<{ content: SiteContent; updatedAt: string }> {
   const content = normalizeSiteContent(value);
-  const updatedAt = new Date().toISOString();
-  await writeSiteContentObject({
-    ...content,
-    _updatedAt: updatedAt,
-    _updatedBy: editorEmail,
-  });
+  const previousTime =
+    previous &&
+    typeof previous === "object" &&
+    "_updatedAt" in previous &&
+    typeof previous._updatedAt === "string"
+      ? Date.parse(previous._updatedAt)
+      : 0;
+  const updatedAt = new Date(
+    Math.max(
+      Date.now(),
+      (Number.isFinite(previousTime) ? previousTime : 0) + 1,
+    ),
+  ).toISOString();
+  await writeSiteContentObject(
+    {
+      ...content,
+      _updatedAt: updatedAt,
+      _updatedBy: editorEmail,
+    },
+    etag,
+    previous,
+  );
   return { content, updatedAt };
 }

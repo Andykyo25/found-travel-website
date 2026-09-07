@@ -93,19 +93,27 @@ function normalizeContactRequest(
     message: typeof source.message === "string" ? source.message : "",
     createdAt,
     storageKey,
+    notification: source.notification as ContactRequest["notification"],
   };
 }
 
 export async function saveContactRequest(
   request: Omit<ContactRequest, "id" | "createdAt">,
-): Promise<ContactRequest> {
+): Promise<ManagedContactRequest> {
   const saved: ContactRequest = {
     ...request,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
+    notification: {
+      state: "pending",
+      attempts: 0,
+      nextAttemptAt: Date.now(),
+      line: false,
+      webhook: false,
+    },
   };
-  await writeContactRequestObject(saved.id, saved);
-  return saved;
+  const storageKey = await writeContactRequestObject(saved.id, saved);
+  return { ...saved, storageKey };
 }
 
 export const contactRequestListLimit = 300;

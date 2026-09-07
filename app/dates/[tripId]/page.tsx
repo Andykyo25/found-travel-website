@@ -1,3 +1,5 @@
+import { TravelImage } from "@/app/components/TravelImage";
+import { upcomingDepartures, formatPrice } from "@/lib/trip-values";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DepartureTable } from "@/app/components/DepartureTable";
@@ -38,6 +40,7 @@ export default async function TripDatesPage({ params }: PageProps) {
   const trip = content.trips.find((item) => item.id === tripId);
   if (!trip) notFound();
   const plans = publishedTripPlans(trip);
+  const departures = upcomingDepartures(trip.departures);
 
   return (
     <main className="dates-shell">
@@ -63,6 +66,27 @@ export default async function TripDatesPage({ params }: PageProps) {
           <span>{trip.days}</span>
         </p>
 
+        <div className="trip-overview">
+          <TravelImage
+            src={trip.image}
+            alt={`${trip.title}行程風景`}
+            priority
+            sizes="(max-width: 640px) 100vw, 50vw"
+          />
+          <div>
+            <h2>旅程亮點</h2>
+            <p>{trip.summary}</p>
+            <strong>{formatPrice(trip.price, true)}</strong>
+            <p>各團期航空、住宿與費用細節請參閱下方方案及完整行程。</p>
+            <Link
+              className="button"
+              href={`/contact?trip=${encodeURIComponent(trip.id)}`}
+            >
+              諮詢這趟旅行
+            </Link>
+          </div>
+        </div>
+
         {plans.length > 0 ? (
           <section className="trip-plans-section" id="plans">
             <div className="trip-plans-intro">
@@ -70,7 +94,9 @@ export default async function TripDatesPage({ params }: PageProps) {
                 <span />
                 TRAVEL OPTIONS
               </p>
-              <h2>{plans.length > 1 ? "選擇適合你的行程方案" : "完整行程方案"}</h2>
+              <h2>
+                {plans.length > 1 ? "選擇適合你的行程方案" : "完整行程方案"}
+              </h2>
               <p>
                 {plans.length > 1
                   ? "不同航空公司、航班時間與行程內容分開呈現，先比較差異再查看完整資料。"
@@ -82,7 +108,8 @@ export default async function TripDatesPage({ params }: PageProps) {
                 <TripPlanCard
                   key={plan.id}
                   plan={plan}
-                  departures={trip.departures}
+                  departures={departures}
+                  tripId={trip.id}
                   fallbackPrice={trip.price}
                   index={index}
                 />
@@ -100,8 +127,12 @@ export default async function TripDatesPage({ params }: PageProps) {
                 : "實際團位與價格請洽業務顧問確認。"}
             </p>
           </div>
-          {trip.departures.length > 0 ? (
-            <DepartureTable departures={trip.departures} plans={plans} />
+          {departures.length > 0 ? (
+            <DepartureTable
+              departures={departures}
+              plans={plans}
+              tripId={trip.id}
+            />
           ) : (
             <div className="dates-empty">
               出發日期規劃中，歡迎透過 LINE 詢問最新團期。
@@ -124,7 +155,7 @@ export default async function TripDatesPage({ params }: PageProps) {
           LINE 聯絡顧問報名 <span aria-hidden="true">↗</span>
         </a>
       </section>
-    
+
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );
