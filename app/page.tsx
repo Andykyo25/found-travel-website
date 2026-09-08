@@ -151,6 +151,8 @@ export default async function Home({
         </div>
       </section>
 
+      <TravelTools destination={content.destination} />
+
       <section className="packages section-shell" id="journeys">
         <div className="packages-head">
           <p className="eyebrow eyebrow-center">
@@ -221,8 +223,6 @@ export default async function Home({
           </Link>
         </div>
       </section>
-
-      <TravelTools destination={content.destination} />
 
       <section className="film-section section-shell" id="film">
         <div className="film-copy">

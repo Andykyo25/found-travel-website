@@ -50,27 +50,27 @@ export function TripPlanCard({
         )}
       </div>
 
-      <Link
-        className="button button-small"
-        href={`/contact?trip=${encodeURIComponent(tripId)}&plan=${encodeURIComponent(plan.id)}`}
+      <a
+        className="button button-small trip-plan-document"
+        href={plan.documentUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`開啟${tripPlanLabel(plan)}完整行程`}
       >
-        諮詢此方案
-      </Link>
+        {plan.documentType === "pdf" ? "開啟行程 PDF" : "開啟 Drive 行程"}
+        <span aria-hidden="true">↗</span>
+      </a>
       <div className="trip-plan-footer">
         <div className="trip-plan-price">
           <small>方案參考價</small>
           <strong>{formatPrice(plan.price || fallbackPrice, true)}</strong>
         </div>
-        <a
+        <Link
           className="button button-small"
-          href={plan.documentUrl}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`開啟${tripPlanLabel(plan)}完整行程`}
+          href={`/contact?trip=${encodeURIComponent(tripId)}&plan=${encodeURIComponent(plan.id)}`}
         >
-          {plan.documentType === "pdf" ? "開啟行程 PDF" : "開啟 Drive 行程"}
-          <span aria-hidden="true">↗</span>
-        </a>
+          諮詢此方案
+        </Link>
       </div>
     </article>
   );

@@ -1096,13 +1096,17 @@ img {
   font-size: 12px;
 }
 
+.trip-plan-document {
+  margin-top: 20px;
+}
+
 .trip-plan-footer {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
   margin-top: auto;
-  padding-top: 20px;
+  padding-top: 28px;
 }
 
 .trip-plan-price {
