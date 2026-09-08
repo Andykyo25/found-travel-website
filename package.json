@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "test": "npm run build && npm run test:unit",
-    "test:unit": "node --import ./tests/register-hooks.mjs --test --test-isolation=none tests/rendered-html.test.mjs tests/csv.test.mjs tests/storage-keys.test.mjs tests/trip-plans.test.mjs tests/trip-values.test.mjs tests/notification-policy.test.mjs tests/storage-concurrency.test.mjs tests/contact-delivery.test.mjs",
+    "test:unit": "node --import ./tests/register-hooks.mjs --test --test-isolation=none tests/rendered-html.test.mjs tests/csv.test.mjs tests/storage-keys.test.mjs tests/trip-plans.test.mjs tests/trip-values.test.mjs tests/notification-policy.test.mjs tests/storage-concurrency.test.mjs tests/contact-delivery.test.mjs tests/departure-batch.test.mjs",
     "lint": "eslint . --ignore-pattern .next --ignore-pattern dist"
   },
   "dependencies": {

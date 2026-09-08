@@ -29,6 +29,8 @@ export type TripPlan = {
   airline: string;
   title: string;
   summary: string;
+  flight?: string;
+  accommodation?: string;
   price: string;
   documentType: TripDocumentType;
   documentUrl: string;
@@ -354,6 +356,8 @@ export function normalizeSiteContent(value: unknown): SiteContent {
           airline: safeString(plan.airline, fallbackPlan.airline, 80),
           title: safeString(plan.title, fallbackPlan.title, 120),
           summary: safeOptionalString(plan.summary, 400),
+          flight: safeOptionalString(plan.flight, 120),
+          accommodation: safeOptionalString(plan.accommodation, 120),
           price: safeOptionalString(plan.price, 60),
           documentType,
           documentUrl: safeDocumentUrl(plan.documentUrl, documentType),

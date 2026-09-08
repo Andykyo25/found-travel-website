@@ -9,7 +9,11 @@ import type {
   TripPlan,
   TripPlanDepartureMode,
 } from "@/lib/site-content";
-import { parseDepartureDate, formatDepartureDate } from "@/lib/trip-values";
+import { parseDepartureDate, formatDepartureDate, upcomingDepartures, formatPrice } from "@/lib/trip-values";
+import { addDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
+import { planAppliesToDeparture, tripPlanLabel } from "@/lib/trip-plans";
+import { DepartureBatchEditor } from "./DepartureBatchEditor";
+import { TripPlanCard } from "./TripPlanCard";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
 
 type TripFilter = "all" | "featured" | "other" | "todo";
@@ -28,13 +32,13 @@ function createPlan(): TripPlan {
         ? crypto.randomUUID()
         : `plan-${Date.now()}`,
     airline: "航空公司待填",
-    title: "新行程方案",
+    title: "新行程版本",
     summary: "請簡短說明航班時間或行程內容的主要差異。",
     price: "",
     documentType: "pdf",
     documentUrl: "",
     documentName: "查看完整行程",
-    departureMode: "all",
+    departureMode: "selected",
     departureIds: [],
   };
 }
@@ -119,6 +123,13 @@ export function TripsEditor({
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<TripFilter>("all");
   const [uploadingPlanKey, setUploadingPlanKey] = useState<string | null>(null);
+  const [openPlanIds, setOpenPlanIds] = useState<Set<string>>(() => new Set(initialContent.trips.flatMap(trip => trip.plans.slice(0, 1).map(plan => plan.id))));
+  const setPlanOpen = (planId: string, open: boolean) => setOpenPlanIds(current => {
+    if (current.has(planId) === open) return current;
+    const next = new Set(current);
+    if (open) next.add(planId); else next.delete(planId);
+    return next;
+  });
   const [openTripIds, setOpenTripIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -207,11 +218,31 @@ export function TripsEditor({
   };
 
   const addPlan = (tripIndex: number) => {
-    updateTripPlans(tripIndex, (plans) => [...plans, createPlan()]);
+    const plan = createPlan();
+    updateTripPlans(tripIndex, (plans) => [...plans, plan]);
+    setPlanOpen(plan.id, true);
     setStatus({
       kind: "idle",
       message: "已新增行程方案，完成資料後請記得儲存",
     });
+  };
+
+  const copyPlan = (tripIndex: number, plan: TripPlan) => {
+    const copy = { ...plan, ...createPlan(), airline: plan.airline, title: `${plan.title}（副本）`, summary: plan.summary, price: plan.price, flight: plan.flight, accommodation: plan.accommodation, documentType: plan.documentType };
+    updateTripPlans(tripIndex, plans => [...plans, copy]);
+    setPlanOpen(copy.id, true);
+    setStatus({ kind: "idle", message: "已複製版本內容，請設定此版本的 PDF 與團期後儲存。" });
+  };
+
+  const addBatchToPlan = (tripId: string, planId: string, rows: DepartureBatchRow[]): string | null => {
+    const trip = draft.trips.find(item => item.id === tripId);
+    if (!trip) return "此行程已不存在，請重新開啟。";
+    try {
+      const updated = addDepartureBatch(trip, planId, rows, () => crypto.randomUUID());
+      setDraft(current => ({ ...current, trips: current.trips.map(item => item.id === tripId ? updated : item) }));
+      markChanged();
+      return null;
+    } catch (error) { return error instanceof Error ? error.message : "無法新增團期，請重新檢查。"; }
   };
 
   const removePlan = (tripIndex: number, planIndex: number) => {
@@ -277,6 +308,7 @@ export function TripsEditor({
     const trip = createTrip();
     setDraft((current) => ({ ...current, trips: [...current.trips, trip] }));
     setOpenTripIds((current) => new Set(current).add(trip.id));
+    trip.plans.forEach(plan => setPlanOpen(plan.id, true));
     setKeyword("");
     setFilter("all");
     setStatus({
@@ -511,7 +543,7 @@ export function TripsEditor({
             <b>1</b> 新增行程
           </span>
           <span>
-            <b>2</b> 建立航空／行程方案並上傳 PDF／Drive
+            <b>2</b> 建立航空版本、上傳文件與新增團期
           </span>
           <span>
             <b>3</b> 儲存並更新網站
@@ -757,10 +789,10 @@ export function TripsEditor({
                   <div className="plan-editor">
                     <div className="plan-editor-heading">
                       <div>
-                        <h4>航空／行程方案</h4>
+                        <h4>航空／行程版本</h4>
                         <small>
                           每一份 PDF 或 Drive
-                          行程建立成獨立方案，並標示航空公司、差異與適用團期。
+                          行程建立成一個版本。展開航空名稱即可管理差異、文件與團期。
                         </small>
                       </div>
                       <button
@@ -768,7 +800,7 @@ export function TripsEditor({
                         type="button"
                         onClick={() => addPlan(index)}
                       >
-                        ＋新增方案
+                        ＋新增版本
                       </button>
                     </div>
 
@@ -782,20 +814,26 @@ export function TripsEditor({
                               : plan.departureIds.length;
 
                           return (
-                            <div
+                            <details
                               className="plan-editor-card"
                               id={`studio-plan-${plan.id}`}
                               key={plan.id}
+                              open={openPlanIds.has(plan.id)}
+                              onToggle={event => setPlanOpen(plan.id, event.currentTarget.open)}
+                              onInvalidCapture={event => { event.currentTarget.open = true; setPlanOpen(plan.id, true); }}
                             >
-                              <div className="plan-editor-card-heading">
+                              <summary className="plan-editor-card-heading">
                                 <div>
-                                  <span>方案 {planIndex + 1}</span>
+                                  <span>行程版本 {planIndex + 1} · {plan.documentUrl ? (plan.documentType === "pdf" ? "PDF 已備妥" : "Drive 已設定") : "待補行程文件"} · {selectedDepartureCount} 個團期</span>
                                   <strong>
                                     {plan.airline || "航空公司待填"}｜
-                                    {plan.title || "方案名稱待填"}
+                                    {plan.title || "版本名稱待填"}
                                   </strong>
                                 </div>
+                                <span>{openPlanIds.has(plan.id) ? "收合 −" : "編輯 ＋"}</span>
+                              </summary>
                                 <div className="trip-editor-actions">
+                                  <button type="button" onClick={() => copyPlan(index, plan)}>複製版本</button>
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -826,8 +864,7 @@ export function TripsEditor({
                                     刪除
                                   </button>
                                 </div>
-                              </div>
-
+                              <h5 className="plan-step-title">1. 航空與版本差異</h5>
                               <div className="field-grid plan-fields">
                                 <Field label="航空公司">
                                   <input
@@ -844,7 +881,7 @@ export function TripsEditor({
                                     }
                                   />
                                 </Field>
-                                <Field label="方案名稱">
+                                <Field label="版本名稱">
                                   <input
                                     required
                                     placeholder="例如：早去晚回精選版"
@@ -860,7 +897,7 @@ export function TripsEditor({
                                   />
                                 </Field>
                                 <Field
-                                  label="方案起價（選填）"
+                                  label="版本起價（選填）"
                                   hint="留空時顯示行程的共用起價。"
                                 >
                                   <input
@@ -876,7 +913,13 @@ export function TripsEditor({
                                     }
                                   />
                                 </Field>
-                                <Field label="方案差異摘要" wide>
+                                <Field label="航班時段（選填）">
+                                  <input maxLength={120} placeholder="例如：早去晚回" value={plan.flight ?? ""} onChange={event => updatePlan(index, planIndex, "flight", event.target.value)} />
+                                </Field>
+                                <Field label="住宿安排（選填）">
+                                  <input maxLength={120} placeholder="例如：兩晚升等五星飯店" value={plan.accommodation ?? ""} onChange={event => updatePlan(index, planIndex, "accommodation", event.target.value)} />
+                                </Field>
+                                <Field label="版本差異摘要" wide>
                                   <textarea
                                     required
                                     placeholder="說明航班時間、住宿或行程內容差異。"
@@ -894,6 +937,7 @@ export function TripsEditor({
                               </div>
 
                               <div className="plan-document-editor">
+                                <h5 className="plan-step-title">2. 此版本的行程文件</h5>
                                 <div
                                   className="document-type-switch"
                                   role="group"
@@ -991,14 +1035,19 @@ export function TripsEditor({
                                     />
                                   </Field>
                                 )}
+                                {plan.documentUrl && <a className="plan-document-preview" href={plan.documentUrl} target="_blank" rel="noreferrer">預覽：{plan.documentName || tripPlanLabel(plan)} ↗</a>}
                               </div>
 
                               <div className="plan-departure-editor">
+                                <h5 className="plan-step-title">3. 此版本的出發日期與價格</h5>
+                                <DepartureBatchEditor trip={trip} plan={plan} todayTime={todayTime} onAdd={rows => addBatchToPlan(trip.id, plan.id, rows)} />
+                                <details className="plan-existing-departures">
+                                  <summary>套用既有團期（目前 {selectedDepartureCount} 個）</summary>
                                 <div className="plan-departure-heading">
                                   <strong>適用團期</strong>
                                   <small>
                                     {trip.departures.length === 0
-                                      ? "請先在下方新增團期"
+                                      ? "可使用上方月曆多選或貼上 Excel 新增"
                                       : `目前套用 ${selectedDepartureCount} 個團期`}
                                   </small>
                                 </div>
@@ -1049,6 +1098,14 @@ export function TripsEditor({
 
                                 {plan.departureMode === "selected" &&
                                 trip.departures.length > 0 ? (
+                                  <>
+                                  <div className="plan-month-actions" role="group" aria-label="按月份批次套用既有團期">
+                                    {[...new Set(trip.departures.map(d => parseDepartureDate(d.date)).filter(d => d !== null).map(d => `${d.year}/${String(d.month).padStart(2, "0")}`))].sort().map(month => {
+                                      const ids = trip.departures.filter(d => formatDepartureDate(d.date).startsWith(`${month}/`)).map(d => d.id);
+                                      const allSelected = ids.every(id => plan.departureIds.includes(id));
+                                      return <button type="button" key={month} aria-pressed={allSelected} onClick={() => updatePlan(index, planIndex, "departureIds", allSelected ? plan.departureIds.filter(id => !ids.includes(id)) : [...new Set([...plan.departureIds, ...ids])])}>{month} {allSelected ? "取消整月" : "全選整月"}</button>;
+                                    })}
+                                  </div>
                                   <div className="plan-departure-options">
                                     {trip.departures.map((departure) => (
                                       <label key={departure.id}>
@@ -1066,20 +1123,27 @@ export function TripsEditor({
                                           }
                                         />
                                         <span>
-                                          {departure.date || "日期待填"}
+                                          {departure.date || "日期待填"} · {formatPrice(departure.price)}
+                                          {departure.note && ` · ${departure.note}`}
                                         </span>
                                       </label>
                                     ))}
                                   </div>
+                                  </>
                                 ) : null}
+                                </details>
                               </div>
-                            </div>
+                              <details className="plan-public-preview">
+                                <summary>4. 預覽旅客看到的版本卡片</summary>
+                                {plan.documentUrl ? <TripPlanCard plan={plan} departures={upcomingDepartures(trip.departures, todayTime)} fallbackPrice={trip.price} tripId={trip.id} days={trip.days} openInquiryInNewTab /> : <p>設定 PDF 或 Drive 網址後即可預覽。未設定文件的版本不會顯示在前臺。</p>}
+                              </details>
+                            </details>
                           );
                         })}
                       </div>
                     ) : (
                       <div className="plan-editor-empty">
-                        尚未建立方案。請新增方案後再上傳行程文件。
+                        尚未建立版本。請新增版本後再上傳行程文件。
                       </div>
                     )}
                   </div>
@@ -1089,7 +1153,7 @@ export function TripsEditor({
                       <div>
                         <h4>出發日期表</h4>
                         <small>
-                          顯示於前台「查看出發時間」頁與「出發團期總表」，沒有日期時前台不顯示該按鈕。日期輸入
+                          可在上方各版本內批次新增，並在此修改既有團期。共用團期的價格修改會影響所有套用版本。日期輸入
                           20260402 會自動轉成 2026/04/02，價格輸入 26800
                           會自動加上逗號；日期無效或空白的列必須修正或移除後才能儲存。
                         </small>
@@ -1116,6 +1180,7 @@ export function TripsEditor({
                         {trip.departures.map((departure, departureIndex) => (
                           <div className="departure-row" key={departure.id}>
                             <div>
+                              <small className="departure-version-label">{trip.plans.filter(plan => planAppliesToDeparture(plan, departure.id)).map(tripPlanLabel).join("、") || "尚未套用任何版本"}</small>
                               <input
                                 aria-label="出發日期"
                                 placeholder="2026/09/09"

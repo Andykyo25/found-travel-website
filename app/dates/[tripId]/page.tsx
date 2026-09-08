@@ -95,23 +95,23 @@ export default async function TripDatesPage({ params }: PageProps) {
                 TRAVEL OPTIONS
               </p>
               <h2>
-                {plans.length > 1 ? "選擇適合你的行程方案" : "完整行程方案"}
+                {plans.length > 1 ? "選擇航空與行程版本" : "航空與完整行程"}
               </h2>
               <p>
                 {plans.length > 1
-                  ? "不同航空公司、航班時間與行程內容分開呈現，先比較差異再查看完整資料。"
+                  ? "先比較航空、航班時段與住宿，再選出發日期，查看對應版本的 PDF 或詢問顧問。"
                   : "查看航空安排、適用團期與完整行程資料。"}
               </p>
             </div>
             <div className="trip-plan-grid">
-              {plans.map((plan, index) => (
+              {plans.map((plan) => (
                 <TripPlanCard
                   key={plan.id}
                   plan={plan}
                   departures={departures}
                   tripId={trip.id}
                   fallbackPrice={trip.price}
-                  index={index}
+                  days={trip.days}
                 />
               ))}
             </div>

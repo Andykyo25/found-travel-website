@@ -41,7 +41,7 @@ export function validateTripDates(value: unknown): string | null {
                 Array.isArray(p.departureIds) &&
                 p.departureIds.includes(departure.id),
             )
-            .map((p) => `${p.airline ?? ""} ${p.title ?? ""}`)
+            .map((p) => p.id || `${p.airline ?? ""} ${p.title ?? ""}`)
             .sort()
             .join("、")
         : "";

@@ -1063,6 +1063,44 @@ img {
   line-height: 1.7;
 }
 
+.trip-plan-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 18px;
+  margin: 20px 0 0;
+  font-size: 13px;
+}
+
+.trip-plan-facts dt { color: var(--muted); }
+.trip-plan-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.trip-plan-date-list button {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--sage-deep);
+  background: #edf3eb;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.trip-plan-date-list button[aria-pressed="true"] {
+  background: var(--sage-deep);
+  border-color: var(--sage-deep);
+  color: #fff;
+}
+
+.trip-plan-date-list .trip-plan-more { background: transparent; }
+.trip-plan-date-list button small { font-size: 11px; }
+.trip-plan-card .button { white-space: normal; text-align: center; overflow-wrap: anywhere; }
+.trip-plan-card h3, .trip-plan-price { overflow-wrap: anywhere; min-width: 0; }
+
 .trip-plan-departures {
   display: grid;
   gap: 9px;
@@ -1973,6 +2011,66 @@ img {
   align-items: center;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  list-style: none;
+}
+
+.plan-editor-card-heading::-webkit-details-marker { display: none; }
+.plan-editor-card-heading strong { overflow-wrap: anywhere; }
+.plan-editor-card:not([open]) > .plan-editor-card-heading { border-bottom: 0; padding-bottom: 0; }
+.plan-editor-card > .trip-editor-actions { margin-top: 14px; justify-content: flex-end; flex-wrap: wrap; }
+.plan-step-title { font-size: 14px; margin: 18px 0 12px; }
+.plan-document-preview { display: inline-block; color: var(--coral-deep); margin-top: 14px; overflow-wrap: anywhere; }
+.plan-public-preview, .plan-existing-departures { margin-top: 20px; }
+.plan-public-preview > summary, .plan-existing-departures > summary { font-weight: 800; font-size: 13px; cursor: pointer; padding: 12px 0; }
+.plan-public-preview > .trip-plan-card { margin-top: 14px; }
+.departure-version-label { display: block; color: var(--sage-deep); font-size: 12px; margin-bottom: 8px; overflow-wrap: anywhere; }
+
+.departure-batch-editor {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #faf8f2;
+}
+.departure-batch-editor > summary { cursor: pointer; font-size: 14px; font-weight: 800; color: var(--sage-deep); }
+.departure-batch-editor p { font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.departure-batch-editor .field-grid { margin: 16px 0; }
+.batch-month-nav { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 18px 0 12px; }
+.batch-month-nav label { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
+.batch-month-nav input { min-width: 0; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+.batch-month-nav button, .batch-calendar button, .batch-selected-dates button, .batch-remove, .plan-month-actions button {
+  font: inherit; font-size: 13px; cursor: pointer; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink);
+}
+.batch-calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.batch-calendar > span { text-align: center; font-size: 12px; color: var(--muted); padding: 6px 0; }
+.batch-calendar button { min-width: 0; padding: 12px 0; }
+.batch-calendar button[aria-pressed="true"], .plan-month-actions button[aria-pressed="true"] { background: var(--sage-deep); color: #fff; border-color: var(--sage-deep); }
+.batch-selected-dates, .plan-month-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.batch-selected-dates button { overflow-wrap: anywhere; }
+.batch-paste-label { margin: 16px 0; }
+.batch-preview { margin-top: 20px; }
+.batch-preview h5 { margin: 0; font-size: 14px; }
+.batch-preview-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.batch-preview-row > .batch-error { grid-column: 1 / -1; margin: 0; }
+.batch-remove { color: #a12d2d; }
+.departure-batch-editor .batch-error { color: #a12d2d; }
+.departure-batch-editor .batch-success { color: var(--sage-deep); }
+.batch-assignment-note { padding: 12px; border-radius: 8px; background: #edf3eb; }
+.departure-batch-editor button:disabled { opacity: .5; cursor: not-allowed; }
+.departure-batch-editor .button { white-space: normal; }
+
+@media (max-width: 700px) {
+  .batch-preview-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .batch-preview-row .field:nth-child(3) { grid-column: 1 / -1; }
+  .batch-preview-row .batch-remove { justify-self: start; }
+}
+@media (max-width: 430px) {
+  .departure-batch-editor { padding: 10px; }
+  .batch-month-nav { gap: 6px; }
+  .batch-calendar { gap: 3px; }
+  .batch-calendar button { padding: 12px 0; }
+  .batch-preview-row { grid-template-columns: minmax(0, 1fr); }
 }
 
 .plan-editor-card-heading > div:first-child {
@@ -2577,6 +2675,19 @@ img {
 }
 
 /* ---------- 後台分頁 ---------- */
+
+@media (max-width: 640px) {
+  .studio-shell:has(.plan-editor) { padding-inline: 12px; }
+  .studio-form .studio-section:has(.studio-trip-list) { padding-inline: 12px; }
+  .studio-trip-list { margin-inline: -12px; }
+  .studio-trip-list .studio-trip { border-inline: 0; border-radius: 0; }
+  .studio-trip-body { padding-inline: 12px; }
+  .studio-trip-body .plan-editor { padding-inline: 0; background: transparent; }
+  .plan-editor-list .plan-editor-card { padding-inline: 0; border-inline: 0; border-radius: 0; }
+  .departure-batch-editor { padding-inline: 8px; }
+  .batch-calendar button { min-height: 44px; }
+  .batch-month-nav input { font-size: 16px; }
+}
 
 .studio-tabs {
   display: flex;
