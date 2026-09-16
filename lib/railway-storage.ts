@@ -153,11 +153,12 @@ export async function writeSiteContentObject(
 
 // 每筆聯絡單各存成一個物件，避免多位客人同時送出時互相覆蓋。
 // 檔名前綴使用毫秒時間戳，字典排序即等於時間排序。
-export async function writeContactRequestObject(id: string, value: unknown) {
+export async function writeContactRequestObject(id: string, value: unknown, submittedAt = Date.now(), createOnly = false) {
   const storage = getClient();
   if (!storage) throw new Error("Railway Storage Bucket is unavailable");
 
-  const key = `${contactPrefix}${Date.now()}-${id}.json`;
+  const key = `${contactPrefix}${submittedAt}-${id}.json`;
+  try {
   await storage.client.send(
     new PutObjectCommand({
       Bucket: storage.config.bucket,
@@ -165,8 +166,13 @@ export async function writeContactRequestObject(id: string, value: unknown) {
       Body: JSON.stringify(value),
       ContentType: "application/json; charset=utf-8",
       CacheControl: "no-store",
+      ...(createOnly ? { IfNoneMatch: "*" } : {}),
     }),
   );
+  } catch (error) {
+    if (!createOnly || (error as { name?: string }).name !== "PreconditionFailed") throw error;
+    // Atomic create already succeeded on an earlier retry. Never overwrite its delivery state.
+  }
   return key;
 }
 

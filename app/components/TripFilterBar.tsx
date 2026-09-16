@@ -73,6 +73,7 @@ export function TripFilterBar({
   const [region, setRegion] = useState(filters.region ?? "");
   const [month, setMonth] = useState(filters.month);
   const [budget, setBudget] = useState(filters.budget);
+  const [keyword, setKeyword] = useState(filters.keyword ?? "");
 
   return (
     <form
@@ -80,10 +81,14 @@ export function TripFilterBar({
       onSubmit={(event) => {
         event.preventDefault();
         router.push(
-          tripFilterHref({ ...filters, month, budget, region }, false),
+          tripFilterHref({ ...filters, month, budget, region, keyword }, false),
         );
       }}
     >
+      <label className="trip-filter-field trip-filter-keyword">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="4.8" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m11.2 11.2 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        <input type="search" aria-label="行程關鍵字" name="q" placeholder="關鍵字：東北、日本…" maxLength={60} value={keyword} onChange={event => setKeyword(event.target.value)} />
+      </label>
       {regions.length > 0 ? (
         <label className="trip-filter-field">
           <select

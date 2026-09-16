@@ -193,7 +193,7 @@ export function TripsEditor({
   ) => {
     updateTripPlans(tripIndex, (plans) =>
       plans.map((plan, index) =>
-        index === planIndex ? { ...plan, [key]: value } : plan,
+        index === planIndex ? { ...plan, [key]: value, ...(key === "documentUrl" ? { documentUpdatedAt: "" } : {}) } : plan,
       ),
     );
   };
@@ -211,6 +211,7 @@ export function TripsEditor({
               documentType,
               documentUrl: "",
               documentName: "查看完整行程",
+              documentUpdatedAt: "",
             }
           : plan,
       ),
@@ -461,6 +462,7 @@ export function TripsEditor({
                         documentType: "pdf",
                         documentUrl: result.url ?? "",
                         documentName: result.filename ?? file.name,
+                        documentUpdatedAt: "",
                       }
                     : itemPlan,
                 ),
@@ -913,7 +915,23 @@ export function TripsEditor({
                                     }
                                   />
                                 </Field>
-                                <Field label="航班時段（選填）">
+                                <details className="field-wide finder-editor-overrides"><summary>進階配對設定（選填，通常不用填）</summary><p>直接沿用既有團期、地區、航空與價格。價格已寫明「／人」、航班已寫明「桃園出發」時會自動讀取；資料不足會另外標示待確認。只有需要補充或更正時才填以下欄位。</p><div className="field-grid"><Field label="服務類型覆寫（選填）" hint="未設定仍可列入待確認版本；不會猜測客製或機票服務。">
+                                  <select value={plan.serviceType ?? "unknown"} onChange={event => updatePlan(index, planIndex, "serviceType", event.target.value as TripPlan["serviceType"])}>
+                                    <option value="unknown">待確認</option><option value="group">跟團旅行</option><option value="custom">自組／客製團</option><option value="partial">機票／機加酒／包車</option>
+                                  </select>
+                                </Field>
+                                <Field label="出發機場覆寫（選填）" hint="優先讀取此處；留空時讀取航班或摘要中明確的出發機場。">
+                                  <input maxLength={40} value={plan.departureAirport ?? ""} onChange={event => updatePlan(index, planIndex, "departureAirport", event.target.value)} />
+                                </Field>
+                                <Field label="價格基準覆寫（選填）" hint="價格已明列／人、／房時可不填；未知或矛盾資料不會當成已符合預算。">
+                                  <select value={plan.priceBasis ?? "unknown"} onChange={event => updatePlan(index, planIndex, "priceBasis", event.target.value as TripPlan["priceBasis"])}>
+                                    <option value="unknown">待確認</option><option value="person">每人</option><option value="room">每房</option><option value="group">整團</option>
+                                  </select>
+                                </Field>
+                                <Field label="文件內容確認日期" hint="由業務確認內容後填寫，不代表即時團位。">
+                                  <input type="date" value={plan.documentUpdatedAt ?? ""} onChange={event => updatePlan(index, planIndex, "documentUpdatedAt", event.target.value)} />
+                                </Field>
+                                </div></details><Field label="航班時段（選填）">
                                   <input maxLength={120} placeholder="例如：早去晚回" value={plan.flight ?? ""} onChange={event => updatePlan(index, planIndex, "flight", event.target.value)} />
                                 </Field>
                                 <Field label="住宿安排（選填）">

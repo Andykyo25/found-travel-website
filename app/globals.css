@@ -3604,3 +3604,149 @@ img {
     display: block;
   }
 }
+
+/* Travel needs and comparison */
+.finder-shell { max-width: 1120px; margin: auto; padding: 24px clamp(16px, 4vw, 48px) 72px; }
+.finder-intro { padding: 40px 0 28px; max-width: 750px; }
+.finder-intro h1 { font-size: clamp(28px, 4vw, 44px); margin: 14px 0; }
+.finder-intro p, .finder-panel p { line-height: 1.8; }
+.finder-panel { background: #fff; padding: clamp(16px, 3vw, 36px); border: 1px solid #e5e9e5; border-radius: 24px; }
+.finder-panel h2 { scroll-margin-top: 24px; }
+.finder-panel select, .finder-panel input, .finder-panel textarea { max-width: 100%; }
+.finder-panel .field-grid { margin: 28px 0; align-items: start; }
+.finder-steps { color: #486756; font-size: 13px; }
+.finder-services { border: 0; padding: 0; margin: 24px 0; }
+.finder-services legend { margin-bottom: 14px; font-weight: 700; }
+.finder-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.finder-service { display: grid; grid-template-columns: 20px 1fr; gap: 9px; padding: 20px; border: 1px solid #ccd8cf; border-radius: 14px; cursor: pointer; }
+.finder-service small { grid-column: 2; line-height: 1.7; color: #526458; }
+.finder-service.selected { background: #eff7ee; border-color: #39794e; }
+.finder-dates { border: 0; padding: 0; margin: 0; min-width: 0; }
+.finder-dates label { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 8px; }
+.finder-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 24px; }
+.finder-result { padding: 22px; border: 1px solid #dce5dc; border-radius: 18px; min-width: 0; overflow-wrap: anywhere; }
+.finder-result h3 { margin: 8px 0 14px; }
+.finder-result dl { font-size: 14px; line-height: 1.8; }
+.finder-result dt { color: #657365; margin-top: 9px; }
+.finder-result dd { margin: 0; }
+.finder-result select { width: 100%; min-width: 0; }
+.finder-match { background: #eff7ee; padding: 10px; border-radius: 8px; font-size: 13px; }
+.finder-pending { font-size: 13px; color: #725329; }
+.finder-actions, .finder-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+.finder-actions label { display: flex; gap: 8px; align-items: center; }
+.finder-empty { padding: 24px; background: #faf7ef; border-radius: 16px; margin-top: 20px; }
+.finder-empty li { line-height: 1.8; }
+.finder-comparison { margin: 28px 0; }
+.finder-summary { padding: 20px; background: #f4f7f2; border-radius: 14px; }
+.finder-summary pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 14px; line-height: 1.8; }
+.finder-home { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; padding-top: 36px; padding-bottom: 36px; }
+.finder-home > div { flex: 1 1 420px; }
+.finder-home h2 { margin: 8px 0; font-size: 28px; }
+.finder-home p { line-height: 1.8; }
+@media (max-width: 650px) {
+  .finder-grid, .finder-results { grid-template-columns: minmax(0, 1fr); }
+  .finder-footer { align-items: stretch; flex-direction: column; }
+  .finder-service, .finder-result { padding: 16px; }
+  .finder-shell .dates-header { flex-wrap: wrap; gap: 14px; }
+  .finder-panel .field-grid { grid-template-columns: minmax(0, 1fr); }
+  .finder-steps { font-size: 12px; }
+}
+
+/* Guided travel cards: no animation libraries or separate content catalogue. */
+.finder-playful { background: linear-gradient(145deg, #fffdf6, #fff 55%, #f4faf4); border: 1px solid #e2e8d6; box-shadow: 0 14px 50px #4057350a; }
+.finder-guide { display: flex; align-items: center; gap: 14px; padding: 18px; background: #f0f5e8; border-radius: 20px; }
+.finder-guide-icon { font-size: 32px; }
+.finder-guide small { display: block; margin-top: 4px; color: #56634e; line-height: 1.7; }
+.finder-progress { display: flex; list-style: none; gap: 8px; padding: 0; margin: 26px 0; }
+.finder-progress li { flex: 1; min-width: 0; }
+.finder-progress button { display: flex; align-items: center; gap: 6px; border: 0; padding: 6px 0; background: none; font-size: 12px; color: #53604c; cursor: pointer; }
+.finder-progress button:disabled { color: #73766e; cursor: default; }
+.finder-progress span { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; background: #e9ece3; }
+.finder-progress .current span, .finder-progress .done span { background: #355d40; color: white; }
+.finder-kicker { letter-spacing: .08em; font-size: 12px; color: #637650; margin: 26px 0 8px; }
+.finder-playful h2 { font-size: clamp(24px, 3vw, 34px); line-height: 1.5; margin: 10px 0 20px; }
+.finder-question { min-height: 260px; animation: finder-arrive .24s ease-out; }
+.finder-service { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 24px; background: #fff; transition: transform .18s, box-shadow .18s; }
+.finder-service:nth-child(2) { background: #fff8ee; }
+.finder-service:nth-child(3) { background: #eff8fa; }
+.finder-service:nth-child(4) { background: #f7f2fa; }
+.finder-service.selected { border: 2px solid #427447; padding: 23px; box-shadow: 0 6px 18px #3d683513; }
+.finder-service input { position: absolute; right: 18px; top: 18px; accent-color: #355d40; width: 18px; height: 18px; }
+.finder-service-icon { font-size: 34px; line-height: 1.4; }
+.finder-service strong { font-size: 18px; padding-right: 8px; }
+.finder-service-label { font-size: 11px; color: #616b56; margin-top: 8px; }
+.finder-chips { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+.finder-chips button { border: 1px solid #cddac6; border-radius: 18px; padding: 16px 22px; color: #344c35; background: #fff; font: inherit; cursor: pointer; min-height: 48px; }
+.finder-chips button[aria-pressed=true] { background: #e7f0d7; border-color: #54723c; box-shadow: 0 3px 0 #c4d6b1; }
+.finder-budget { max-width: 360px; margin: 26px 0; }
+.finder-note { color: #606951; font-size: 13px; line-height: 1.7; }
+.finder-question-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 28px; padding-top: 22px; border-top: 1px dashed #d2dac8; }
+.finder-question-footer > span { font-size: 12px; color: #65705c; }
+.finder-error { color: #a53d27; background: #fff2e9; padding: 12px 18px; border-radius: 12px; }
+.finder-recap { display: flex; gap: 8px; flex-wrap: wrap; }
+.finder-recap span { padding: 7px 12px; border-radius: 20px; background: #eef2e5; font-size: 12px; }
+.finder-recap button { font: inherit; font-size: 13px; border: 0; background: none; text-decoration: underline; cursor: pointer; color: #486544; padding: 8px; }
+.finder-postcard { min-width: 0; background: white; border: 1px solid #dde3d5; border-radius: 22px; overflow: hidden; box-shadow: 0 5px 14px #26391908; }
+.finder-postcard.is-picked { border-color: #527249; box-shadow: 0 0 0 1px #527249; }
+.finder-postcard-image { position: relative; height: 180px; background: #e6eddd; display: grid; place-items: center; font-size: 48px; }
+.finder-postcard-image img { width: 100%; height: 100%; object-fit: cover; }
+.finder-stamp { position: absolute; bottom: 12px; left: 14px; max-width: calc(100% - 28px); font-size: 12px; background: #fffef4; padding: 7px 12px; border-radius: 8px; color: #405437; }
+.finder-postcard-body { padding: 22px; overflow-wrap: anywhere; }
+.finder-postcard h3 { margin: 12px 0 6px; font-size: 20px; line-height: 1.5; }
+.finder-badge { display: inline-block; background: #edf5e6; color: #365928; font-size: 11px; padding: 5px 10px; border-radius: 10px; }
+.finder-badge.pending { background: #fff1d9; color: #785317; }
+.finder-airline { color: #5b6654; font-size: 13px; }
+.finder-price { font-size: 22px; font-weight: 700; color: #345a36; }
+.finder-price small { display: block; font-size: 12px; font-weight: 400; }
+.finder-facts { display: grid; gap: 12px; margin: 18px 0; }
+.finder-facts dt { font-size: 12px; color: #67715e; }
+.finder-facts dd { margin: 5px 0 0; font-size: 14px; line-height: 1.7; }
+.finder-postcard select { width: 100%; min-width: 0; }
+.finder-card-details { margin: 16px 0; font-size: 12px; line-height: 1.8; color: #626448; }
+.finder-card-details summary, .finder-maybe > summary { cursor: pointer; padding: 8px 0; }
+.finder-card-details ul { padding-left: 18px; }
+.finder-postcard .button { font-size: 12px; padding: 10px 14px; min-height: 44px; }
+.finder-postcard .button:disabled { opacity: .5; cursor: not-allowed; }
+.finder-actions a { font-size: 13px; }
+.finder-empty > span { font-size: 32px; }
+.finder-maybe { margin: 28px 0; padding: 18px; border: 1px dashed #d8c9a6; border-radius: 18px; background: #fffbf3; }
+.finder-maybe > summary { font-weight: 700; }
+.finder-shortlist { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.finder-shortlist .finder-postcard-body { padding: 16px; }
+.finder-playful :focus-visible { outline: 3px solid #d88d32; outline-offset: 4px; }
+.finder-playful h2:focus { outline: none; }
+.finder-playful .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes finder-arrive { from { opacity: .2; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (hover: hover) { .finder-service:hover { transform: translateY(-3px); box-shadow: 0 8px 20px #3a492b12; } }
+@media (max-width: 760px) { .finder-shortlist { grid-template-columns: 1fr; } .finder-progress button { flex-direction: column; text-align: center; font-size: 10px; } }
+@media (max-width: 450px) { .finder-guide { padding: 12px; } .finder-service { padding: 18px; } .finder-service.selected { padding: 17px; } .finder-chips button { padding: 14px; } .finder-question-footer { flex-wrap: wrap; } .finder-question-footer .button { flex: 1; } .finder-postcard-body { padding: 16px; } }
+@media (prefers-reduced-motion: reduce) { .finder-question { animation: none; } .finder-service { transition: none; } .finder-service:hover { transform: none; } }
+
+/* Prominent trip-finder invitation and shared keyword search. */
+.finder-home.section-shell { padding-block: 38px; }
+.finder-home .finder-home-card { display: grid; grid-template-columns: 1.35fr 1fr; gap: 32px; width: 100%; flex: 1 1 100%; padding: clamp(26px, 4vw, 58px); border-radius: 32px; background: linear-gradient(120deg, #e7efd9, #f4f3da 62%, #fce2cd); border: 1px solid #d5dfc4; box-shadow: 0 18px 48px #45602713; overflow: hidden; }
+.finder-home-copy { align-self: center; }
+.finder-home-copy h2 { font-size: clamp(28px, 3vw, 42px); line-height: 1.45; margin: 16px 0; color: #294931; }
+.finder-home-copy > p:not(.eyebrow) { color: #4c5a43; font-size: 16px; }
+.finder-home-copy small { display: block; color: #58674d; font-size: 12px; margin-top: 16px; }
+.finder-home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 26px; }
+.finder-home-actions .button { min-height: 58px; font-size: 16px; padding: 16px 24px; box-shadow: 0 8px 20px #d5754930; }
+.finder-home-actions > a:not(.button) { font-size: 13px; color: #3e5940; text-decoration: underline; text-underline-offset: 4px; }
+.finder-home-preview { display: grid; place-items: center; position: relative; padding: 18px; }
+.finder-home-ticket { background: #fffdf5; padding: 30px; width: 100%; max-width: 340px; border: 1px solid #fff; border-radius: 22px; box-shadow: 8px 12px 0 #cfba9130; transform: rotate(3deg); }
+.finder-home-ticket > span { font-size: 10px; letter-spacing: .18em; color: #6d7959; }
+.finder-home-ticket > strong { display: block; font-size: 27px; line-height: 1.5; margin: 16px 0; color: #465939; }
+.finder-home-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.finder-home-mini span { background: #f0f4e6; padding: 12px 8px; border-radius: 10px; font-size: 12px; text-align: center; }
+.finder-home-ticket > p { border-top: 1px dashed #cdd5bd; padding-top: 16px; font-size: 12px; color: #647454; }
+.finder-home-spark { position: absolute; top: -12px; right: -2px; font-size: 58px; color: #d99255; }
+.trip-filter-bar { width: min(1050px, 100%); }
+.trip-filter-keyword { flex: 1.55; min-width: 180px; cursor: text; }
+.trip-filter-keyword input { width: 100%; min-width: 0; padding: 0; background: transparent; border: 0; color: var(--ink); font: inherit; font-size: 14px; line-height: 24px; }
+.trip-filter-keyword input::placeholder { color: #657265; opacity: 1; }
+.trip-filter-field:focus-within { outline: 2px solid #59704c; outline-offset: -2px; }
+.trip-search-summary { text-align: center; color: #52644a; font-size: 14px; margin: 18px 0 26px; }
+.trip-search-summary a { text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 641px) and (max-width: 960px) { .trip-filter-bar { flex-wrap: wrap; border-radius: 24px; } .trip-filter-keyword { flex: 1 1 100%; border-bottom: 1px solid var(--line); border-radius: 14px; } }
+@media (max-width: 760px) { .finder-home .finder-home-card { grid-template-columns: 1fr; gap: 12px; } .finder-home-preview { display: none; } .finder-home-actions { align-items: stretch; flex-direction: column; } .finder-home-actions .button { text-align: center; justify-content: center; } }
+@media (max-width: 640px) { .trip-filter-keyword { flex: auto; min-width: 0; border-bottom: 1px solid var(--line); border-radius: 12px; padding-block: 14px; } .trip-filter-keyword input { font-size: 16px; } .finder-home.section-shell { padding-block: 24px; } }

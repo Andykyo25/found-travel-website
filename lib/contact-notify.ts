@@ -48,7 +48,7 @@ async function pushLineMessage(text: string, retryKey: string) {
       authorization: `Bearer ${token}`,
       "x-line-retry-key": retryKey,
     },
-    body: JSON.stringify({ to, messages: [{ type: "text", text }] }),
+    body: JSON.stringify({ to, messages: [{ type: "text", text: text.length > 4000 ? `${text.slice(0, 3900)}\n\n（通知摘要較長，完整需求請至官網後台諮詢紀錄查看。）` : text }] }),
     signal: AbortSignal.timeout(notifyTimeoutMs),
   });
 

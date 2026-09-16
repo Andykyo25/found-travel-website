@@ -31,6 +31,10 @@ export type TripPlan = {
   summary: string;
   flight?: string;
   accommodation?: string;
+  serviceType?: "group" | "custom" | "partial" | "unknown";
+  departureAirport?: string;
+  priceBasis?: "person" | "room" | "group" | "unknown";
+  documentUpdatedAt?: string;
   price: string;
   documentType: TripDocumentType;
   documentUrl: string;
@@ -317,7 +321,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
           },
         ];
     const usedPlanIds = new Set<string>();
-    const plans = plansSource.flatMap((planValue, planIndex) => {
+    const plans = plansSource.flatMap<TripPlan>((planValue, planIndex) => {
       if (!planValue || typeof planValue !== "object") return [];
       const plan = planValue as Partial<TripPlan>;
       const fallbackPlan = fallback.plans[planIndex] ?? fallback.plans[0];
@@ -358,6 +362,10 @@ export function normalizeSiteContent(value: unknown): SiteContent {
           summary: safeOptionalString(plan.summary, 400),
           flight: safeOptionalString(plan.flight, 120),
           accommodation: safeOptionalString(plan.accommodation, 120),
+          serviceType: plan.serviceType === "group" || plan.serviceType === "custom" || plan.serviceType === "partial" ? plan.serviceType : "unknown",
+          departureAirport: safeOptionalString(plan.departureAirport, 40),
+          priceBasis: plan.priceBasis === "person" || plan.priceBasis === "room" || plan.priceBasis === "group" ? plan.priceBasis : "unknown",
+          documentUpdatedAt: /^\d{4}-\d{2}-\d{2}$/.test(String(plan.documentUpdatedAt ?? "")) ? String(plan.documentUpdatedAt) : "",
           price: safeOptionalString(plan.price, 60),
           documentType,
           documentUrl: safeDocumentUrl(plan.documentUrl, documentType),

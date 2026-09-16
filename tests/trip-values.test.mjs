@@ -113,3 +113,21 @@ test("optional canonical origin accepts only an HTTPS origin", () => {
   ])
     assert.throws(() => configuredSiteOrigin(url));
 });
+
+test("keyword search uses published itinerary text, aliases, and combines with filters", async () => {
+  const { readTripFilters, matchesTripKeyword } = await import("../lib/trip-filters.ts");
+  const trip = { id: "japan", title: "日本東北溫泉", region: "TOHOKU", summary: "賞楓與慢旅行", badge: "秋季", days: "5日", price: "35000", departures: [], plans: [{ documentUrl: "https://example.com/tour.pdf", airline: "長榮航空", title: "標準版", accommodation: "溫泉飯店" }, { documentUrl: "", title: "未公開郵輪" }] };
+  for (const q of ["東北", "日本", "日本 東北", "ＴＯＨＯＫＵ", "長榮 溫泉", "　賞楓　"]) assert.equal(matchesTripKeyword(trip, q), true, q);
+  for (const q of ["韓國", "日本 郵輪", "未公開郵輪"]) assert.equal(matchesTripKeyword(trip, q), false, q);
+  const f = readTripFilters({ q: " 日本 東北 ", budget: "b2", region: "TOHOKU" });
+  assert.equal(filterTrips([trip], f).length, 1);
+  assert.equal(filterTrips([trip], { ...f, budget: "b1" }).length, 0);
+  assert.equal(filterTrips([trip], { ...f, category: "夏季" }).length, 0);
+  const url = new URL(tripFilterHref(f, true), "https://example.com");
+  assert.equal(url.searchParams.get("q"), "日本 東北");
+  assert.equal(url.searchParams.get("all"), "1");
+  assert.equal(readTripFilters({ q: ["a", "b"] }).keyword, "a");
+  assert.equal(readTripFilters({ q: "a".repeat(100) }).keyword.length, 60);
+  assert.equal(matchesTripKeyword({ ...trip, title: "東京慢旅", region: "TOKYO・HAKONE" }, "日本"), true);
+  assert.equal(matchesTripKeyword({ ...trip, title: "中國東北", region: "中國", summary: "", plans: [] }, "日本"), false);
+});

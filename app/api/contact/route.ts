@@ -96,8 +96,12 @@ export async function POST(request: NextRequest) {
   }
 
   let saved: ManagedContactRequest;
+  const token = (body as { submissionId?: unknown }).submissionId;
+  if (token !== undefined && (typeof token !== "string" || !/^\d{13}-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token) || Number(token.slice(0, 13)) > Date.now() + 60000 || Number(token.slice(0, 13)) < Date.now() - 7 * 86400000)) {
+    return NextResponse.json({ error: "表單已過期，請重新開啟後送出" }, { status: 400 });
+  }
   try {
-    saved = await saveContactRequest(parsed.request);
+    saved = await saveContactRequest(parsed.request, typeof token === "string" ? token : undefined);
   } catch (error) {
     console.error("Unable to save contact request", error);
     return NextResponse.json(

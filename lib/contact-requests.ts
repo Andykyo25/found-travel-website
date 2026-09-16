@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 
 import {
   contactTimeSlots,
@@ -55,8 +56,8 @@ export function parseContactRequestInput(
 
   const message = typeof input.message === "string" ? input.message.trim() : "";
   if (!message) return { ok: false, error: "請填寫諮詢內容" };
-  if (message.length > 1000) {
-    return { ok: false, error: "諮詢內容請控制在 1000 字以內" };
+  if (message.length > 6000) {
+    return { ok: false, error: "需求摘要與諮詢內容請控制在 6000 字以內" };
   }
 
   return {
@@ -99,10 +100,15 @@ function normalizeContactRequest(
 
 export async function saveContactRequest(
   request: Omit<ContactRequest, "id" | "createdAt">,
+  submissionToken?: string,
 ): Promise<ManagedContactRequest> {
+  const match = submissionToken?.match(/^(\d{13})-([0-9a-f-]{36})$/i);
+  const submittedAt = match ? Number(match[1]) : Date.now();
+  const digest = match ? createHash("sha256").update(`${submissionToken}:${JSON.stringify(request)}`).digest("hex") : "";
+  const stableId = digest ? `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-a${digest.slice(17, 20)}-${digest.slice(20, 32)}` : crypto.randomUUID();
   const saved: ContactRequest = {
     ...request,
-    id: crypto.randomUUID(),
+    id: stableId,
     createdAt: new Date().toISOString(),
     notification: {
       state: "pending",
@@ -112,7 +118,7 @@ export async function saveContactRequest(
       webhook: false,
     },
   };
-  const storageKey = await writeContactRequestObject(saved.id, saved);
+  const storageKey = await writeContactRequestObject(saved.id, saved, submittedAt, Boolean(match));
   return { ...saved, storageKey };
 }
 

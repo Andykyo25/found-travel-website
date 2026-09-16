@@ -1,21 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { contactTimeSlots, type ContactTimeSlotId } from "@/lib/contact-fields";
+import { recordFinderEvent } from "@/lib/finder-events";
 
 type Status =
   | { kind: "idle" }
   | { kind: "sending" }
   | { kind: "error"; message: string }
-  | { kind: "success" };
+  | { kind: "success"; context: string };
 
 export function ContactForm({
   lineUrl,
   initialMessage = "",
+  contextMessage = "",
 }: {
   lineUrl: string;
   initialMessage?: string;
+  contextMessage?: string;
 }) {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -23,6 +26,8 @@ export function ContactForm({
   const [message, setMessage] = useState(initialMessage);
   const [company, setCompany] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const inFlight = useRef(false);
+  const submissionId = useRef("");
 
   const togglePreferredTime = (id: ContactTimeSlotId) => {
     setPreferredTimes((current) =>
@@ -34,11 +39,14 @@ export function ContactForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (inFlight.current) return;
     if (preferredTimes.length === 0) {
       setStatus({ kind: "error", message: "請選擇希望聯繫時段" });
       return;
     }
 
+    inFlight.current = true;
+    submissionId.current ||= `${Date.now()}-${crypto.randomUUID()}`;
     setStatus({ kind: "sending" });
     try {
       const response = await fetch("/api/contact", {
@@ -48,22 +56,26 @@ export function ContactForm({
           name,
           mobile,
           preferredTimes,
-          message,
+          message: [contextMessage, message].filter(Boolean).join("\n\n客人補充：\n"),
+          submissionId: submissionId.current,
           company,
         }),
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error ?? "送出失敗");
-      setStatus({ kind: "success" });
+      setStatus({ kind: "success", context: contextMessage });
+      if (contextMessage) recordFinderEvent("contact_saved");
     } catch (error) {
       setStatus({
         kind: "error",
         message: error instanceof Error ? error.message : "送出失敗",
       });
+    } finally {
+      inFlight.current = false;
     }
   }
 
-  if (status.kind === "success") {
+  if (status.kind === "success" && status.context === contextMessage) {
     return (
       <div className="contact-success" role="status">
         <span className="contact-success-mark" aria-hidden="true">
@@ -90,6 +102,7 @@ export function ContactForm({
 
   return (
     <form className="contact-form" onSubmit={submit}>
+      {contextMessage && <section aria-label="待提交的需求摘要" className="finder-summary"><h3>需求摘要</h3><pre>{contextMessage}</pre></section>}
       <div className="field-grid">
         <label className="field">
           <span>

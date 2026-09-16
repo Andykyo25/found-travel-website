@@ -20,6 +20,7 @@ export type TripFilters = {
   budget: string;
   category: string;
   region?: string;
+  keyword?: string;
 };
 
 export const emptyTripFilters: TripFilters = {
@@ -110,7 +111,36 @@ export function readTripFilters(
     budget: read("budget"),
     category: read("category"),
     region: read("region"),
+    keyword: read("q").trim(),
   };
+}
+
+function normalizeSearch(value: string) {
+  return value.normalize("NFKC").toLowerCase().replaceAll("臺", "台");
+}
+
+// Shared aliases, not per-product tags. Country expansion uses destination
+// fields only, so an airline name never classifies a trip's destination.
+const destinationAliases = [
+  { terms: ["日本", "japan"], places: /日本|japan|tokyo|hakone|hokkaido|tohoku|東京|箱根|北海道|大阪|京都|九州|沖繩|沖縄|名古屋/ },
+  { terms: ["東北", "tohoku"], places: /東北|tohoku/ },
+  { terms: ["東京", "tokyo"], places: /東京|tokyo/ },
+  { terms: ["箱根", "hakone"], places: /箱根|hakone/ },
+  { terms: ["北海道", "hokkaido"], places: /北海道|hokkaido/ },
+  { terms: ["峇里島", "巴厘島", "bali"], places: /峇里島|巴厘島|bali/ },
+];
+
+export function matchesTripKeyword(trip: Trip, keyword: string) {
+  const terms = normalizeSearch(keyword.trim().slice(0, 60)).split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const location = normalizeSearch([trip.region, trip.title].filter(Boolean).join(" "));
+  const aliases = destinationAliases.filter(a => a.places.test(location)).flatMap(a => a.terms);
+  const content = normalizeSearch([
+    trip.title, trip.region, trip.summary, trip.badge, trip.days,
+    ...(trip.plans ?? []).filter(p => p.documentUrl).flatMap(p => [p.airline, p.title, p.summary, p.flight, p.accommodation]),
+    ...(trip.departures ?? []).map(d => d.note), ...aliases,
+  ].filter(Boolean).join(" "));
+  return terms.every(term => content.includes(term));
 }
 
 export function filterTrips(trips: Trip[], filters: TripFilters) {
@@ -119,6 +149,7 @@ export function filterTrips(trips: Trip[], filters: TripFilters) {
   return trips.filter((trip) => {
     if (filters.category && trip.badge !== filters.category) return false;
     if (filters.region && trip.region !== filters.region) return false;
+    if (!matchesTripKeyword(trip, filters.keyword ?? "")) return false;
 
     if (filters.month && !departureMonthIds(trip).has(filters.month)) {
       return false;
@@ -271,6 +302,7 @@ export function tripFilterHref(filters: TripFilters, showAll: boolean) {
   if (filters.budget) params.set("budget", filters.budget);
   if (filters.category) params.set("category", filters.category);
   if (filters.region) params.set("region", filters.region);
+  if (filters.keyword?.trim()) params.set("q", filters.keyword.trim().slice(0, 60));
   if (showAll) params.set("all", "1");
 
   const query = params.toString();
