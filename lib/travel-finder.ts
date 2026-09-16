@@ -5,7 +5,7 @@ import { upcomingDepartures, parseDepartureDate, taipeiTodayTime } from "@/lib/t
 import { departureAirport, priceBasis, serviceType } from "@/lib/travel-facts";
 
 export const serviceLabels = { group: "跟團旅行", custom: "自組／客製團", partial: "機票／機加酒／包車", undecided: "還沒決定／其他需求" };
-export const basisLabels = { person: "每人", room: "每房", group: "整團", unknown: "基準待確認" };
+export const basisLabels = { person: "每人", room: "每房", group: "整團", unknown: "" };
 export type TravelNeeds = {
   service: keyof typeof serviceLabels;
   destination: string;
@@ -54,7 +54,7 @@ export function findTravel(trips: Trip[], needs: TravelNeeds, today = taipeiToda
     const missing: string[] = [];
     if (needs.service !== "undecided" && service !== needs.service) {
       if (service !== "unknown" || needs.service !== "group") { excluded.service++; continue; }
-      missing.push("是否提供跟團服務待確認");
+      // Legacy catalogue plans remain browseable without a service tag.
     }
     if (needs.destination && trip.region !== needs.destination) { excluded.destination++; continue; }
     if (needs.airport && airport !== needs.airport) {
@@ -100,8 +100,8 @@ export function findTravel(trips: Trip[], needs: TravelNeeds, today = taipeiToda
   return { candidates, pendingCandidates, excluded };
 }
 export function needsSummary(needs: TravelNeeds, selected: { candidate: TravelCandidate; departureId: string }[]) {
-  return ["來源：官網旅行需求入口 /find-trip", `服務：${serviceLabels[needs.service]}`, `目的地／航點：${needs.destination || "尚未決定"}`, `出發日範圍：${needs.start || "不限"} ～ ${needs.end || "不限"}`, `每人預算上限：${needs.budget ? `NT$${needs.budget}` : "尚未決定"}`, `出發機場：${needs.airport || "尚未決定"}`, `同行人數：${needs.people || "尚未決定"}`, ...(needs.service === "partial" ? [`回程日期：${needs.returnDate || "待確認"}`, `行李需求：${needs.luggage || "待確認"}`] : []), ...(needs.service === "custom" ? [`住宿／交通需求：${needs.stayTransport || "待確認"}`] : []), `原始補充需求：${needs.details || "未提供"}`, "候選方案（非訂位／報價承諾）：", ...selected.map(({ candidate: c, departureId }) => {
+  return ["來源：官網旅行需求入口 /find-trip", `服務：${serviceLabels[needs.service]}`, `目的地／航點：${needs.destination || "尚未決定"}`, `出發日範圍：${needs.start || "不限"} ～ ${needs.end || "不限"}`, `每人預算上限：${needs.budget ? `NT$${needs.budget}` : "尚未決定"}`, `出發機場：${needs.airport || "尚未決定"}`, `同行人數：${needs.people || "尚未決定"}`, ...(needs.service === "partial" ? [`回程日期：${needs.returnDate || "尚未決定"}`, `行李需求：${needs.luggage || "尚未決定"}`] : []), ...(needs.service === "custom" ? [`住宿／交通需求：${needs.stayTransport || "尚未決定"}`] : []), `原始補充需求：${needs.details || "未提供"}`, "候選方案（非訂位／報價承諾）：", ...selected.map(({ candidate: c, departureId }) => {
     const d = c.departures.find(item => item.id === departureId);
-    return `${c.trip.title}｜${tripPlanLabel(c.plan)} [${c.key}]\n出發日：${d?.date || "待選擇"}；團期備註：${d?.note || "未提供"}；參考價格：${d?.price || c.plan.price || c.trip.price}（${basisLabels[priceBasis(c.plan, d?.price || c.plan.price || c.trip.price)]}）\n待確認：${c.pending.join("、")}`;
+    return `${c.trip.title}｜${tripPlanLabel(c.plan)} [${c.key}]\n出發日：${d?.date || "待選擇"}\n團期備註：${d?.note || "未提供"}\n參考價格：${d?.price || c.plan.price || c.trip.price}（${basisLabels[priceBasis(c.plan, d?.price || c.plan.price || c.trip.price)]}）`;
   }), ...(selected.length ? [] : ["尚未選擇方案，請顧問依原始條件協助。"]), "人數、住宿、行李及其他文字需求尚未自動配對，須人工確認。"].join("\n");
 }

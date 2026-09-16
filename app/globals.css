@@ -3750,3 +3750,55 @@ img {
 @media (min-width: 641px) and (max-width: 960px) { .trip-filter-bar { flex-wrap: wrap; border-radius: 24px; } .trip-filter-keyword { flex: 1 1 100%; border-bottom: 1px solid var(--line); border-radius: 14px; } }
 @media (max-width: 760px) { .finder-home .finder-home-card { grid-template-columns: 1fr; gap: 12px; } .finder-home-preview { display: none; } .finder-home-actions { align-items: stretch; flex-direction: column; } .finder-home-actions .button { text-align: center; justify-content: center; } }
 @media (max-width: 640px) { .trip-filter-keyword { flex: auto; min-width: 0; border-bottom: 1px solid var(--line); border-radius: 12px; padding-block: 14px; } .trip-filter-keyword input { font-size: 16px; } .finder-home.section-shell { padding-block: 24px; } }
+
+/* Edge-to-edge homepage cover. The catalogue owns the single search form. */
+.hero-full.hero-edge { width: 100%; margin: 0; border-radius: 0; min-height: 100svh; box-shadow: none; }
+.hero-edge .hero-inner { width: min(1280px, calc(100% - 96px)); padding-block: 28px 64px; }
+.hero-edge .hero-scrim { background: linear-gradient(180deg, #061d295e 0%, #061d2908 35%, #061d2926 60%, #061d29b8 100%); }
+.hero-edge .hero-center { align-items: flex-start; justify-content: flex-end; padding-top: 140px; text-align: left; }
+.hero-edge .hero-title { max-width: 24ch; font-size: clamp(36px, 3.8vw, 62px); line-height: 1.35; text-wrap: balance; }
+.hero-edge .hero-phrase { display: inline; }
+.hero-edge .hero-phrase:last-child { display: block; }
+.hero-edge .hero-sub { margin-top: 20px; max-width: 650px; font-size: clamp(15px, 1.3vw, 19px); }
+.hero-edge .hero-nav { border-color: transparent; border-radius: 0; background: none; backdrop-filter: none; }
+.hero-edge .hero-nav a { padding: 10px 14px; text-shadow: 0 2px 12px #0008; }
+.hero-edge .hero-nav a.active { color: #fff; background: none; text-decoration: underline; text-underline-offset: 8px; }
+.hero-edge .hero-bar-actions .hero-contact-button { color: #fff; border: 1px solid #ffffffb8; background: #102b3226; border-radius: 3px; }
+.hero-edge .hero-bar-actions .hero-contact-button:hover { background: #ffffff26; }
+.hero-scroll-link { display: inline-flex; align-items: center; gap: 36px; color: white; font-size: 13px; letter-spacing: .12em; border-bottom: 1px solid #ffffff80; padding-bottom: 10px; margin-top: 34px; }
+.hero-scroll-link span { font-size: 20px; }
+@media (max-width: 900px) { .hero-edge .hero-inner { width: calc(100% - 48px); padding-block: 20px 44px; } }
+@media (max-width: 640px) { .hero-full.hero-edge { min-height: 100svh; } .hero-edge .hero-inner { width: calc(100% - 36px); padding-block: 16px 38px; } .hero-edge .hero-center { padding-block: 100px 0; } .hero-edge .hero-title { font-size: clamp(30px, 7.5vw, 40px); line-height: 1.4; } .hero-edge .hero-sub { font-size: 15px; margin-top: 16px; } .hero-edge .hero-kicker { margin-bottom: 16px; } .hero-scroll-link { margin-top: 26px; } }
+
+/* Photo carousel controls remain above the fixed cover copy. */
+.hero-carousel, .hero-slide { position: absolute; inset: 0; }
+.hero-carousel { touch-action: pan-y; }
+.hero-slide { opacity: 0; transition: opacity 1s ease; }
+.hero-slide.is-active { opacity: 1; }
+.hero-edge .hero-scrim { pointer-events: none; }
+.hero-edge .hero-inner { pointer-events: none; padding-bottom: 100px; }
+.hero-edge .hero-inner a, .hero-edge .hero-inner button, .hero-edge .hero-inner nav { pointer-events: auto; }
+.hero-slide-arrow { display: grid; place-items: center; padding: 0; line-height: 1; transform: translateY(-50%); position: absolute; z-index: 3; top: 48%; width: 46px; height: 46px; border: 1px solid #ffffff70; border-radius: 50%; color: white; background: #132f3b40; font-size: 32px; cursor: pointer; }
+.hero-slide-prev { left: 20px; }
+.hero-slide-next { right: 20px; }
+.hero-carousel-controls { position: absolute; z-index: 3; bottom: 26px; left: 50%; transform: translateX(-50%); width: min(1280px, calc(100% - 96px)); display: flex; align-items: center; gap: 20px; color: white; }
+.hero-slide-dots { display: flex; flex: 1; gap: 12px; }
+.hero-slide-dots button { flex: 1; min-width: 0; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.hero-slide-dots span { display: block; height: 3px; background: #ffffff55; transition: background .3s; }
+.hero-slide-dots button[aria-pressed="true"] span { background: white; }
+.hero-slide-count { font-size: 12px; letter-spacing: .12em; }
+.hero-slide-toggle { width: 44px; height: 44px; color: white; border: 1px solid #ffffff70; border-radius: 50%; background: #132f3b40; cursor: pointer; }
+.hero-carousel button:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.hero-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-block: 16px; }
+.hero-image-card { border: 1px solid #d6ddd2; border-radius: 12px; overflow: hidden; background: white; }
+.hero-image-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.hero-image-card strong, .hero-image-card > div { display: flex; padding: 10px; gap: 10px; }
+.hero-image-card button, .hero-image-add button { border: 1px solid #ccd5c9; padding: 8px 12px; border-radius: 8px; background: #f5f7f2; cursor: pointer; }
+.hero-images-editor button:disabled { opacity: .45; cursor: default; }
+.hero-image-add { display: flex; align-items: end; gap: 12px; margin-bottom: 16px; }
+.hero-image-add label { flex: 1; min-width: 0; }
+.hero-image-add input { display: block; width: 100%; }
+.hero-image-upload { display: grid; gap: 10px; margin-bottom: 16px; }
+@media (max-width: 640px) { .hero-carousel-controls { width: calc(100% - 36px); bottom: 14px; gap: 12px; } .hero-slide-arrow { top: 42%; width: 38px; height: 38px; } .hero-slide-prev { left: 12px; } .hero-slide-next { right: 12px; } .hero-edge .hero-inner { padding-bottom: 90px; } }
+@media (prefers-reduced-motion: reduce) { .hero-slide, .hero-slide-dots span { transition: none; } }
+@media (max-width: 640px) { .hero-carousel-controls { left: 18px; right: 86px; width: auto; transform: none; gap: 10px; } .hero-slide-dots { gap: 8px; } .hero-slide-count { font-size: 10px; white-space: nowrap; } .hero-slide-toggle { flex-shrink: 0; } }

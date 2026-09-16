@@ -1,3 +1,4 @@
+import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
 import { formatDepartureDate } from "@/lib/trip-values";
 import { cache } from "react";
 import {
@@ -64,6 +65,7 @@ export type SiteContent = {
   heroTitle: string;
   heroText: string;
   heroImage: string;
+  heroImages: string[];
   videoTitle: string;
   videoUrl: string;
   contactTitle: string;
@@ -87,6 +89,7 @@ export const defaultSiteContent: SiteContent = {
   heroText:
     "由找到了旅行社的專業顧問團隊，替你把每一段期待，排成剛剛好的旅程。",
   heroImage: "",
+  heroImages: [...defaultHeroImages],
   videoTitle: "旅行的樣子，先從一段影片開始",
   videoUrl: "/media/homepage.mp4",
   contactTitle: "下一趟旅行，讓我們一起找到。",
@@ -419,6 +422,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
     heroText: safeString(input.heroText, defaultSiteContent.heroText, 300),
     // 留空時前台會退回使用第一個行程的封面圖。
     heroImage: safeOptionalString(input.heroImage, 800),
+    heroImages: normalizeHeroImages(input.heroImages, safeOptionalString(input.heroImage, 800)),
     videoTitle: safeString(
       input.videoTitle,
       defaultSiteContent.videoTitle,

@@ -401,3 +401,19 @@ export async function createTripPdfUrl(key: string) {
     return null;
   }
 }
+
+export async function uploadHeroImage(bytes: Uint8Array) {
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  const key = `hero-images/${crypto.randomUUID()}.webp`;
+  await storage.client.send(new PutObjectCommand({ Bucket: storage.config.bucket, Key: key, Body: bytes, ContentType: "image/webp" }));
+  return key;
+}
+
+export async function readHeroImage(key: string) {
+  if (!/^hero-images\/[0-9a-f-]{36}\.webp$/.test(key)) return null;
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  const result = await storage.client.send(new GetObjectCommand({ Bucket: storage.config.bucket, Key: key }));
+  return result.Body?.transformToByteArray();
+}

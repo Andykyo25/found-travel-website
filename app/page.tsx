@@ -1,4 +1,4 @@
-import { TravelImage } from "./components/TravelImage";
+import { HeroCarousel } from "./components/HeroCarousel";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import {
@@ -65,19 +65,8 @@ export default async function Home({
 
   return (
     <main>
-      <div className="announcement">
-        <span className="announcement-dot" />
-        {content.announcement}
-      </div>
-
-      <section className="hero-full" id="top">
-        <TravelImage
-          className="hero-media"
-          src={heroImage}
-          alt=""
-          priority
-          sizes="100vw"
-        />
+      <section className="hero-full hero-edge" id="top">
+        <HeroCarousel images={content.heroImages.length ? content.heroImages : [heroImage]} />
         <span className="hero-scrim" aria-hidden="true" />
 
         <div className="hero-inner">
@@ -139,17 +128,15 @@ export default async function Home({
               ))}
             </h1>
             <p className="hero-sub">{content.heroText}</p>
-            {/* key 讓網址篩選條件改變時重新掛載，兩條搜尋列才不會顯示舊值。 */}
-            <TripFilterBar
-              key={`hero-${filters.month}-${filters.budget}-${filters.category}-${filters.region}-${filters.keyword}`}
-              months={months}
-              regions={regions}
-              filters={filters}
-              tone="on-image"
-            />
+            <a className="hero-scroll-link" href="#journeys">探索旅行 <span aria-hidden="true">↓</span></a>
           </div>
         </div>
       </section>
+
+      <div className="announcement">
+        <span className="announcement-dot" />
+        {content.announcement}
+      </div>
 
       <TravelTools destination={content.destination} />
 

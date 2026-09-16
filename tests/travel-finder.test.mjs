@@ -11,7 +11,7 @@ function search(needs = {}, trip = structuredClone(base)) { return findTravel([t
 const cases = [
   ["past departures excluded, today included", {}, t => t, 1, ["a", "b"]],
   ["unpublished document excluded", {}, t => { t.plans[0].documentUrl = ""; return t; }, 0],
-  ["unknown service not inferred from title", {}, t => { delete t.plans[0].serviceType; return t; }, 0],
+  ["unrestricted group discovery does not require manual service tags", {}, t => { delete t.plans[0].serviceType; return t; }, 1],
   ["custom service does not match group", { service: "custom" }, t => t, 0],
   ["partial service does not match group", { service: "partial" }, t => t, 0],
   ["undecided can browse unknown service", { service: "undecided" }, t => { delete t.plans[0].serviceType; return t; }, 1],
@@ -103,7 +103,7 @@ test("untagged plans remain discoverable separately without pretending to match"
   assert.equal(c.needsConfirmation, true);
   assert.match(c.pending.join(" "), /價格.*待確認/);
   assert.doesNotMatch(c.reasons.join(" "), /在每人預算內|出發機場：桃園/);
-  assert.match(needsSummary({ ...emptyNeeds, budget: "50000" }, [{ candidate: c, departureId: "a" }]), /每人價格能否符合預算待確認/);
+  assert.doesNotMatch(needsSummary({ ...emptyNeeds, budget: "50000" }, [{ candidate: c, departureId: "a" }]), /待確認|；/);
 });
 test("known mismatches never enter the pending list", () => {
   for (const needs of [{ airport: "高雄" }, { destination: "韓國" }, { budget: "1000" }, { start: "2028-01-01" }, { service: "partial" }]) {
@@ -130,4 +130,14 @@ test("conflicting units and starting prices are kept out of budget-confirmed res
 test("confirmed dates do not accidentally include uncertain-priced alternatives", () => {
   const trip = structuredClone(base); trip.departures.find(d => d.id === "b").price = "30,000 起／人";
   assert.deepEqual(search({ budget: "50000" }, trip).candidates[0].departures.map(d => d.id), ["a"]);
+});
+
+test("nine legacy published versions are visible when all preferences are unrestricted", () => {
+  const trip = structuredClone(base);
+  trip.plans = Array.from({ length: 9 }, (_, i) => ({ ...base.plans[0], id: `p${i}`, serviceType: undefined, departureAirport: undefined, priceBasis: undefined }));
+  const result = search({}, trip);
+  assert.equal(result.candidates.length, 9);
+  assert.equal(result.pendingCandidates.length, 0);
+  assert.ok(result.candidates.every(c => !c.reasons.includes("跟團旅行")));
+  assert.doesNotMatch(needsSummary(emptyNeeds, [{ candidate: result.candidates[0], departureId: "a" }]), /待確認|；/);
 });

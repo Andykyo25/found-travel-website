@@ -6,12 +6,14 @@ export function TravelImage({
   className,
   priority = false,
   sizes = "(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 33vw",
+  onError,
 }: {
   src: string;
   alt: string;
   className?: string;
   priority?: boolean;
   sizes?: string;
+  onError?: () => void;
 }) {
   // Optimize local assets and the established photo provider. Other editor URLs
   // retain their original rendering without opening the server image proxy.
@@ -24,6 +26,7 @@ export function TravelImage({
     return (
       <Image
         src={src}
+        onError={onError}
         alt={alt}
         className={className}
         width={1600}
@@ -37,6 +40,7 @@ export function TravelImage({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
+      onError={onError}
       alt={alt}
       className={className}
       width={1600}

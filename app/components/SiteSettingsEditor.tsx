@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { HeroImagesEditor } from "./HeroImagesEditor";
 import type { Destination, SiteContent } from "@/lib/site-content";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
 
@@ -68,6 +70,8 @@ export function SiteSettingsEditor({
     initialUpdatedAt,
   );
 
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const destinationValue = Math.max(
     0,
     destinationPresets.findIndex(
@@ -82,7 +86,7 @@ export function SiteSettingsEditor({
       className="studio-form"
       onSubmit={(event) => {
         event.preventDefault();
-        void save();
+        if (!uploadingImage) void save();
       }}
     >
       <section className="studio-section">
@@ -115,17 +119,7 @@ export function SiteSettingsEditor({
               onChange={(event) => updateRoot("heroText", event.target.value)}
             />
           </Field>
-          <Field
-            label="首頁大圖網址或網站路徑"
-            hint="顯示在首頁最上方的滿版背景照。留空會自動使用第一個行程的封面圖。建議用寬幅橫圖（如 1920×1080）。"
-            wide
-          >
-            <input
-              placeholder="留空 = 自動使用第一個行程的封面圖"
-              value={draft.heroImage}
-              onChange={(event) => updateRoot("heroImage", event.target.value)}
-            />
-          </Field>
+          <HeroImagesEditor images={draft.heroImages} onChange={(images) => updateRoot("heroImages", images)} onBusy={setUploadingImage} />
           <Field label="影片區標題" wide>
             <input
               value={draft.videoTitle}
@@ -226,7 +220,7 @@ export function SiteSettingsEditor({
         </div>
       </section>
 
-      <StudioSaveBar status={status} />
+      <StudioSaveBar status={status} busy={uploadingImage} />
     </form>
   );
 }
