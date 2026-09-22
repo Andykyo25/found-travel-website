@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
     const railwayHost = process.env.RAILWAY_PUBLIC_DOMAIN;
     if (!origin || !railwayHost || new URL(origin).hostname === railwayHost)
       return [];
-    return ["/", "/dates/:path*", "/contact"].map((source) => ({
+    return ["/", "/dates/:path*", "/contact", "/about"].map((source) => ({
       source,
       has: [
         { type: "host" as const, value: railwayHost.replaceAll(".", "\\.") },

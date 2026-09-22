@@ -30,7 +30,7 @@ const navLinks: NavLink[] = [
   { href: "#journeys", label: "精選行程" },
   { href: "/dates", label: "出發團期" },
   { href: "#film", label: "旅行靈感" },
-  { href: "#about", label: "關於我們" },
+  { href: "/about", label: "關於我們" },
 ];
 
 export default async function Home({
@@ -256,6 +256,7 @@ export default async function Home({
           <p>
             找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的業務顧問陪你完成。
           </p>
+          <Link className="text-link" href="/about">認識我們・閱讀旅人好評 <span aria-hidden="true">↗</span></Link>
         </div>
         <div className="values-grid">
           <article>
@@ -322,7 +323,7 @@ export default async function Home({
         <div className="footer-links">
           <a href="#journeys">精選行程</a>
           <Link href="/dates">出發團期</Link>
-          <a href="#about">關於我們</a>
+          <Link href="/about">關於我們</Link>
           <Link href="/contact">聯絡表單</Link>
           <a href="/studio">內容管理</a>
         </div>
