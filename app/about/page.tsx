@@ -34,8 +34,8 @@ const services = [
 
 function ReviewCredit({ review }: { review: (typeof travelerReviews)[number] }) {
   return <div className={styles.reviewCredit}>
-    <div><strong>{review.author}</strong><span>Google Maps 評論者</span></div>
-    <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`閱讀 ${review.author} 的 Google 評論原文（另開分頁）`}>閱讀原文 <span aria-hidden="true">↗</span></a>
+    <div><span>Google Maps 旅客回饋</span></div>
+    <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`閱讀「${review.journey}」的 Google 評論原文（另開分頁）`}>閱讀原文 <span aria-hidden="true">↗</span></a>
   </div>;
 }
 
