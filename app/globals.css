@@ -1292,7 +1292,8 @@ img {
 }
 
 .film-section.home-band {
-  background: #526b58;
+  background: #dce3d3;
+  color: #293e36;
   padding-block: 88px;
   grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr);
 }
@@ -1318,7 +1319,6 @@ img {
   color: #faf8f0;
 }
 
-.home-band .film-copy > p,
 .contact.home-band > div > p:last-child,
 .home-band .contact-company {
   color: #e0e7da;
@@ -1326,6 +1326,10 @@ img {
 
 .home-band .eyebrow.light { color: #dce3cc; }
 .home-band .eyebrow.light > span { background: #c5cbae; }
+.film-section.home-band .film-copy > p { color: #52634e; }
+.film-section.home-band .eyebrow.light { color: #59694f; }
+.film-section.home-band .eyebrow.light > span { background: #78886b; }
+.film-section.home-band .light-link { color: #293e36; border-bottom: 1px solid #829278; padding-bottom: 10px; font-weight: 500; }
 .home-band .contact-actions .button { border-radius: 2px; }
 .home-band .button-on-dark { background: #f2f0e6; border-color: #f2f0e6; color: #293e36; }
 .home-band .button-on-dark-ghost { border-color: #bac5ae; color: #faf8f0; }
@@ -3833,6 +3837,47 @@ img {
 @media (min-width: 641px) and (max-width: 960px) { .trip-filter-bar { flex-wrap: wrap; border-radius: 24px; } .trip-filter-keyword { flex: 1 1 100%; border-bottom: 1px solid var(--line); border-radius: 14px; } }
 @media (max-width: 760px) { .finder-home .finder-home-card { grid-template-columns: 1fr; gap: 12px; } .finder-home-preview { display: none; } .finder-home-actions { align-items: stretch; flex-direction: column; } .finder-home-actions .button { text-align: center; justify-content: center; } }
 @media (max-width: 640px) { .trip-filter-keyword { flex: auto; min-width: 0; border-bottom: 1px solid var(--line); border-radius: 12px; padding-block: 14px; } .trip-filter-keyword input { font-size: 16px; } .finder-home.section-shell { padding-block: 24px; } }
+
+/* Quiet editorial styling shared with the About page. */
+.home-intro { background: #faf8f3; padding: 32px 0 16px; color: #293e36; }
+.home-intro .travel-tools-panel,
+.home-intro .finder-home { width: min(1240px, calc(100% - 96px)); margin-inline: auto; }
+.home-intro .travel-tools-panel { margin-top: 0; gap: 20px; }
+.home-intro .travel-tools-picker select { border-radius: 2px; box-shadow: none; background-color: transparent; border-color: #c9cdbf; font-weight: 500; }
+.home-intro .travel-tools { border-radius: 0; border-inline: 0; border-color: #d3d8cb; background: transparent; box-shadow: none; }
+.home-intro .tool { grid-template-columns: 28px minmax(0, 1fr); gap: 14px; padding: 26px 20px; }
+.home-intro .tool .tool-icon { width: 28px; height: 32px; background: transparent; color: #748165; border-radius: 0; font-weight: 400; }
+.home-intro .tool small { font-weight: 400; font-size: 11px; letter-spacing: .04em; color: #5f6c5c; }
+.home-intro .tool strong { font-family: "Noto Serif TC", "PMingLiU", Georgia, serif; font-weight: 500; font-size: 20px; }
+.home-intro .tool-note { display: block; margin-top: 6px; font-size: 10px; line-height: 1.7; color: #64705e; overflow-wrap: anywhere; }
+.home-intro .finder-home { padding-block: 64px; }
+.home-intro .finder-home-card { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 12px 0; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 70px; }
+.home-intro .finder-home-copy .eyebrow { color: #7c694d; font-weight: 400; font-size: 12px; letter-spacing: .16em; }
+.home-intro .finder-home-copy h2 { font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif; font-weight: 500; line-height: 1.6; letter-spacing: .025em; color: #293e36; margin: 22px 0; }
+.home-intro .finder-home-copy > p:not(.eyebrow) { color: #68736b; font-size: 14px; line-height: 2; }
+.home-intro .finder-home-copy small { color: #68736b; font-size: 11px; margin-top: 22px; }
+.home-intro .finder-home-actions { gap: 24px; margin-top: 30px; }
+.home-intro .finder-home-actions .button { background: #2f473d; border-color: #2f473d; color: #faf8f0; border-radius: 2px; box-shadow: none; font-size: 13px; font-weight: 500; min-height: 52px; }
+.home-intro .finder-home-actions .button:hover { background: #455f4d; transform: none; }
+.home-intro .finder-home-preview { border-left: 1px solid #d3d8cb; padding: 20px 0 20px 50px; }
+.home-intro .finder-home-ticket { max-width: none; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; transform: none; }
+.home-intro .finder-home-ticket > span { color: #7c694d; }
+.home-intro .finder-home-ticket > strong { font-family: "Noto Serif TC", "PMingLiU", serif; font-size: 32px; font-weight: 500; color: #52654b; margin: 24px 0; }
+.home-intro .finder-home-mini { gap: 0 22px; }
+.home-intro .finder-home-mini span { padding: 15px 0; background: transparent; border-radius: 0; border-top: 1px solid #d3d8cb; text-align: left; font-size: 13px; color: #4f604d; }
+.home-intro .finder-home-mini i { font-family: Georgia, serif; color: #817451; font-size: 12px; margin-right: 10px; }
+.home-intro .finder-home-ticket > p { border-top: 1px solid #d3d8cb; padding-top: 22px; margin-top: 12px; color: #68736b; }
+@media (max-width: 900px) {
+  .home-intro .travel-tools-panel, .home-intro .finder-home { width: calc(100% - 48px); }
+  .home-intro .finder-home-card { gap: 32px; }
+  .home-intro .finder-home-preview { padding-left: 28px; }
+}
+@media (max-width: 760px) {
+  .home-intro .finder-home-card { grid-template-columns: 1fr; }
+  .home-intro .finder-home { padding-block: 44px; }
+  .home-intro .finder-home-copy h2 { font-size: clamp(25px, 6vw, 36px); }
+  .home-intro .tool { padding: 20px 0; }
+}
 
 /* Edge-to-edge homepage cover. The catalogue owns the single search form. */
 .hero-full.hero-edge { width: 100%; margin: 0; border-radius: 0; min-height: 100svh; box-shadow: none; }

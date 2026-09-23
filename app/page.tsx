@@ -138,14 +138,17 @@ export default async function Home({
         {content.announcement}
       </div>
 
+      <div className="home-intro">
       <TravelTools destination={content.destination} />
 
       <section className="finder-home section-shell" aria-labelledby="finder-home-title">
         <div className="finder-home-card">
           <div className="finder-home-copy"><p className="eyebrow">你的旅行，從一點想法開始</p><h2 id="finder-home-title">還沒決定去哪？<br />一起找到適合你的旅行。</h2><p>跟團、自組客製，或只需要機票與住宿。<br />回答 5 個小問題，把期待慢慢變成旅行計畫。</p><div className="finder-home-actions"><Link className="button" href="/find-trip">幫我找旅行 · 開始整理需求 <span aria-hidden="true">→</span></Link><Link href="#journeys">我有方向，直接看行程 ↓</Link></div><small>不用登入、不必先留電話，還沒想好也可以。</small></div>
-          <div className="finder-home-preview" aria-hidden="true"><span className="finder-home-spark">✦</span><div className="finder-home-ticket"><span>MY NEXT JOURNEY</span><strong>下一站，<br />你的理想旅行。</strong><div className="finder-home-mini"><span>🧳 輕鬆跟團</span><span>🚌 親友自組</span><span>✈️ 自由安排</span><span>🧭 找找靈感</span></div><p>想法 → 選擇 → 顧問陪你確認</p></div></div>
+          <div className="finder-home-preview" aria-hidden="true"><div className="finder-home-ticket"><span>MY NEXT JOURNEY</span><strong>下一站，<br />你的理想旅行。</strong><div className="finder-home-mini"><span><i>01</i> 輕鬆跟團</span><span><i>02</i> 親友自組</span><span><i>03</i> 自由安排</span><span><i>04</i> 找找靈感</span></div><p>想法 → 選擇 → 顧問陪你確認</p></div></div>
         </div>
       </section>
+
+      </div>
 
       <section className="packages section-shell" id="journeys">
         <div className="packages-head">
