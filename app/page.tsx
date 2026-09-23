@@ -219,7 +219,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="film-section section-shell" id="film">
+      <section className="film-section section-shell home-band" id="film">
         <div className="film-copy">
           <p className="eyebrow light">
             <span />
@@ -246,7 +246,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="about section-shell" id="about">
+      <section className="about section-shell home-band" id="about">
         <div className="about-card">
           <p className="eyebrow">
             <span />
@@ -277,7 +277,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="contact section-shell" id="contact">
+      <section className="contact section-shell home-band" id="contact">
         <div>
           <p className="eyebrow light">
             <span />
@@ -302,7 +302,7 @@ export default async function Home({
         </div>
       </section>
 
-      <footer className="site-footer section-shell">
+      <footer className="site-footer section-shell home-band">
         <div className="footer-identity">
           <a className="brand footer-brand" href="#top">
             {/* eslint-disable-next-line @next/next/no-img-element */}

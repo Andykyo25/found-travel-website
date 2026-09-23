@@ -1282,6 +1282,82 @@ img {
   margin-top: 22px;
 }
 
+/* Full-width homepage bands share the About page palette. Keep the content
+   inset while the background reaches both edges, without 100vw overflow. */
+.home-band.section-shell {
+  width: 100%;
+  margin-inline: 0;
+  border-radius: 0;
+  padding-inline: max(32px, calc((100% - 1240px) / 2));
+}
+
+.film-section.home-band {
+  background: #526b58;
+  padding-block: 88px;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr);
+}
+
+.home-band .video-frame {
+  border-radius: 4px;
+  box-shadow: 0 18px 40px #162d2426;
+}
+
+.about.home-band {
+  background: #faf8f3;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+}
+
+.home-band .values-grid article {
+  border-radius: 4px;
+  background: #eeefe7;
+}
+
+.contact.home-band {
+  padding-block: 86px;
+  background: #2f473d;
+  color: #faf8f0;
+}
+
+.home-band .film-copy > p,
+.contact.home-band > div > p:last-child,
+.home-band .contact-company {
+  color: #e0e7da;
+}
+
+.home-band .eyebrow.light { color: #dce3cc; }
+.home-band .eyebrow.light > span { background: #c5cbae; }
+.home-band .contact-actions .button { border-radius: 2px; }
+.home-band .button-on-dark { background: #f2f0e6; border-color: #f2f0e6; color: #293e36; }
+.home-band .button-on-dark-ghost { border-color: #bac5ae; color: #faf8f0; }
+.home-band .contact-actions .button:hover { background: #dce3d3; color: #293e36; }
+
+.site-footer.home-band {
+  padding-block: 48px 64px;
+  background: #2f473d;
+  border-top: 1px solid #63766a;
+  color: #d1d8cd;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+.home-band .footer-brand,
+.home-band .company-details strong { color: #faf8f0; }
+.home-band .footer-links { flex-wrap: wrap; gap: 16px 22px; }
+.site-footer.home-band a:hover { color: #fff; text-decoration: underline; text-underline-offset: 5px; }
+
+@media (max-width: 1180px) {
+  .about.home-band { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .film-section.home-band, .site-footer.home-band { grid-template-columns: 1fr; }
+  .film-section.home-band, .contact.home-band { padding-block: 64px; }
+}
+
+@media (max-width: 620px) {
+  .home-band.section-shell { padding-inline: 24px; }
+  .site-footer.home-band { padding-bottom: 100px; }
+}
+
 .film-section {
   min-height: 560px;
   display: grid;
