@@ -1,4 +1,5 @@
 import { HeroCarousel } from "./components/HeroCarousel";
+import { ParticleGlobe } from "./components/ParticleGlobe";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import {
@@ -250,12 +251,13 @@ export default async function Home({
       </section>
 
       <section className="about section-shell home-band" id="about">
+        <ParticleGlobe />
         <div className="about-card">
           <p className="eyebrow">
             <span />
             WHY FOUND
           </p>
-          <h2>找到的不只是景點，是適合你的旅行方式。</h2>
+          <h2><span>找到的不只是景點，</span><span>是適合你的旅行方式。</span></h2>
           <p>
             找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的業務顧問陪你完成。
           </p>
