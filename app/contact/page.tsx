@@ -52,7 +52,7 @@ export default async function ContactPage({
     : "";
 
   return (
-    <main className="contact-shell">
+    <main className="contact-shell public-page">
       <header className="dates-header">
         <Link className="brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}

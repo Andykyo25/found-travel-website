@@ -10,7 +10,7 @@ export default async function FindTripPage() {
   const { content, available } = await getSiteContentWithMeta()
     .then(({ content }) => ({ content, available: true }))
     .catch(() => ({ content: { ...defaultSiteContent, trips: [] }, available: false }));
-  return <main className="finder-shell">
+  return <main className="finder-shell public-page">
     <header className="dates-header"><Link className="brand" href="/">{content.brandName}</Link><Link href="/#journeys" className="button button-secondary button-small">直接瀏覽行程</Link></header>
     <div className="finder-intro"><p className="eyebrow">FIND YOUR JOURNEY</p><h1>先說說，你想怎麼旅行？</h1><p>不用先留電話。整理幾個想法，找到值得比較的選擇，再一起確認細節。</p></div>
     {!available && <p role="status" className="finder-empty">行程資料暫時無法載入，請稍後重試。您仍可先整理需求交給顧問；目前不提供商品配對。</p>}

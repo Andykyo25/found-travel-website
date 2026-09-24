@@ -4075,3 +4075,45 @@ body:has(.finder-shell) { background: #faf8f3; }
   .finder-shell .finder-progress button { line-height: 1.6; }
 }
 @media (prefers-reduced-motion: reduce) { .finder-shell .finder-question { animation: none; } }
+
+/* Shared public-page design; Studio retains its operational UI. */
+body:has(.public-page) { background: #faf8f3; }
+.public-page { --coral: #2f473d; --coral-deep: #455f4d; --paper: #fffdf8; --line: #d3d8cb; --shadow: 0 3px 12px #293e3605; color: #293e36; }
+.public-page h1, .public-page h2, .public-page h3 { font-family: "Noto Serif TC", "PMingLiU", serif; font-weight: 500; line-height: 1.6; }
+.public-page .eyebrow { color: #7c694d; font-weight: 500; letter-spacing: .14em; }
+.public-page .eyebrow > span { background: #97a387; }
+.public-page .button, .public-page .board-link { border-radius: 2px; box-shadow: none; font-weight: 500; }
+.public-page .button { background: #2f473d; color: #faf8f3; border: 1px solid #2f473d; }
+.public-page .button:hover, .public-page .board-link.primary:hover { background: #455f4d; border-color: #455f4d; color: #faf8f3; transform: none; box-shadow: none; }
+.public-page .button-secondary { background: transparent; border-color: #aab79b; color: #2f473d; }
+.public-page .button-secondary:hover { background: #edf0e7; border-color: #52654b; color: #293e36; }
+.public-page .dates-card, .public-page .contact-card { border-radius: 0; border: 0; border-top: 1px solid #c9cdbf; background: transparent; box-shadow: none; padding-inline: 0; }
+.public-page .trip-overview img { border-radius: 2px; }
+.public-page .trip-plan-card { border-radius: 2px; background: #fffdf8; border-color: #c9cdbf; box-shadow: none; }
+.public-page .trip-plan-card:target { border-color: #52654b; box-shadow: 0 0 0 2px #52654b26; }
+.public-page .trip-plan-airline, .public-page .dates-plan-list a, .public-page .trip-plan-date-list button, .public-page .trip-plan-date-list span, .public-page .board-badge { border-radius: 2px; background: #edf0e7; color: #52654b; }
+.public-page .trip-plan-date-list button[aria-pressed=true] { background: #2f473d; border-color: #2f473d; color: #faf8f3; box-shadow: none; }
+.public-page .trip-plan-date-list .trip-plan-more { background: transparent; }
+.public-page .trip-plan-document { background: transparent; color: #2f473d; border-color: #aab79b; }
+.public-page .trip-plan-document:hover { background: #edf0e7; color: #293e36; }
+.public-page .trip-plan-price strong, .public-page .board-price strong, .public-page .dates-price { color: #293e36; font-weight: 500; }
+.public-page .month-pill, .public-page .trip-filter-pill { border-radius: 2px; background: transparent; border-color: #c9cdbf; box-shadow: none; font-weight: 500; }
+.public-page .month-pill.active, .public-page .trip-filter-pill.active { background: #2f473d; color: #faf8f3; border-color: #2f473d; }
+.public-page .month-pill.active small, .public-page .trip-filter-pill.active small { background: transparent; color: #faf8f3; }
+.public-page .board-row { border-radius: 2px; background: #fffdf8; box-shadow: none; }
+.public-page .board-row:hover { border-color: #aab79b; box-shadow: none; }
+.public-page .board-link { border-color: #aab79b; }
+.public-page .board-link.primary { background: #2f473d; border-color: #2f473d; color: #faf8f3; }
+.public-page .board-cta { border-radius: 2px; background: #2f473d; }
+.public-page .board-cta .button { background: #f2f0e6; border-color: #f2f0e6; color: #2f473d; }
+.public-page .board-cta .button-secondary { background: transparent; border-color: #aab79b; color: #faf8f3; }
+.public-page .board-cta .button:hover { background: #e0e5d8; color: #293e36; }
+.public-page .board-empty, .public-page .dates-empty, .public-page .contact-aside, .public-page .dates-table-wrap { border-radius: 2px; box-shadow: none; }
+.public-page input:not([type=checkbox]):not([type=radio]), .public-page select, .public-page textarea { border-radius: 2px; background-color: #fffdf8; border-color: #c9cdbf; }
+.public-page .contact-slot { border-radius: 2px; background: #fffdf8; font-weight: 500; }
+.public-page .contact-slot.on { background: #edf0e7; color: #293e36; border-color: #2f473d; }
+.public-page .contact-slot input { accent-color: #2f473d; }
+.public-page .field-required { color: #a33a2b; }
+.public-page .contact-form-status { border-radius: 2px; }
+.public-page :focus-visible { outline: 2px solid #52654b; outline-offset: 4px; }
+.public-page .finder-panel h2:focus { outline: none; }

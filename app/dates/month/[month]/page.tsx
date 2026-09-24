@@ -52,7 +52,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
   const label = monthLabel(month);
 
   return (
-    <main className="board-shell">
+    <main className="board-shell public-page">
       <header className="dates-header">
         <Link className="brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}

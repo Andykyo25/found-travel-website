@@ -43,7 +43,7 @@ export default async function TripDatesPage({ params }: PageProps) {
   const departures = upcomingDepartures(trip.departures);
 
   return (
-    <main className="dates-shell">
+    <main className="dates-shell public-page">
       <header className="dates-header">
         <Link className="brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}

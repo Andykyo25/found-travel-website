@@ -26,7 +26,7 @@ export default async function AllDeparturesPage() {
   const months = departureMonthOptions(rows);
 
   return (
-    <main className="board-shell">
+    <main className="board-shell public-page">
       <header className="dates-header">
         <Link className="brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -72,7 +72,7 @@ export default async function AllDeparturesPage() {
       )}
 
       <DepartureBoardCta lineUrl={content.lineUrl} />
-    
+
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
   );
