@@ -4031,3 +4031,47 @@ img {
 @media (max-width: 640px) { .hero-carousel-controls { width: calc(100% - 36px); bottom: 14px; gap: 12px; } .hero-slide-arrow { top: 42%; width: 38px; height: 38px; } .hero-slide-prev { left: 12px; } .hero-slide-next { right: 12px; } .hero-edge .hero-inner { padding-bottom: 90px; } }
 @media (prefers-reduced-motion: reduce) { .hero-slide, .hero-slide-dots span { transition: none; } }
 @media (max-width: 640px) { .hero-carousel-controls { left: 18px; right: 86px; width: auto; transform: none; gap: 10px; } .hero-slide-dots { gap: 8px; } .hero-slide-count { font-size: 10px; white-space: nowrap; } .hero-slide-toggle { flex-shrink: 0; } }
+
+/* Editorial styling across the complete travel finder flow. */
+body:has(.finder-shell) { background: #faf8f3; }
+.finder-shell { color: #293e36; }
+.finder-shell h1, .finder-shell h2, .finder-shell h3, .finder-service strong { font-family: "Noto Serif TC", "PMingLiU", serif; font-weight: 500; line-height: 1.6; }
+.finder-shell .eyebrow, .finder-shell .finder-kicker { color: #7c694d; font-weight: 500; letter-spacing: .14em; }
+.finder-shell .finder-panel { background: transparent; border: 0; border-top: 1px solid #c9cdbf; border-radius: 0; box-shadow: none; padding: 32px 0; }
+.finder-shell .finder-guide { padding: 0 0 26px; background: transparent; border-radius: 0; border-bottom: 1px solid #d3d8cb; }
+.finder-shell .finder-guide-icon { color: #7d8d6e; font: 32px Georgia, serif; }
+.finder-shell .finder-guide strong { font-weight: 500; }
+.finder-shell .finder-progress { gap: 16px; margin-block: 28px; }
+.finder-shell .finder-progress li { border-top: 1px solid #d3d8cb; padding-top: 8px; }
+.finder-shell .finder-progress li.current, .finder-shell .finder-progress li.done { border-color: #2f473d; }
+.finder-shell .finder-progress span { border-radius: 0; background: transparent; color: #7d8d6e; font: italic 20px Georgia, serif; }
+.finder-shell .finder-progress .current span, .finder-shell .finder-progress .done span { color: #293e36; background: transparent; }
+.finder-shell .finder-progress .current button { font-weight: 700; color: #293e36; }
+.finder-shell .finder-grid { gap: 18px; }
+.finder-shell .finder-service { background: #fffdf8; border: 1px solid #c9cdbf; border-radius: 2px; padding: 24px; box-shadow: none; transform: none; transition: background-color .18s, border-color .18s; }
+.finder-shell .finder-service:hover { border-color: #748165; }
+.finder-shell .finder-service.selected { background: #edf0e7; border-color: #2f473d; box-shadow: inset 0 0 0 1px #2f473d; }
+.finder-shell .finder-service-icon { color: #7d8d6e; font: italic 28px Georgia, serif; margin-bottom: 10px; }
+.finder-shell .finder-service strong { font-size: 21px; }
+.finder-shell .finder-service input { accent-color: #2f473d; }
+.finder-shell .button { border-radius: 2px; border: 1px solid #2f473d; background: #2f473d; color: #faf8f3; box-shadow: none; font-weight: 500; }
+.finder-shell .button:hover { background: #455f4d; border-color: #455f4d; transform: none; }
+.finder-shell .button-secondary { background: transparent; color: #2f473d; border-color: #aab79b; }
+.finder-shell .button-secondary:hover { background: #edf0e7; color: #293e36; }
+.finder-shell .finder-chips button { border-radius: 2px; background: #fffdf8; border-color: #c9cdbf; box-shadow: none; }
+.finder-shell .finder-chips button[aria-pressed=true] { background: #edf0e7; border-color: #2f473d; box-shadow: inset 0 0 0 1px #2f473d; }
+.finder-shell .finder-question-footer { border-top-style: solid; border-color: #d3d8cb; }
+.finder-shell .finder-postcard, .finder-shell .finder-result { border-radius: 2px; border-color: #c9cdbf; background: #fffdf8; box-shadow: none; }
+.finder-shell .finder-postcard.is-picked { border-color: #2f473d; box-shadow: 0 0 0 1px #2f473d; }
+.finder-shell .finder-stamp, .finder-shell .finder-badge, .finder-shell .finder-recap span, .finder-shell .finder-match { border-radius: 2px; }
+.finder-shell .finder-summary, .finder-shell .finder-empty, .finder-shell .finder-maybe { border-radius: 2px; background: #f0f1e9; border: 1px solid #d3d8cb; }
+.finder-shell .finder-error { border-radius: 2px; }
+.finder-shell input:not([type=radio]):not([type=checkbox]), .finder-shell select, .finder-shell textarea { border-radius: 2px; border-color: #c9cdbf; background-color: #fffdf8; }
+.finder-shell :focus-visible { outline: 2px solid #52654b; outline-offset: 4px; }
+.finder-shell h2:focus { outline: none; }
+@media (max-width: 640px) {
+  .finder-shell .finder-service { padding: 20px; }
+  .finder-shell .finder-progress { gap: 8px; }
+  .finder-shell .finder-progress button { line-height: 1.6; }
+}
+@media (prefers-reduced-motion: reduce) { .finder-shell .finder-question { animation: none; } }

@@ -10,10 +10,10 @@ import { ContactForm } from "./ContactForm";
 import { TravelImage } from "./TravelImage";
 
 const services = [
-  { id: "group", icon: "🧳", title: "跟著行程，輕鬆出發", text: "找一團喜歡的旅行，把安排交給我們。" },
-  { id: "custom", icon: "🚌", title: "和自己人，玩自己的", text: "親友自組、公司出遊，一起規劃專屬旅程。" },
-  { id: "partial", icon: "✈️", title: "只差一點，就能出發", text: "機票、機加酒或包車，補上需要的安排。" },
-  { id: "undecided", icon: "🧭", title: "還沒想好，找找靈感", text: "先看看有哪些選擇，不用急著決定。" },
+  { id: "group", icon: "01", title: "跟著行程，輕鬆出發", text: "找一團喜歡的旅行，把安排交給我們。" },
+  { id: "custom", icon: "02", title: "和自己人，玩自己的", text: "親友自組、公司出遊，一起規劃專屬旅程。" },
+  { id: "partial", icon: "03", title: "只差一點，就能出發", text: "機票、機加酒或包車，補上需要的安排。" },
+  { id: "undecided", icon: "04", title: "還沒想好，找找靈感", text: "先看看有哪些選擇，不用急著決定。" },
 ] as const;
 const questions = ["這次，想怎麼旅行？", "心裡有想去的地方嗎？", "從哪裡、什麼時候出發？", "這趟旅行，想抓多少預算？", "和誰同行？還有什麼小心願？"];
 const stepLabels = ["旅行方式", "想去的地方", "出發安排", "旅行預算", "同行與心願"];
@@ -25,7 +25,7 @@ function ChoiceCard({ candidate: c, departureId, selected, disabled, compact, on
   const d = c.departures.find(d => d.id === departureId) || c.departures[0];
   const price = d.price || c.plan.price || c.trip.price || "價格洽詢";
   return <article className={`finder-postcard${selected ? " is-picked" : ""}${compact ? " compact" : ""}`}>
-    {!compact && <div className="finder-postcard-image">{c.trip.image ? <TravelImage src={c.trip.image} alt="" /> : <span aria-hidden="true">🧳</span>}<span className="finder-stamp">{c.trip.days} · {c.trip.region}</span></div>}
+    {!compact && <div className="finder-postcard-image">{c.trip.image ? <TravelImage src={c.trip.image} alt="" /> : <span aria-hidden="true">旅</span>}<span className="finder-stamp">{c.trip.days} · {c.trip.region}</span></div>}
     <div className="finder-postcard-body">
       <h3>{c.trip.title}</h3><p className="finder-airline">{c.plan.airline} · {c.plan.title}</p>
       <p className="finder-price">{price}<small>{basisLabels[priceBasis(c.plan, price)]}</small></p>
@@ -85,14 +85,14 @@ export function TravelFinder({ trips, lineUrl, today }: { trips: Trip[]; lineUrl
   }
   const customService = needs.service === "custom" || needs.service === "partial";
   return <div className="finder-panel finder-playful">
-    <div className="finder-guide"><span className="finder-guide-icon" aria-hidden="true">🧭</span><div><strong>一起找到，喜歡的旅行。</strong><small>{stage === "needs" ? "一次一個小問題，還沒想好也沒關係。" : "把喜歡的留下來，其他細節我們一起確認。"}</small></div></div>
+    <div className="finder-guide"><span className="finder-guide-icon" aria-hidden="true">↗</span><div><strong>一起找到，喜歡的旅行。</strong><small>{stage === "needs" ? "一次一個小問題，還沒想好也沒關係。" : "把喜歡的留下來，其他細節我們一起確認。"}</small></div></div>
     {stage === "needs" && <ol className="finder-progress" aria-label="需求進度">{stepLabels.map((label, i) => <li key={label} className={i === step ? "current" : i < step ? "done" : ""}><button type="button" disabled={i > step} aria-current={i === step ? "step" : undefined} onClick={() => goStep(i)}><span>{i < step ? "✓" : i + 1}</span>{label}</button></li>)}</ol>}
     <p className="finder-kicker">{stage === "needs" ? `小問題 ${step + 1} / 5` : stage === "results" ? "你的旅行靈感清單" : "最後一步，交給我們"}</p>
     <h2 ref={heading} tabIndex={-1}>{stage === "needs" ? questions[step] : stage === "results" ? "有沒有讓你心動的選擇？" : "把想法留給顧問，把期待留給旅行。"}</h2>
     {stage === "needs" && <form onSubmit={advance}>
       <div className="finder-question" key={step}>
         {step === 0 && <fieldset className="finder-services"><legend className="sr-only">旅行方式</legend><div className="finder-grid">{services.map(s => <label className={`finder-service ${needs.service === s.id ? "selected" : ""}`} key={s.id}><input type="radio" name="service" checked={needs.service === s.id} onChange={() => change("service", s.id)} /><span className="finder-service-icon" aria-hidden="true">{s.icon}</span><strong>{s.title}</strong><small>{s.text}</small><span className="finder-service-label">{serviceLabels[s.id]}</span></label>)}</div></fieldset>}
-        {step === 1 && <><p>選個方向就好，其他想去的地方也能在最後告訴我們。</p><div className="finder-chips" role="group" aria-label="目的地">{["", ...destinations].map(d => <button key={d} type="button" aria-pressed={needs.destination === d} onClick={() => change("destination", d)}>{d || "🧭 還沒決定／其他地方"}</button>)}</div></>}
+        {step === 1 && <><p>選個方向就好，其他想去的地方也能在最後告訴我們。</p><div className="finder-chips" role="group" aria-label="目的地">{["", ...destinations].map(d => <button key={d} type="button" aria-pressed={needs.destination === d} onClick={() => change("destination", d)}>{d || "還沒決定／其他地方"}</button>)}</div></>}
         {step === 2 && <div className="field-grid"><fieldset className="field finder-dates"><legend>可以出發的日期範圍</legend><label>最早<input aria-label="最早出發日" type="date" value={needs.start} onChange={e => change("start", e.target.value)} /></label><label>最晚<input aria-label="最晚出發日" type="date" min={needs.start || undefined} value={needs.end} onChange={e => change("end", e.target.value)} /></label><small>留空代表尚未決定。這是可出發的範圍，不是去回程日期。</small></fieldset><label className="field"><span>從哪個機場出發？</span><select value={needs.airport} onChange={e => change("airport", e.target.value)}><option value="">都可以／還沒決定</option>{airports.map(a => <option key={a}>{a}</option>)}</select></label>{needs.service === "partial" && <label className="field"><span>回程日期（選填）</span><input type="date" min={needs.start || undefined} value={needs.returnDate} onChange={e => change("returnDate", e.target.value)} /></label>}</div>}
         {step === 3 && <><p>先抓每人的預算上限，實際費用再由顧問和你確認。</p><div className="finder-chips" role="group" aria-label="預算快捷選擇">{["", "30000", "50000", "80000"].map(b => <button key={b} type="button" aria-pressed={needs.budget === b} onClick={() => change("budget", b)}>{b ? `${Number(b).toLocaleString()} 元內` : "先不設限"}</button>)}</div><label className="field finder-budget"><span>或填寫自己的金額（台幣／人）</span><input type="number" min="1" step="1" value={needs.budget} placeholder="例如 45000" onChange={e => change("budget", e.target.value)} /></label><p className="finder-note">卡片顯示行程參考價格，完整費用請查看行程頁與文件。</p></>}
         {step === 4 && <div className="field-grid"><label className="field"><span>一起出發的人數</span><input type="number" min="1" max="999" step="1" value={needs.people} placeholder="尚未決定可留空" onChange={e => change("people", e.target.value)} /></label>{needs.service === "partial" && <label className="field"><span>行李需要怎麼安排？</span><select value={needs.luggage} onChange={e => change("luggage", e.target.value)}><option value="">還沒決定</option><option>僅手提行李</option><option>需要托運行李</option><option>有特殊行李，請顧問聯繫確認</option></select></label>}{needs.service === "custom" && <label className="field"><span>住宿與交通需求</span><input maxLength={200} value={needs.stayTransport} placeholder="例如：四星飯店、需要包車" onChange={e => change("stayTransport", e.target.value)} /></label>}<label className="field field-wide"><span>還有什麼想告訴我們？（選填）</span><textarea maxLength={600} value={needs.details} placeholder={needs.service === "partial" ? "想去哪個航點？需要機票、機加酒或包車？日期是否有彈性？" : "想去的地方、旅遊天數，或同行家人的需求，都可以寫在這裡。"} onChange={e => change("details", e.target.value)} /><small>這些小心願會完整交給顧問，由顧問協助確認。</small></label></div>}
