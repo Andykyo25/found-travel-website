@@ -3888,6 +3888,59 @@ img {
 
 /* Quiet editorial styling shared with the About page. */
 .home-intro { background: #faf8f3; padding: 32px 0 16px; color: #293e36; }
+
+/* Homepage journeys share the editorial palette of the brand story. */
+.home-packages.section-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 80px max(48px, calc((100% - 1240px) / 2));
+  background: #faf8f3;
+  border-top: 1px solid #d3d8cb;
+}
+.home-packages .packages-head { margin-bottom: 40px; }
+.home-packages .packages-head h2 { color: #293e36; font-weight: 500; line-height: 1.6; font-size: clamp(28px, 3.1vw, 44px); }
+.home-packages .packages-head > p { font-size: 14px; }
+.home-packages .packages-head .eyebrow { color: #7c694d; font-size: 12px; font-weight: 500; letter-spacing: .16em; margin-bottom: 18px; }
+.home-packages .trip-filter-bar { width: 100%; border-color: #c9cdbf; border-radius: 2px; background: #fffdf8; box-shadow: 0 3px 12px #293e3605; }
+.home-packages .trip-filter-field { border-radius: 0; }
+.home-packages .trip-filter-field select { font-weight: 500; }
+.home-packages .trip-filter-submit,
+.home-packages .package-book,
+.home-packages .packages-empty .button { border: 1px solid #2f473d; border-radius: 2px; background: #2f473d; color: #faf8f3; box-shadow: none; font-weight: 500; }
+.home-packages .trip-filter-submit:hover,
+.home-packages .package-book:hover,
+.home-packages .packages-empty .button:hover { background: #455f4d; border-color: #455f4d; transform: none; }
+.home-packages .category-pills { gap: 8px 24px; margin-bottom: 40px; }
+.home-packages .category-pill { border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; padding: 12px 6px; font-weight: 500; color: #647169; }
+.home-packages .category-pill:hover,
+.home-packages .category-pill.active { background: transparent; border-color: #52654b; color: #293e36; }
+.home-packages .category-pill.active { font-weight: 700; }
+.home-packages .package-grid { gap: 48px 32px; }
+.home-packages .package-image { border-radius: 2px; }
+.home-packages .package-badge { border-radius: 2px; font-weight: 500; border: 1px solid #fffdf880; }
+.home-packages .package-card h3 { font-family: "Noto Serif TC", "PMingLiU", serif; font-size: 23px; font-weight: 500; margin-top: 24px; color: #293e36; }
+.home-packages .package-meta { border-color: #d3d8cb; }
+.home-packages .package-footer { gap: 20px; padding-top: 22px; }
+.home-packages .package-price strong { font-size: 20px; font-weight: 500; color: #293e36; }
+.home-packages .package-book { min-height: 44px; padding-inline: 18px; }
+.home-packages .package-dates { color: #52654b; font-weight: 500; }
+.home-packages .package-dates:hover { color: #293e36; text-decoration: underline; }
+.home-packages .explore-more { border: 0; border-bottom: 1px solid #aab79b; border-radius: 0; background: transparent; color: #293e36; padding-inline: 8px; box-shadow: none; font-weight: 500; }
+.home-packages .explore-more:hover { border-color: #293e36; transform: none; }
+.home-packages .packages-empty { border-radius: 2px; border-style: solid; }
+.home-packages :focus-visible { outline: 2px solid #52654b; outline-offset: 4px; }
+.home-intro.home-travel-tools { padding: 0 0 64px; }
+.home-intro.home-travel-tools .tool { padding-block: 20px; }
+@media (max-width: 900px) {
+  .home-packages.section-shell { padding: 56px 24px; }
+}
+@media (max-width: 640px) {
+  .home-packages .category-pills { gap: 6px 18px; }
+  .home-packages .package-footer { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .home-packages .trip-filter-field select { font-size: 16px; }
+  .home-intro.home-travel-tools { padding-bottom: 40px; }
+}
 .home-intro .travel-tools-panel,
 .home-intro .finder-home { width: min(1240px, calc(100% - 96px)); margin-inline: auto; }
 .home-intro .travel-tools-panel { margin-top: 0; gap: 20px; }

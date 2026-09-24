@@ -140,8 +140,6 @@ export default async function Home({
       </div>
 
       <div className="home-intro">
-      <TravelTools destination={content.destination} />
-
       <section className="finder-home section-shell" aria-labelledby="finder-home-title">
         <div className="finder-home-card">
           <div className="finder-home-copy"><p className="eyebrow">你的旅行，從一點想法開始</p><h2 id="finder-home-title">還沒決定去哪？<br />一起找到適合你的旅行。</h2><p>跟團、自組客製，或只需要機票與住宿。<br />回答 5 個小問題，把期待慢慢變成旅行計畫。</p><div className="finder-home-actions"><Link className="button" href="/find-trip">幫我找旅行 · 開始整理需求 <span aria-hidden="true">→</span></Link><Link href="#journeys">我有方向，直接看行程 ↓</Link></div><small>不用登入、不必先留電話，還沒想好也可以。</small></div>
@@ -151,11 +149,11 @@ export default async function Home({
 
       </div>
 
-      <section className="packages section-shell" id="journeys">
+      <section className="packages section-shell home-packages" id="journeys">
         <div className="packages-head">
           <p className="eyebrow eyebrow-center">
             <span />
-            EXPLORE POPULAR PACKAGE
+            SELECTED JOURNEYS
             <span />
           </p>
           <h2>這次想去哪裡，慢慢選。</h2>
@@ -222,6 +220,10 @@ export default async function Home({
           </Link>
         </div>
       </section>
+
+      <div className="home-intro home-travel-tools">
+        <TravelTools destination={content.destination} />
+      </div>
 
       <section className="film-section section-shell home-band" id="film">
         <div className="film-copy">
