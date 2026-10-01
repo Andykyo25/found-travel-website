@@ -7,6 +7,7 @@ import { TripPlanCard } from "@/app/components/TripPlanCard";
 import { getSiteContent } from "@/lib/site-content";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { publishedTripPlans } from "@/lib/trip-plans";
+import { SiteHeader } from "@/app/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -44,18 +45,11 @@ export default async function TripDatesPage({ params }: PageProps) {
 
   return (
     <main className="dates-shell public-page">
-      <header className="dates-header">
-        <Link className="brand" href="/">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
-          <span>{content.brandName}</span>
-        </Link>
-        <Link className="button button-secondary button-small" href="/dates">
-          全部團期
-        </Link>
-      </header>
+      <a className="skip-link" href="#trip-content">跳至行程內容</a>
+      <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} />
+      <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/#journeys">精選行程</Link><span aria-hidden="true">/</span><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">行程內容</span></nav>
 
-      <section className="dates-card">
+      <section className="dates-card" id="trip-content">
         <p className="eyebrow">
           <span />
           DEPARTURE DATES

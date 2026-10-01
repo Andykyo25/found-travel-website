@@ -33,7 +33,7 @@ function createPlan(): TripPlan {
         : `plan-${Date.now()}`,
     airline: "航空公司待填",
     title: "新行程版本",
-    summary: "請簡短說明航班時間或行程內容的主要差異。",
+    summary: "",
     price: "",
     documentType: "pdf",
     documentUrl: "",
@@ -54,7 +54,7 @@ function createTrip(): Trip {
     region: "DESTINATION",
     days: "5日",
     title: "新行程",
-    summary: "請填寫這趟旅程最吸引人的特色與適合對象。",
+    summary: "",
     price: "價格請洽詢",
     image: "/trips/tokyo.jpg",
     plans: [createPlan()],
@@ -780,6 +780,7 @@ export function TripsEditor({
                     <Field label="行程簡介" wide>
                       <textarea
                         required
+                        placeholder="說明這趟旅程的特色與適合對象。"
                         value={trip.summary}
                         onChange={(event) =>
                           updateTrip(index, "summary", event.target.value)

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatDepartureDate, formatPrice } from "@/lib/trip-values";
 import type { TripDeparture, TripPlan } from "@/lib/site-content";
-import { departuresForPlan, tripPlanLabel } from "@/lib/trip-plans";
+import { departuresForPlan, tripPlanLabel, tripPlanSummary } from "@/lib/trip-plans";
 
 export function TripPlanCard({
   plan,
@@ -28,6 +28,7 @@ export function TripPlanCard({
   const visibleDepartures = showAll ? applicableDepartures : applicableDepartures.slice(0, 6);
   const remainingCount = applicableDepartures.length - visibleDepartures.length;
   const versionLabel = tripPlanLabel(plan);
+  const summary = tripPlanSummary(plan);
   const inquiryHref = `/contact?trip=${encodeURIComponent(tripId)}&plan=${encodeURIComponent(plan.id)}${selectedDeparture ? `&departure=${encodeURIComponent(selectedDeparture.id)}` : ""}`;
 
   return (
@@ -37,8 +38,8 @@ export function TripPlanCard({
       </div>
 
       <h3>{plan.title}</h3>
-      {plan.summary ? (
-        <p className="trip-plan-summary">{plan.summary}</p>
+      {summary ? (
+        <p className="trip-plan-summary">{summary}</p>
       ) : null}
 
       {(days || plan.flight || plan.accommodation) && <dl className="trip-plan-facts">

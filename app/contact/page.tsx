@@ -4,10 +4,10 @@ import {
   upcomingDepartures,
 } from "@/lib/trip-values";
 import { publishedTripPlans, tripPlanLabel } from "@/lib/trip-plans";
-import Link from "next/link";
 import { ContactForm } from "@/app/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
+import { SiteHeader } from "@/app/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -53,18 +53,10 @@ export default async function ContactPage({
 
   return (
     <main className="contact-shell public-page">
-      <header className="dates-header">
-        <Link className="brand" href="/">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
-          <span>{content.brandName}</span>
-        </Link>
-        <Link className="button button-secondary button-small" href="/">
-          回首頁
-        </Link>
-      </header>
+      <a className="skip-link" href="#contact-content">跳至聯絡表單</a>
+      <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/contact" />
 
-      <section className="contact-card">
+      <section className="contact-card" id="contact-content">
         <p className="eyebrow">
           <span />
           CONTACT US

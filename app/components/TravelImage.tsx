@@ -7,6 +7,7 @@ export function TravelImage({
   priority = false,
   sizes = "(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 33vw",
   onError,
+  onLoad,
 }: {
   src: string;
   alt: string;
@@ -14,6 +15,7 @@ export function TravelImage({
   priority?: boolean;
   sizes?: string;
   onError?: () => void;
+  onLoad?: () => void;
 }) {
   // Optimize local assets and the established photo provider. Other editor URLs
   // retain their original rendering without opening the server image proxy.
@@ -27,6 +29,7 @@ export function TravelImage({
       <Image
         src={src}
         onError={onError}
+        onLoad={onLoad}
         alt={alt}
         className={className}
         width={1600}
@@ -41,6 +44,7 @@ export function TravelImage({
     <img
       src={src}
       onError={onError}
+      onLoad={onLoad}
       alt={alt}
       className={className}
       width={1600}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSiteOrigin } from "@/lib/site-url";
 import "./globals.css";
+import "./editorial.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   // metadataBase 由請求標頭推導，各頁的相對 canonical 會依此展開成絕對網址。
@@ -43,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-Hant">
+    <html lang="zh-Hant" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );

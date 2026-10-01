@@ -9,7 +9,9 @@ import {
   readTripFilters,
   tripFilterHref,
 } from "@/lib/trip-filters";
-import { MobileNav, type NavLink } from "./components/MobileNav";
+import { SiteHeader } from "./components/SiteHeader";
+import { JourneyAtlas } from "./components/JourneyAtlas";
+import { EditorialMotion } from "./components/EditorialMotion";
 import { PackageCard } from "./components/PackageCard";
 import { TravelTools } from "./components/TravelTools";
 import { TripFilterBar } from "./components/TripFilterBar";
@@ -24,15 +26,6 @@ export const metadata = {
 };
 
 const visibleTripLimit = 6;
-
-// 桌機膠囊導覽與手機漢堡選單共用這一份，避免兩邊漏改。
-const navLinks: NavLink[] = [
-  { href: "#top", label: "首頁" },
-  { href: "#journeys", label: "精選行程" },
-  { href: "/dates", label: "出發團期" },
-  { href: "#film", label: "旅行靈感" },
-  { href: "/about", label: "關於我們" },
-];
 
 export default async function Home({
   searchParams,
@@ -65,59 +58,18 @@ export default async function Home({
   );
 
   return (
-    <main>
-      <section className="hero-full hero-edge" id="top">
+    <main className="editorial-home" id="top">
+      <a className="skip-link" href="#journeys">跳至精選行程</a>
+      <EditorialMotion />
+      <section className="hero-full hero-edge" aria-labelledby="cover-title">
         <HeroCarousel images={content.heroImages.length ? content.heroImages : [heroImage]} />
         <span className="hero-scrim" aria-hidden="true" />
+        <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} home />
 
         <div className="hero-inner">
-          <header className="hero-bar">
-            <a
-              className="brand hero-brand"
-              href="#top"
-              aria-label={`${content.brandName}首頁`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
-              <span>{content.brandName}</span>
-            </a>
-
-            <nav className="hero-nav" aria-label="主要導覽">
-              {navLinks.map((link, index) =>
-                link.href.startsWith("#") ? (
-                  <a
-                    key={link.href}
-                    className={index === 0 ? "active" : undefined}
-                    href={link.href}
-                  >
-                    {link.label}
-                  </a>
-                ) : (
-                  <Link key={link.href} href={link.href}>
-                    {link.label}
-                  </Link>
-                ),
-              )}
-            </nav>
-
-            <div className="hero-bar-actions">
-              <Link
-                className="button button-small hero-contact-button"
-                href="/contact"
-              >
-                聯絡表單 <span aria-hidden="true">↗</span>
-              </Link>
-              <MobileNav
-                links={navLinks}
-                lineUrl={content.lineUrl}
-                brandName={content.brandName}
-              />
-            </div>
-          </header>
-
           <div className="hero-center">
-            <p className="hero-kicker">{content.heroKicker}</p>
-            <h1 className="hero-title">
+            <p className="hero-kicker"><span className="cover-index">01 /</span>{content.heroKicker}</p>
+            <h1 className="hero-title" id="cover-title">
               {(
                 content.heroTitle.match(/[^，,。\n]+[，,。]?/g) ?? [
                   content.heroTitle,
@@ -129,28 +81,34 @@ export default async function Home({
               ))}
             </h1>
             <p className="hero-sub">{content.heroText}</p>
-            <a className="hero-scroll-link" href="#journeys">探索旅行 <span aria-hidden="true">↓</span></a>
+            <div className="cover-actions"><a className="button" href="#journeys">探索精選行程 <span aria-hidden="true">↗</span></a><Link href="/find-trip">還沒想好？幫我找旅行 <span aria-hidden="true">→</span></Link></div>
+            <p className="cover-signature" aria-hidden="true">A little further. A little closer.</p>
           </div>
         </div>
+        <div className="cover-photo-note" aria-hidden="true"><span>THE WORLD IS STILL FULL OF WONDER</span><span>世界很大，剛好有你。</span></div>
       </section>
 
       <div className="announcement">
-        <span className="announcement-dot" />
-        {content.announcement}
+        <span className="announcement-label">A NOTE FROM FOUND</span><span>{content.announcement}</span><a href="#finder-home-title">從你的旅行想法開始 <span aria-hidden="true">↓</span></a>
       </div>
 
       <div className="home-intro">
       <section className="finder-home section-shell" aria-labelledby="finder-home-title">
-        <div className="finder-home-card">
+        <div className="finder-home-card" data-reveal>
           <div className="finder-home-copy"><p className="eyebrow">你的旅行，從一點想法開始</p><h2 id="finder-home-title">還沒決定去哪？<br />一起找到適合你的旅行。</h2><p>跟團、自組客製，或只需要機票與住宿。<br />回答 5 個小問題，把期待慢慢變成旅行計畫。</p><div className="finder-home-actions"><Link className="button" href="/find-trip">幫我找旅行 · 開始整理需求 <span aria-hidden="true">→</span></Link><Link href="#journeys">我有方向，直接看行程 ↓</Link></div><small>不用登入、不必先留電話，還沒想好也可以。</small></div>
-          <div className="finder-home-preview" aria-hidden="true"><div className="finder-home-ticket"><span>MY NEXT JOURNEY</span><strong>下一站，<br />你的理想旅行。</strong><div className="finder-home-mini"><span><i>01</i> 輕鬆跟團</span><span><i>02</i> 親友自組</span><span><i>03</i> 自由安排</span><span><i>04</i> 找找靈感</span></div><p>想法 → 選擇 → 顧問陪你確認</p></div></div>
+          <JourneyAtlas journeys={orderedTrips.filter((trip, index, all) => all.findIndex(item => item.badge === trip.badge) === index).slice(0, 4).map(({ id, title, region, badge, summary, image }) => ({ id, title, region, badge, summary, image }))} />
         </div>
       </section>
 
       </div>
 
+      <div className="home-intro home-travel-tools">
+        <div className="travel-tools-heading"><p className="eyebrow">BEFORE YOU GO</p><h2>出發前的小筆記</h2><span>天氣、匯率與當地生活，一起準備好。</span></div>
+        <TravelTools destination={content.destination} />
+      </div>
+
       <section className="packages section-shell home-packages" id="journeys">
-        <div className="packages-head">
+        <div className="packages-head" data-reveal>
           <p className="eyebrow eyebrow-center">
             <span />
             SELECTED JOURNEYS
@@ -191,11 +149,11 @@ export default async function Home({
           </nav>
         ) : null}
 
-        {hasFilters && <p className="trip-search-summary" role="status">{filters.keyword ? `「${filters.keyword}」` : "目前條件"}找到 {matchedTrips.length} 個行程 · <Link href="/#journeys">清除全部篩選</Link></p>}
+        <div className="catalogue-caption"><span>{hasFilters ? "YOUR SELECTION" : "THE JOURNEY COLLECTION"}</span><span role="status">{filters.keyword ? `「${filters.keyword}」` : ""}{matchedTrips.length} 個行程{hasFilters ? <> · <Link href="/#journeys">清除全部篩選</Link></> : "，各有自己的風景。"}</span></div>
         {visibleTrips.length > 0 ? (
           <div className="package-grid">
-            {visibleTrips.map((trip, index) => (
-              <PackageCard key={trip.id} trip={trip} priority={index === 0} />
+            {visibleTrips.map((trip) => (
+              <PackageCard key={trip.id} trip={trip} />
             ))}
           </div>
         ) : (
@@ -221,17 +179,13 @@ export default async function Home({
         </div>
       </section>
 
-      <div className="home-intro home-travel-tools">
-        <TravelTools destination={content.destination} />
-      </div>
-
       <section className="film-section section-shell home-band" id="film">
-        <div className="film-copy">
+        <div className="film-copy" data-reveal>
           <p className="eyebrow light">
             <span />
             TRAVEL FILM
           </p>
-          <h2>先感受，再決定要去哪裡。</h2>
+          <h2>先感受，<br />再決定要去哪裡。</h2>
           <p>
             旅行的樣子，很難只靠文字說完。看一段片，感受城市的呼吸、山野的光，以及你想留下的步調。
           </p>
@@ -239,22 +193,23 @@ export default async function Home({
             和顧問聊聊旅程 <span aria-hidden="true">↗</span>
           </a>
         </div>
-        <div className="video-frame">
+        <div className="film-visual" data-reveal><div className="video-frame">
           <video
             src={content.videoUrl}
             title={content.videoTitle}
             controls
             playsInline
             preload="metadata"
+            poster="/trips/bali.jpg"
           >
             您的瀏覽器不支援影片播放。
           </video>
-        </div>
+        </div><p className="film-caption"><span>TRAVEL, IN MOTION</span><span>為下一段旅程，留一點想像。</span></p></div>
       </section>
 
       <section className="about section-shell home-band" id="about">
         <ParticleGlobe />
-        <div className="about-card">
+        <div className="about-card" data-reveal>
           <p className="eyebrow">
             <span />
             WHY FOUND
@@ -265,7 +220,7 @@ export default async function Home({
           </p>
           <Link className="text-link" href="/about">認識我們・閱讀旅人好評 <span aria-hidden="true">↗</span></Link>
         </div>
-        <div className="values-grid">
+        <div className="values-grid" data-reveal>
           <article>
             <span>01</span>
             <h3>先聽，再排行程</h3>
@@ -309,7 +264,7 @@ export default async function Home({
         </div>
       </section>
 
-      <footer className="site-footer section-shell home-band">
+      <footer className="site-footer section-shell home-band" role="contentinfo">
         <div className="footer-identity">
           <a className="brand footer-brand" href="#top">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -334,6 +289,7 @@ export default async function Home({
           <Link href="/contact">聯絡表單</Link>
           <a href="/studio">內容管理</a>
         </div>
+        <div className="footer-colophon"><span>FOUND TRAVEL — 好旅行，被好好照顧。</span><a href="#top">回到頁首 <span aria-hidden="true">↑</span></a></div>
       </footer>
 
       <LineFloatingButton lineUrl={content.lineUrl} />

@@ -521,6 +521,14 @@ export const getSiteContentWithMeta = cache(
       updatedBy: null,
       etag: null,
     };
+    // A local, explicit design review uses only a snapshot of public content.
+    // Production always reads the configured Bucket, even if this flag is set.
+    if (process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1") {
+      const { readFile } = await import("node:fs/promises");
+      const snapshot = JSON.parse(await readFile(`${process.cwd()}/work/design-preview.json`, "utf8"));
+      if (!snapshot || !Array.isArray(snapshot.trips)) throw new Error("Invalid design preview snapshot");
+      return { content: normalizeSiteContent(snapshot), meta: emptyMeta };
+    }
     const stored = await readSiteContentObject<StoredSiteContent>();
     if (!stored) return { content: defaultSiteContent, meta: emptyMeta };
     const saved = stored.value;
@@ -558,6 +566,9 @@ export async function saveSiteContent(
   etag: string | null,
   previous: unknown,
 ): Promise<{ content: SiteContent; updatedAt: string }> {
+  if (process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1") {
+    throw new Error("本機設計預覽不接受內容儲存");
+  }
   const content = normalizeSiteContent(value);
   const previousTime =
     previous &&

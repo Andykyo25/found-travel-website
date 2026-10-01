@@ -6,6 +6,7 @@ import { recordFinderEvent } from "@/lib/finder-events";
 import type { Trip } from "@/lib/site-content";
 import { basisLabels, emptyNeeds, findTravel, needsSummary, serviceLabels, validateNeeds, type TravelNeeds, type TravelCandidate } from "@/lib/travel-finder";
 import { departureAirport, priceBasis } from "@/lib/travel-facts";
+import { tripPlanSummary } from "@/lib/trip-plans";
 import { ContactForm } from "./ContactForm";
 import { TravelImage } from "./TravelImage";
 
@@ -24,12 +25,13 @@ function ChoiceCard({ candidate: c, departureId, selected, disabled, compact, on
 }) {
   const d = c.departures.find(d => d.id === departureId) || c.departures[0];
   const price = d.price || c.plan.price || c.trip.price || "價格洽詢";
+  const summary = tripPlanSummary(c.plan);
   return <article className={`finder-postcard${selected ? " is-picked" : ""}${compact ? " compact" : ""}`}>
     {!compact && <div className="finder-postcard-image">{c.trip.image ? <TravelImage src={c.trip.image} alt="" /> : <span aria-hidden="true">旅</span>}<span className="finder-stamp">{c.trip.days} · {c.trip.region}</span></div>}
     <div className="finder-postcard-body">
       <h3>{c.trip.title}</h3><p className="finder-airline">{c.plan.airline} · {c.plan.title}</p>
       <p className="finder-price">{price}<small>{basisLabels[priceBasis(c.plan, price)]}</small></p>
-      {!compact && <p>{c.plan.summary}</p>}
+      {!compact && summary && <p>{summary}</p>}
       <dl className="finder-facts">{(departureAirport(c.plan) || c.plan.flight) && <div><dt>🛫 出發／航班</dt><dd>{[departureAirport(c.plan), c.plan.flight].filter(Boolean).join(" · ")}</dd></div>}<div><dt>🌙 住宿／天數</dt><dd>{[c.plan.accommodation, c.trip.days].filter(Boolean).join(" · ")}</dd></div></dl>
       <label className="field"><span>想選哪一天？</span><select aria-label={`${c.trip.title} ${c.plan.title}出發日${compact ? "（比較）" : ""}`} value={d.id} onChange={e => onDate(e.target.value)}>{c.departures.map(date => <option key={date.id} value={date.id}>{date.date} · {date.price || c.plan.price || c.trip.price}{priceBasis(c.plan, date.price || c.plan.price || c.trip.price) !== "unknown" ? `（${basisLabels[priceBasis(c.plan, date.price || c.plan.price || c.trip.price)]}）` : ""}</option>)}</select></label>
       {d.note && <p className="finder-note">團期備註：{d.note}</p>}

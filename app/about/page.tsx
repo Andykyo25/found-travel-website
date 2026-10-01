@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import { googleMapsPlaceUrl, travelerReviews } from "@/lib/traveler-reviews";
-import { MobileNav } from "@/app/components/MobileNav";
+import { SiteHeader } from "@/app/components/SiteHeader";
 import { TravelImage } from "@/app/components/TravelImage";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import styles from "./page.module.css";
@@ -18,13 +18,6 @@ export const metadata: Metadata = {
     url: "/about",
   },
 };
-
-const navLinks = [
-  { href: "/", label: "首頁" },
-  { href: "/#journeys", label: "精選行程" },
-  { href: "/dates", label: "出發團期" },
-  { href: "/about", label: "關於我們" },
-];
 
 const services = [
   { number: "01", english: "CURATED JOURNEYS", title: "精選跟團旅行", text: "從想去的地方開始，陪你比較航班、住宿與行程節奏，找到適合這次假期的選擇。", href: "/#journeys", action: "探索精選行程" },
@@ -45,20 +38,7 @@ export default async function AboutPage() {
 
   return <main className={styles.page} id="top">
     <a className={styles.skipLink} href="#our-story">跳至頁面內容</a>
-    <header className={styles.header}>
-      <Link className="brand" href="/" aria-label={`${content.brandName}首頁`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
-        <span>{content.brandName}</span>
-      </Link>
-      <nav className={styles.desktopNav} aria-label="主要導覽">
-        {navLinks.map(link => <Link key={link.href} href={link.href} aria-current={link.href === "/about" ? "page" : undefined}>{link.label}</Link>)}
-      </nav>
-      <div className={styles.headerActions}>
-        <Link className={styles.headerContact} href="/contact">聊聊你的旅行 <span aria-hidden="true">↗</span></Link>
-        <MobileNav links={navLinks} lineUrl={content.lineUrl} brandName={content.brandName} />
-      </div>
-    </header>
+    <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/about" />
 
     <section className={styles.hero} aria-labelledby="about-title">
       <div className={styles.heroCopy}>
@@ -133,7 +113,7 @@ export default async function AboutPage() {
       <div className={styles.contactActions}><a href={content.lineUrl} target="_blank" rel="noopener noreferrer">LINE 聯絡顧問 <span aria-hidden="true">↗</span></a><Link href="/contact">填寫聯絡表單 <span aria-hidden="true">→</span></Link></div>
     </section>
 
-    <footer className={styles.footer}>
+    <footer className={styles.footer} role="contentinfo">
       <div><Link className="brand" href="/">{content.brandName}</Link><p>好旅行，被好好照顧。</p></div>
       <div className={styles.companyDetails}><strong>{content.companyName}</strong><span>{content.businessLicense}・{content.qualityLicense}</span><span>統一編號 {content.taxId} │ 負責人 {content.representative}</span><span>{content.address}</span></div>
       <nav aria-label="頁尾導覽"><Link href="/">回首頁</Link><Link href="/dates">出發團期</Link><Link href="/contact">聯絡我們</Link></nav>

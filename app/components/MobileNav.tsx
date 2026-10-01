@@ -41,14 +41,24 @@ export function MobileNav({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const backgroundRef = useRef<{ element: HTMLElement; inert: boolean } | null>(null);
 
   // 選單開啟時鎖住背景捲動，關閉時還原原本的設定。
   useEffect(() => {
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const background = document.querySelector("main");
+    if (background) {
+      backgroundRef.current = { element: background, inert: background.inert };
+      background.inert = true;
+    }
     return () => {
       document.body.style.overflow = previous;
+      if (backgroundRef.current) {
+        backgroundRef.current.element.inert = backgroundRef.current.inert;
+        backgroundRef.current = null;
+      }
     };
   }, [open]);
 
@@ -59,6 +69,7 @@ export function MobileNav({
 
   // preventScroll：把焦點還給漢堡鈕時不要把畫面拉回頁首。
   const close = () => {
+    if (backgroundRef.current) backgroundRef.current.element.inert = backgroundRef.current.inert;
     setOpen(false);
     triggerRef.current?.focus({ preventScroll: true });
   };
@@ -67,6 +78,7 @@ export function MobileNav({
   // 並在此同步解除捲動鎖定 —— 這個 handler 跑完瀏覽器才會執行連結的
   // 預設行為，body 若還鎖著 overflow 就捲不到錨點。
   const closeForNavigation = () => {
+    if (backgroundRef.current) backgroundRef.current.element.inert = backgroundRef.current.inert;
     setOpen(false);
     document.body.style.overflow = "";
   };

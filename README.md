@@ -9,6 +9,17 @@
 - `/contact` 公開聯絡表單，先存檔，再發送通知；失敗可重試，並在 `/studio/contacts` 查看狀態
 - Railway 連接 GitHub `main` 後，每次推送會自動重新部署
 
+## 本機設計預覽
+
+沒有 Bucket 憑證時，可將正式站已公開的內容快照（`SiteContent` 結構，至少包含
+`trips`）保存在 `work/design-preview.json`，於 `.env.local` 設定
+`FOUND_DESIGN_PREVIEW=1`，再執行 `npm.cmd run dev`。公開頁面會標示本機預覽，
+內容管理儲存會被阻擋。快照與 `.env.local` 都不會進入 Git。
+
+此功能只在 `NODE_ENV=development` 生效；正式建置與正式服務一律沿用 Bucket。
+未啟用時保留原本的內容讀取與錯誤處理。聯絡表單仍須配置儲存服務才能成功收件，
+版面驗證請勿送出實際客戶資料。
+
 ## 航空版本與批次團期
 
 在後臺「行程管理」展開行程後，每個航空／行程版本可以分別編輯名稱、

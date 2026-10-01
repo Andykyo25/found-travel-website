@@ -6,6 +6,7 @@ import {
   plansForDeparture,
   publishedTripPlans,
   tripPlanLabel,
+  tripPlanSummary,
 } from "../lib/trip-plans.ts";
 
 const departures = [
@@ -73,4 +74,11 @@ test("only published plans appear for each departure", () => {
 
 test("plan labels make airline and itinerary differences explicit", () => {
   assert.equal(tripPlanLabel(selectedPlan), "中華航空｜午去午回");
+});
+
+test("public summaries omit legacy editor instructions without changing saved content", () => {
+  const legacy = { ...allPlan, summary: "請簡短說明航班時間或行程內容的主要差異。" };
+  assert.equal(tripPlanSummary(legacy), "");
+  assert.equal(legacy.summary, "請簡短說明航班時間或行程內容的主要差異。");
+  assert.equal(tripPlanSummary({ ...allPlan, summary: "早去晚回，安排兩晚溫泉住宿。" }), "早去晚回，安排兩晚溫泉住宿。");
 });

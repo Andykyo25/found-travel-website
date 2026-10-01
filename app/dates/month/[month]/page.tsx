@@ -11,6 +11,7 @@ import {
   upcomingDepartureRows,
 } from "@/lib/trip-filters";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
+import { SiteHeader } from "@/app/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -53,18 +54,11 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
 
   return (
     <main className="board-shell public-page">
-      <header className="dates-header">
-        <Link className="brand" href="/">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
-          <span>{content.brandName}</span>
-        </Link>
-        <Link className="button button-secondary button-small" href="/dates">
-          全部團期
-        </Link>
-      </header>
+      <a className="skip-link" href="#month-content">跳至月份團期</a>
+      <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/dates" />
+      <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">{label}</span></nav>
 
-      <section className="board-head">
+      <section className="board-head" id="month-content">
         <p className="eyebrow">
           <span />
           DEPARTURE BOARD

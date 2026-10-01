@@ -28,8 +28,11 @@ export function ContactForm({
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const inFlight = useRef(false);
   const submissionId = useRef("");
+  const firstSlotRef = useRef<HTMLInputElement>(null);
+  const slotError = status.kind === "error" && status.message === "請選擇希望聯繫時段";
 
   const togglePreferredTime = (id: ContactTimeSlotId) => {
+    if (slotError) setStatus({ kind: "idle" });
     setPreferredTimes((current) =>
       current.includes(id)
         ? current.filter((slot) => slot !== id)
@@ -42,6 +45,7 @@ export function ContactForm({
     if (inFlight.current) return;
     if (preferredTimes.length === 0) {
       setStatus({ kind: "error", message: "請選擇希望聯繫時段" });
+      firstSlotRef.current?.focus();
       return;
     }
 
@@ -136,13 +140,13 @@ export function ContactForm({
           />
         </label>
 
-        <fieldset className="field-wide contact-slots">
+        <fieldset className="field-wide contact-slots" aria-invalid={slotError || undefined} aria-describedby={slotError ? "preferred-times-error" : undefined}>
           <legend>
             希望聯繫時段 <b className="field-required">*</b>
             <small>可複選，我們會盡量在您方便的時間來電</small>
           </legend>
           <div className="contact-slot-options">
-            {contactTimeSlots.map((slot) => (
+            {contactTimeSlots.map((slot, index) => (
               <label
                 key={slot.id}
                 className={`contact-slot${
@@ -150,6 +154,7 @@ export function ContactForm({
                 }`}
               >
                 <input
+                  ref={index === 0 ? firstSlotRef : undefined}
                   type="checkbox"
                   name="preferredTimes"
                   value={slot.id}
@@ -160,6 +165,7 @@ export function ContactForm({
               </label>
             ))}
           </div>
+          {slotError && <p className="contact-form-status error" id="preferred-times-error" role="alert">請選擇希望聯繫時段</p>}
         </fieldset>
 
         <label className="field field-wide">
@@ -194,7 +200,7 @@ export function ContactForm({
         </label>
       </div>
 
-      {status.kind === "error" ? (
+      {status.kind === "error" && !slotError ? (
         <p className="contact-form-status error" role="alert">
           {status.message}
         </p>

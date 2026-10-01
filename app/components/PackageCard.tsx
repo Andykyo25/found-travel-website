@@ -91,17 +91,19 @@ export function PackageCard({
   const plans = publishedTripPlans(trip);
 
   return (
-    <article className="package-card">
-      <div className="package-image">
+    <article className="package-card" data-reveal>
+      <Link className="package-image" href={`/dates/${trip.id}`} aria-label={`探索${trip.title}`} tabIndex={-1} aria-hidden="true">
         <TravelImage
           src={trip.image}
           alt={`${trip.title}行程風景`}
           priority={priority}
         />
         <span className="package-badge">{trip.badge}</span>
-      </div>
+        <span className="package-image-arrow" aria-hidden="true">↗</span>
+      </Link>
 
-      <h3>{trip.title}</h3>
+      <h3><Link href={`/dates/${trip.id}`}>{trip.title}</Link></h3>
+      <p className="package-summary">{trip.summary}</p>
 
       <p className="package-location">
         <PinIcon />
