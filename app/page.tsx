@@ -80,12 +80,10 @@ export default async function Home({
                 </span>
               ))}
             </h1>
-            <p className="hero-sub">{content.heroText}</p>
             <div className="cover-actions"><a className="button" href="#journeys">探索精選行程 <span aria-hidden="true">↗</span></a><Link href="/find-trip">還沒想好？幫我找旅行 <span aria-hidden="true">→</span></Link></div>
-            <p className="cover-signature" aria-hidden="true">A little further. A little closer.</p>
           </div>
         </div>
-        <div className="cover-photo-note" aria-hidden="true"><span>THE WORLD IS STILL FULL OF WONDER</span><span>世界很大，剛好有你。</span></div>
+        <div className="cover-photo-note" aria-hidden="true"><span>世界很大，剛好有你。</span></div>
       </section>
 
       <div className="announcement">
