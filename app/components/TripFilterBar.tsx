@@ -77,7 +77,7 @@ export function TripFilterBar({
 
   return (
     <form
-      className={`trip-filter-bar${tone === "on-image" ? " on-image" : ""}`}
+      className={`trip-filter-bar fh-filter${tone === "on-image" ? " on-image" : ""}`}
       onSubmit={(event) => {
         event.preventDefault();
         router.push(
@@ -91,6 +91,7 @@ export function TripFilterBar({
       </label>
       {regions.length > 0 ? (
         <label className="trip-filter-field">
+          <svg viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="M9 1.9c-2.7 0-4.8 2.1-4.8 4.8 0 3.5 4.8 9.4 4.8 9.4s4.8-5.9 4.8-9.4c0-2.7-2.1-4.8-4.8-4.8Z" fill="none" stroke="currentColor" strokeWidth="1.4" /><circle cx="9" cy="6.7" r="1.7" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
           <select
             value={region}
             onChange={(e) => setRegion(e.target.value)}

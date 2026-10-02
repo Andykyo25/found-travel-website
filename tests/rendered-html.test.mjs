@@ -30,6 +30,7 @@ test("the finished travel site replaces all starter content", async () => {
     robotsRoute,
     sitemapRoute,
     monthPage,
+    siteFooter,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -93,11 +94,14 @@ test("the finished travel site replaces all starter content", async () => {
       new URL("../app/dates/month/[month]/page.tsx", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../app/components/SiteFooter.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /精選行程/);
   assert.match(page, /TravelTools/);
-  assert.match(page, /內容管理/);
+  // 頁尾（含內容管理入口）已抽成全站共用元件，首頁以 SiteFooter 引用。
+  assert.match(page, /SiteFooter/);
+  assert.match(siteFooter, /內容管理/);
   assert.match(page, /PackageCard/);
   assert.match(page, /TripFilterBar/);
   assert.match(page, /hero-full/);

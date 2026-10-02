@@ -1,7 +1,9 @@
+import type { CSSProperties } from "react";
 import { HeroCarousel } from "./components/HeroCarousel";
 import { ParticleGlobe } from "./components/ParticleGlobe";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
+import { getSiteOrigin } from "@/lib/site-url";
 import {
   categoryOptions,
   filterTrips,
@@ -11,8 +13,11 @@ import {
 } from "@/lib/trip-filters";
 import { SiteHeader } from "./components/SiteHeader";
 import { JourneyAtlas } from "./components/JourneyAtlas";
-import { EditorialMotion } from "./components/EditorialMotion";
+import { FilmPlayer } from "./components/FilmPlayer";
+import { HomeIntro } from "./components/HomeIntro";
 import { PackageCard } from "./components/PackageCard";
+import { SiteFooter } from "./components/SiteFooter";
+import { SplitText } from "./components/SplitText";
 import { TravelTools } from "./components/TravelTools";
 import { TripFilterBar } from "./components/TripFilterBar";
 import { LineFloatingButton } from "./components/LineFloatingButton";
@@ -26,6 +31,15 @@ export const metadata = {
 };
 
 const visibleTripLimit = 6;
+
+function Arrow({ direction = "right" }: { direction?: "right" | "up-right" | "down" }) {
+  const path = { right: "M5 12h14m-6-6 6 6-6 6", "up-right": "M7 17 17 7M8 7h9v9", down: "M12 5v14m-6-6 6 6 6-6" }[direction];
+  return (
+    <svg className={`fh-arrow fh-arrow-${direction}`} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={path} />
+    </svg>
+  );
+}
 
 export default async function Home({
   searchParams,
@@ -56,239 +70,271 @@ export default async function Home({
   const hasFilters = Boolean(
     filters.month || filters.budget || filters.category || filters.region || filters.keyword,
   );
+  const atlasJourneys = orderedTrips
+    .filter((trip, index, all) => all.findIndex((item) => item.badge === trip.badge) === index)
+    .slice(0, 4)
+    .map(({ id, title, region, badge, summary, image }) => ({ id, title, region, badge, summary, image }));
+  // 公告可由後台編輯：以「・」分段，重複排列成跑馬燈。
+  const origin = await getSiteOrigin();
+  // 結構化資料：讓搜尋引擎辨識這是一家旅行社，並帶出公司資訊。
+  const agencyJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TravelAgency",
+    name: content.companyName,
+    alternateName: content.brandName,
+    url: origin,
+    image: `${origin}/og-railway.png`,
+    logo: `${origin}/brand/logo.png`,
+    taxID: content.taxId,
+    address: { "@type": "PostalAddress", streetAddress: content.address, addressCountry: "TW" },
+    sameAs: [content.lineUrl],
+  };
+  const marqueeItems = content.announcement.split(/[・|｜]/).map((item) => item.trim()).filter(Boolean);
 
   return (
-    <main className="editorial-home" id="top">
+    <main className="editorial-home fh" id="top">
       <a className="skip-link" href="#journeys">跳至精選行程</a>
-      <EditorialMotion />
-      <section className="hero-full hero-edge" aria-labelledby="cover-title">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(agencyJsonLd).replace(/</g, "\\u003c") }}
+      />
+      <HomeIntro />
+      <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} home />
+
+      {/* hero-full：滿版封面，照片為輪播，標題逐字升起 */}
+      <section className="fh-hero hero-full" aria-labelledby="cover-title" data-track="exit">
         <HeroCarousel images={content.heroImages.length ? content.heroImages : [heroImage]} />
-        <span className="hero-scrim" aria-hidden="true" />
-        <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} home />
+        <span className="fh-hero-scrim" aria-hidden="true" />
+        <span className="fh-grain" aria-hidden="true" />
+        <span className="fh-marks fh-marks-hero" aria-hidden="true"><b /><b /><b /><b /></span>
 
-        <div className="hero-inner">
-          <div className="hero-center">
-            <p className="hero-kicker"><span className="cover-index">01 /</span>{content.heroKicker}</p>
-            <h1 className="hero-title" id="cover-title">
-              {(
-                content.heroTitle.match(/[^，,。\n]+[，,。]?/g) ?? [
-                  content.heroTitle,
-                ]
-              ).map((phrase, index) => (
-                <span className="hero-phrase" key={index}>
-                  {phrase.trim()}
-                </span>
-              ))}
-            </h1>
-            <div className="cover-actions"><a className="button" href="#journeys">探索精選行程 <span aria-hidden="true">↗</span></a><Link href="/find-trip">還沒想好？幫我找旅行 <span aria-hidden="true">→</span></Link></div>
-          </div>
-        </div>
-        <div className="cover-photo-note" aria-hidden="true"><span>世界很大，剛好有你。</span></div>
-      </section>
-
-      <div className="announcement">
-        <span className="announcement-label">A NOTE FROM FOUND</span><span>{content.announcement}</span><a href="#finder-home-title">從你的旅行想法開始 <span aria-hidden="true">↓</span></a>
-      </div>
-
-      <div className="home-intro">
-      <section className="finder-home section-shell" aria-labelledby="finder-home-title">
-        <div className="finder-home-card" data-reveal>
-          <div className="finder-home-copy"><p className="eyebrow">你的旅行，從一點想法開始</p><h2 id="finder-home-title">還沒決定去哪？<br />一起找到適合你的旅行。</h2><p>跟團、自組客製，或只需要機票與住宿。<br />回答 5 個小問題，把期待慢慢變成旅行計畫。</p><div className="finder-home-actions"><Link className="button" href="/find-trip">幫我找旅行 · 開始整理需求 <span aria-hidden="true">→</span></Link><Link href="#journeys">我有方向，直接看行程 ↓</Link></div><small>不用登入、不必先留電話，還沒想好也可以。</small></div>
-          <JourneyAtlas journeys={orderedTrips.filter((trip, index, all) => all.findIndex(item => item.badge === trip.badge) === index).slice(0, 4).map(({ id, title, region, badge, summary, image }) => ({ id, title, region, badge, summary, image }))} />
-        </div>
-      </section>
-
-      </div>
-
-      <div className="home-intro home-travel-tools">
-        <div className="travel-tools-heading"><p className="eyebrow">BEFORE YOU GO</p><h2>出發前的小筆記</h2><span>天氣、匯率與當地生活，一起準備好。</span></div>
-        <TravelTools destination={content.destination} />
-      </div>
-
-      <section className="packages section-shell home-packages" id="journeys">
-        <div className="packages-head" data-reveal>
-          <p className="eyebrow eyebrow-center">
-            <span />
-            SELECTED JOURNEYS
-            <span />
+        <div className="fh-hero-copy">
+          <p className="fh-kicker">
+            <span className="fh-kicker-no">01</span>
+            <span className="fh-kicker-rule" aria-hidden="true" />
+            {content.heroKicker}
           </p>
-          <h2>這次想去哪裡，慢慢選。</h2>
-          <p>
-            不把行程塞滿，而是留下剛好的空白。每一團皆可依航班、季節與同行者需求微調。
-          </p>
-        </div>
-
-        <TripFilterBar
-          key={`packages-${filters.month}-${filters.budget}-${filters.category}-${filters.region}-${filters.keyword}`}
-          months={months}
-          regions={regions}
-          filters={filters}
-        />
-
-        {categories.length > 0 ? (
-          <nav className="category-pills" aria-label="行程分類">
-            <Link
-              className={`category-pill${filters.category ? "" : " active"}`}
-              href={tripFilterHref({ ...filters, category: "" }, showAll)}
-            >
-              全部
+          <SplitText as="h1" id="cover-title" className="fh-title" text={content.heroTitle} intro start={520} step={42} />
+          <div className="fh-cta">
+            <a className="fh-btn fh-btn-light" href="#journeys" data-magnetic>
+              探索精選行程 <Arrow direction="up-right" />
+            </a>
+            <Link className="fh-link fh-link-light" href="/find-trip">
+              還沒想好？幫我找旅行 <Arrow />
             </Link>
-            {categories.map((category) => (
-              <Link
-                key={category}
-                className={`category-pill${
-                  filters.category === category ? " active" : ""
-                }`}
-                href={tripFilterHref({ ...filters, category }, showAll)}
-              >
-                {category}
-              </Link>
-            ))}
-          </nav>
-        ) : null}
-
-        <div className="catalogue-caption"><span>{hasFilters ? "YOUR SELECTION" : "THE JOURNEY COLLECTION"}</span><span role="status">{filters.keyword ? `「${filters.keyword}」` : ""}{matchedTrips.length} 個行程{hasFilters ? <> · <Link href="/#journeys">清除全部篩選</Link></> : "，各有自己的風景。"}</span></div>
-        {visibleTrips.length > 0 ? (
-          <div className="package-grid">
-            {visibleTrips.map((trip) => (
-              <PackageCard key={trip.id} trip={trip} />
-            ))}
           </div>
-        ) : (
-          <div className="packages-empty">
-            <p>目前沒有符合條件的行程。</p>
-            {hasFilters ? (
-              <Link className="button button-secondary" href="/#journeys">
-                清除篩選條件
+        </div>
+        <p className="fh-hero-note" aria-hidden="true">世界很大，剛好有你。</p>
+        <a className="fh-scroll" href="#intro" aria-label="向下捲動">
+          <span>SCROLL</span>
+          <i aria-hidden="true" />
+        </a>
+      </section>
+
+      <div className="fh-marquee" role="group" aria-label={content.announcement}>
+        <div className="fh-marquee-track" aria-hidden="true">
+          {[0, 1].map((group) => (
+            <ul key={group}>
+              {Array.from({ length: 3 }, () => marqueeItems).flat().map((item, index) => (
+                <li key={index} className={index >= marqueeItems.length ? "is-copy" : undefined}>
+                  <span>{item}</span>
+                  <i />
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+
+      <section className="fh-finder" id="intro" aria-labelledby="finder-home-title">
+        <div className="fh-wrap fh-finder-grid">
+          <div className="fh-finder-copy">
+            <p className="fh-eyebrow" data-rv><i>02</i>你的旅行，從一點想法開始</p>
+            <SplitText as="h2" id="finder-home-title" className="fh-h2" text="還沒決定去哪？一起找到適合你的旅行。" />
+            <p className="fh-lede" data-rv>
+              跟團、自組客製，或只需要機票與住宿。<br />
+              回答 5 個小問題，把期待慢慢變成旅行計畫。
+            </p>
+            <div className="fh-actions" data-rv>
+              <Link className="fh-btn" href="/find-trip" data-magnetic>
+                幫我找旅行・開始整理需求 <Arrow />
+              </Link>
+              <Link className="fh-link" href="#journeys">
+                我有方向，直接看行程 <Arrow direction="down" />
+              </Link>
+            </div>
+            <small className="fh-note" data-rv>不用登入、不必先留電話，還沒想好也可以。</small>
+          </div>
+          <JourneyAtlas journeys={atlasJourneys} />
+        </div>
+      </section>
+
+      <section className="fh-tools" aria-labelledby="tools-title">
+        <div className="fh-wrap">
+          <div className="fh-tools-head" data-rv>
+            <p className="fh-eyebrow"><i>—</i>BEFORE YOU GO</p>
+            <h2 id="tools-title">出發前的小筆記</h2>
+            <span>天氣、匯率與當地生活，一起準備好。</span>
+          </div>
+          <TravelTools destination={content.destination} />
+        </div>
+      </section>
+
+      <section className="fh-journeys" id="journeys">
+        <div className="fh-wrap">
+          <header className="fh-section-head">
+            <p className="fh-eyebrow" data-rv><i>03</i>SELECTED JOURNEYS</p>
+            <SplitText as="h2" className="fh-h2" text="這次想去哪裡，慢慢選。" />
+            <p className="fh-section-lede" data-rv>
+              不把行程塞滿，而是留下剛好的空白。每一團皆可依航班、季節與同行者需求微調。
+            </p>
+          </header>
+
+          <TripFilterBar
+            key={`packages-${filters.month}-${filters.budget}-${filters.category}-${filters.region}-${filters.keyword}`}
+            months={months}
+            regions={regions}
+            filters={filters}
+          />
+
+          {categories.length > 0 ? (
+            <nav className="fh-pills" aria-label="行程分類">
+              <Link
+                className={`fh-pill${filters.category ? "" : " active"}`}
+                href={tripFilterHref({ ...filters, category: "" }, showAll)}
+                aria-current={filters.category ? undefined : "true"}
+              >
+                全部
+              </Link>
+              {categories.map((category) => (
+                <Link
+                  key={category}
+                  className={`fh-pill${filters.category === category ? " active" : ""}`}
+                  href={tripFilterHref({ ...filters, category }, showAll)}
+                  aria-current={filters.category === category ? "true" : undefined}
+                >
+                  {category}
+                </Link>
+              ))}
+            </nav>
+          ) : null}
+
+          <div className="fh-caption">
+            <span>{hasFilters ? "YOUR SELECTION" : "THE JOURNEY COLLECTION"}</span>
+            <span role="status">
+              {filters.keyword ? `「${filters.keyword}」` : ""}
+              {matchedTrips.length} 個行程
+              {hasFilters ? (
+                <>
+                  {" "}· <Link href="/#journeys">清除全部篩選</Link>
+                </>
+              ) : (
+                "，各有自己的風景。"
+              )}
+            </span>
+          </div>
+
+          {visibleTrips.length > 0 ? (
+            <div className={`fh-grid${showAll ? " is-all" : ""}`}>
+              {visibleTrips.map((trip, index) => (
+                <PackageCard key={trip.id} trip={trip} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="fh-empty">
+              <p>目前沒有符合條件的行程。</p>
+              {hasFilters ? (
+                <Link className="fh-btn" href="/#journeys">
+                  清除篩選條件
+                </Link>
+              ) : null}
+            </div>
+          )}
+
+          <div className="fh-more">
+            {hasMore ? (
+              <Link className="fh-link" href={tripFilterHref(filters, true)}>
+                看更多行程 <Arrow />
               </Link>
             ) : null}
-          </div>
-        )}
-
-        <div className="packages-more">
-          {hasMore ? (
-            <Link className="explore-more" href={tripFilterHref(filters, true)}>
-              看更多行程 <span aria-hidden="true">→</span>
+            <Link className="fh-link" href="/dates">
+              查看全部出發團期 <Arrow />
             </Link>
-          ) : null}
-          <Link className="explore-more" href="/dates">
-            查看全部出發團期 <span aria-hidden="true">→</span>
-          </Link>
+          </div>
         </div>
       </section>
 
-      <section className="film-section section-shell home-band" id="film">
-        <div className="film-copy" data-reveal>
-          <p className="eyebrow light">
-            <span />
-            TRAVEL FILM
-          </p>
-          <h2>先感受，<br />再決定要去哪裡。</h2>
-          <p>
-            旅行的樣子，很難只靠文字說完。看一段片，感受城市的呼吸、山野的光，以及你想留下的步調。
-          </p>
-          <a href="#contact" className="text-link light-link">
-            和顧問聊聊旅程 <span aria-hidden="true">↗</span>
-          </a>
+      <section className="fh-film" id="film">
+        <div className="fh-wrap fh-film-head">
+          <div>
+            <p className="fh-eyebrow fh-eyebrow-light" data-rv><i>04</i>TRAVEL FILM</p>
+            <SplitText as="h2" className="fh-h2" text="先感受，再決定要去哪裡。" />
+          </div>
+          <div className="fh-film-aside" data-rv>
+            <p>旅行的樣子，很難只靠文字說完。看一段片，感受城市的呼吸、山野的光，以及你想留下的步調。</p>
+            <a className="fh-link fh-link-light" href="#contact">
+              和顧問聊聊旅程 <Arrow direction="up-right" />
+            </a>
+          </div>
         </div>
-        <div className="film-visual" data-reveal><div className="video-frame">
-          <video
-            src={content.videoUrl}
-            title={content.videoTitle}
-            controls
-            playsInline
-            preload="metadata"
-            poster="/trips/bali.jpg"
-          >
-            您的瀏覽器不支援影片播放。
-          </video>
-        </div><p className="film-caption"><span>TRAVEL, IN MOTION</span><span>為下一段旅程，留一點想像。</span></p></div>
+        <div className="fh-film-stage" data-track="enter">
+          <FilmPlayer src={content.videoUrl} title={content.videoTitle} poster="/media/film-poster.jpg" />
+        </div>
+        <p className="fh-film-caption fh-wrap" data-rv>
+          <span>TRAVEL, IN MOTION</span>
+          <span>為下一段旅程，留一點想像。</span>
+        </p>
       </section>
 
-      <section className="about section-shell home-band" id="about">
+      <section className="fh-why" id="about" aria-labelledby="why-title">
         <ParticleGlobe />
-        <div className="about-card" data-reveal>
-          <p className="eyebrow">
-            <span />
-            WHY FOUND
-          </p>
-          <h2><span>找到的不只是景點，</span><span>是適合你的旅行方式。</span></h2>
-          <p>
-            找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的業務顧問陪你完成。
-          </p>
-          <Link className="text-link" href="/about">認識我們・閱讀旅人好評 <span aria-hidden="true">↗</span></Link>
-        </div>
-        <div className="values-grid" data-reveal>
-          <article>
-            <span>01</span>
-            <h3>先聽，再排行程</h3>
-            <p>從同行者、體力與在意的小事開始，不套用制式答案。</p>
-          </article>
-          <article>
-            <span>02</span>
-            <h3>資訊說清楚</h3>
-            <p>費用、自由活動、移動時間與風險，在出發前完整確認。</p>
-          </article>
-          <article>
-            <span>03</span>
-            <h3>旅途中找得到人</h3>
-            <p>行前提醒、當地變動與回程協助，都有同一個窗口接手。</p>
-          </article>
+        <div className="fh-wrap">
+          <p className="fh-eyebrow" data-rv><i>05</i>WHY FOUND</p>
+          <SplitText as="h2" id="why-title" className="fh-statement" text="找到的不只是景點，是適合你的旅行方式。" lit track="enter" />
+          <div className="fh-why-body" data-rv>
+            <p>
+              找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的業務顧問陪你完成。
+            </p>
+            <Link className="fh-link" href="/about">
+              認識我們・閱讀旅人好評 <Arrow direction="up-right" />
+            </Link>
+          </div>
+          <div className="fh-values">
+            {[
+              ["01", "先聽，再排行程", "從同行者、體力與在意的小事開始，不套用制式答案。"],
+              ["02", "資訊說清楚", "費用、自由活動、移動時間與風險，在出發前完整確認。"],
+              ["03", "旅途中找得到人", "行前提醒、當地變動與回程協助，都有同一個窗口接手。"],
+            ].map(([no, title, text], index) => (
+              <article key={no} data-rv style={{ "--rv-i": index } as CSSProperties}>
+                <span className="fh-value-no">{no}</span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="contact section-shell home-band" id="contact">
-        <div>
-          <p className="eyebrow light">
-            <span />
-            LET&apos;S FIND YOUR WAY
-          </p>
-          <h2>{content.contactTitle}</h2>
-          <p>{content.contactText}</p>
-        </div>
-        <div className="contact-actions">
-          <a
-            className="button button-on-dark"
-            href={content.lineUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            LINE 聯絡顧問 <span aria-hidden="true">↗</span>
-          </a>
-          <Link className="button button-on-dark-ghost" href="/contact">
-            填寫聯絡表單 <span aria-hidden="true">→</span>
-          </Link>
-          <span className="contact-company">{content.companyName}</span>
+      <section className="fh-contact" id="contact" aria-labelledby="contact-title">
+        <div className="fh-wrap fh-contact-grid">
+          <div>
+            <p className="fh-eyebrow fh-eyebrow-light" data-rv><i>06</i>LET&apos;S FIND YOUR WAY</p>
+            <SplitText as="h2" id="contact-title" className="fh-h2 fh-h2-xl" text={content.contactTitle} />
+            <p className="fh-contact-text" data-rv>{content.contactText}</p>
+          </div>
+          <div className="fh-contact-actions" data-rv>
+            <a className="fh-btn fh-btn-light fh-btn-lg" href={content.lineUrl} target="_blank" rel="noreferrer" data-magnetic>
+              LINE 聯絡顧問 <Arrow direction="up-right" />
+            </a>
+            <Link className="fh-btn fh-btn-ghost fh-btn-lg" href="/contact" data-magnetic>
+              填寫聯絡表單 <Arrow />
+            </Link>
+            <span className="fh-contact-company">{content.companyName}</span>
+          </div>
         </div>
       </section>
 
-      <footer className="site-footer section-shell home-band" role="contentinfo">
-        <div className="footer-identity">
-          <a className="brand footer-brand" href="#top">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="brand-logo" src="/brand/logo-mark.png" alt="" />
-            <span>{content.brandName}</span>
-          </a>
-          <p>內容與報價以業務顧問最終確認為準</p>
-        </div>
-        <div className="company-details">
-          <strong>{content.companyName}</strong>
-          <span>{content.businessLicense}</span>
-          <span>{content.qualityLicense}</span>
-          <span>
-            統一編號 {content.taxId} │ 負責人 {content.representative}
-          </span>
-          <span>地址：{content.address}</span>
-        </div>
-        <div className="footer-links">
-          <a href="#journeys">精選行程</a>
-          <Link href="/dates">出發團期</Link>
-          <Link href="/about">關於我們</Link>
-          <Link href="/contact">聯絡表單</Link>
-          <a href="/studio">內容管理</a>
-        </div>
-        <div className="footer-colophon"><span>FOUND TRAVEL — 好旅行，被好好照顧。</span><a href="#top">回到頁首 <span aria-hidden="true">↑</span></a></div>
-      </footer>
+      <SiteFooter content={content} home />
 
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>

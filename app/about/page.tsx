@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import { googleMapsPlaceUrl, travelerReviews } from "@/lib/traveler-reviews";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { SiteFooter } from "@/app/components/SiteFooter";
 import { TravelImage } from "@/app/components/TravelImage";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import styles from "./page.module.css";
@@ -36,7 +37,8 @@ export default async function AboutPage() {
   const content = await getSiteContent();
   const [featured, ...reviews] = travelerReviews;
 
-  return <main className={styles.page} id="top">
+  return <>
+  <main className={styles.page} id="top">
     <a className={styles.skipLink} href="#our-story">跳至頁面內容</a>
     <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/about" />
 
@@ -113,11 +115,8 @@ export default async function AboutPage() {
       <div className={styles.contactActions}><a href={content.lineUrl} target="_blank" rel="noopener noreferrer">LINE 聯絡顧問 <span aria-hidden="true">↗</span></a><Link href="/contact">填寫聯絡表單 <span aria-hidden="true">→</span></Link></div>
     </section>
 
-    <footer className={styles.footer} role="contentinfo">
-      <div><Link className="brand" href="/">{content.brandName}</Link><p>好旅行，被好好照顧。</p></div>
-      <div className={styles.companyDetails}><strong>{content.companyName}</strong><span>{content.businessLicense}・{content.qualityLicense}</span><span>統一編號 {content.taxId} │ 負責人 {content.representative}</span><span>{content.address}</span></div>
-      <nav aria-label="頁尾導覽"><Link href="/">回首頁</Link><Link href="/dates">出發團期</Link><Link href="/contact">聯絡我們</Link></nav>
-    </footer>
     <LineFloatingButton lineUrl={content.lineUrl} />
-  </main>;
+  </main>
+  <SiteFooter content={content} />
+  </>;
 }

@@ -12,6 +12,8 @@ import {
 } from "@/lib/trip-filters";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { SiteFooter } from "@/app/components/SiteFooter";
+import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +55,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
   const label = monthLabel(month);
 
   return (
+    <>
     <main className="board-shell public-page">
       <a className="skip-link" href="#month-content">跳至月份團期</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/dates" />
@@ -63,7 +66,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
           <span />
           DEPARTURE BOARD
         </p>
-        <h1>{label}出發團期</h1>
+        <SplitText as="h1" text={`${label}出發團期`} />
         <p className="board-lede">
           {label}可報名的出發日期與團費，依日期由近到遠排列。
           名額與最新價格以業務顧問回覆為準。
@@ -82,5 +85,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
 
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
+    <SiteFooter content={content} />
+    </>
   );
 }

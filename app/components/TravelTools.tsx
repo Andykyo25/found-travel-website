@@ -52,8 +52,13 @@ export function TravelTools({ destination }: { destination: Destination }) {
   const { data, status: dataStatus } = activeDataState;
 
   useEffect(() => {
+    // 伺服器與瀏覽器各自取「現在」，分鐘跨界時文字會不一致；掛載後立即校正一次。
+    const sync = window.setTimeout(() => setNow(new Date()), 0);
     const interval = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(sync);
+      window.clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -102,7 +107,7 @@ export function TravelTools({ destination }: { destination: Destination }) {
     : "";
 
   return (
-    <section className="travel-tools-panel" aria-label="旅遊目的地即時資訊">
+    <section className="travel-tools-panel fh-tools-panel" aria-label="旅遊目的地即時資訊">
       <div className="travel-tools-picker">
         <label htmlFor="travel-destination">選擇目的地</label>
         <select
@@ -125,7 +130,7 @@ export function TravelTools({ destination }: { destination: Destination }) {
           </span>
           <div>
             <small>{selected.city}・當地時間</small>
-            <strong>{localTime}</strong>
+            <strong suppressHydrationWarning>{localTime}</strong>
           </div>
         </div>
         <div className="tool">

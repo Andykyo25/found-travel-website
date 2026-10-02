@@ -8,15 +8,17 @@ const navigation: NavLink[] = [
   { href: "/about", label: "關於我們" },
 ];
 
-export function SiteHeader({ brandName, lineUrl, active = "", home = false }: {
+export function SiteHeader({ brandName, lineUrl, active = "", home = false, tone = "light" }: {
   brandName: string;
   lineUrl: string;
   active?: string;
   home?: boolean;
+  /** dark：疊在深色版面上的透明標頭（例如 404）。 */
+  tone?: "light" | "dark";
 }) {
   return <>
     {process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1" && <div className="design-preview-note">本機設計預覽 <span>行程採用正式站公開內容快照 · 未發布</span></div>}
-    <header className="site-header" role="banner">
+    <header className={`site-header${home ? " is-home" : ""}${tone === "dark" ? " is-dark" : ""}`} role="banner" data-scrolled="false" data-hidden="false">
     <Link className="brand site-brand" href="/" aria-label={`${brandName}首頁`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="brand-logo" src="/brand/logo-mark.png" alt="" width="58" height="46" />

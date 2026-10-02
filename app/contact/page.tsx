@@ -8,6 +8,8 @@ import { ContactForm } from "@/app/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { SiteFooter } from "@/app/components/SiteFooter";
+import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,7 @@ export default async function ContactPage({
     : "";
 
   return (
+    <>
     <main className="contact-shell public-page">
       <a className="skip-link" href="#contact-content">跳至聯絡表單</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/contact" />
@@ -61,7 +64,7 @@ export default async function ContactPage({
           <span />
           CONTACT US
         </p>
-        <h1>留下聯絡方式，讓顧問來找你。</h1>
+        <SplitText as="h1" text="留下聯絡方式，讓顧問來找你。" />
         <p className="contact-card-lede">
           填寫下方表單後，我們會保存您的需求，並安排顧問於您希望的時段與您聯繫。
           想先聊聊也可以直接用 LINE 找我們。
@@ -93,5 +96,7 @@ export default async function ContactPage({
 
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
+    <SiteFooter content={content} />
+    </>
   );
 }

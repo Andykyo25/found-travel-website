@@ -11,6 +11,8 @@ import {
 } from "@/lib/trip-filters";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { SiteFooter } from "@/app/components/SiteFooter";
+import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function AllDeparturesPage() {
   const months = departureMonthOptions(rows);
 
   return (
+    <>
     <main className="board-shell public-page">
       <a className="skip-link" href="#departures-content">跳至出發團期</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/dates" />
@@ -37,7 +40,7 @@ export default async function AllDeparturesPage() {
           <span />
           DEPARTURE BOARD
         </p>
-        <h1>出發團期總表</h1>
+        <SplitText as="h1" text="出發團期總表" />
         <p className="board-lede">
           所有行程的出發日期與團費集中在這一頁，依日期由近到遠排列。
           已出發的團期不再顯示，想確認名額請直接與顧問聯繫。
@@ -69,5 +72,7 @@ export default async function AllDeparturesPage() {
 
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
+    <SiteFooter content={content} />
+    </>
   );
 }

@@ -1,7 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getSiteOrigin } from "@/lib/site-url";
+import { FoundMotion } from "./components/FoundMotion";
+import { display, latin, serif } from "./fonts";
 import "./globals.css";
 import "./editorial.css";
+import "./found.css";
+
+export const viewport: Viewport = {
+  themeColor: "#263a31",
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   // metadataBase 由請求標頭推導，各頁的相對 canonical 會依此展開成絕對網址。
@@ -44,8 +51,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-Hant" data-scroll-behavior="smooth">
-      <body>{children}</body>
+    <html
+      lang="zh-Hant"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+      className={`${latin.variable} ${serif.variable} ${display.variable}`}
+    >
+      <head>
+        {/* 同一分頁已看過首頁序幕時，在首次繪製前就略過（避免閃一下）。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(sessionStorage.getItem("found-intro"))document.documentElement.dataset.intro="skip"}catch(e){}`,
+          }}
+        />
+      </head>
+      <body>
+        {children}
+        <FoundMotion />
+      </body>
     </html>
   );
 }

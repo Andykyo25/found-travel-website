@@ -82,7 +82,7 @@ export function ParticleGlobe() {
         const p = project(point.x, point.y, point.z);
         if (p.y > height + 2 || p.z < -0.12) continue;
         const depth = Math.max(0, p.z);
-        context.fillStyle = `rgba(113, 137, 105, ${(point.land ? 0.58 : 0.035) * (0.25 + depth * 0.75)})`;
+        context.fillStyle = `rgba(113, 137, 105, ${(point.land ? 0.82 : 0.05) * (0.25 + depth * 0.75)})`;
         const size = point.land ? 0.65 + depth * 0.5 : 0.5;
         context.beginPath();
         context.arc(p.x, p.y, size, 0, Math.PI * 2);

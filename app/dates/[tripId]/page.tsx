@@ -8,6 +8,8 @@ import { getSiteContent } from "@/lib/site-content";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { publishedTripPlans } from "@/lib/trip-plans";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { SiteFooter } from "@/app/components/SiteFooter";
+import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
@@ -44,40 +46,51 @@ export default async function TripDatesPage({ params }: PageProps) {
   const departures = upcomingDepartures(trip.departures);
 
   return (
+    <>
     <main className="dates-shell public-page">
       <a className="skip-link" href="#trip-content">跳至行程內容</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} />
       <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/#journeys">精選行程</Link><span aria-hidden="true">/</span><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">行程內容</span></nav>
 
       <section className="dates-card" id="trip-content">
-        <p className="eyebrow">
-          <span />
-          DEPARTURE DATES
-        </p>
-        <h1>{trip.title}</h1>
-        <p className="dates-meta">
-          <span>{trip.region}</span>
-          <span>{trip.days}</span>
-        </p>
-
         <div className="trip-overview">
-          <TravelImage
-            src={trip.image}
-            alt={`${trip.title}行程風景`}
-            priority
-            sizes="(max-width: 640px) 100vw, 50vw"
-          />
-          <div>
+          <div className="trip-overview-media">
+            <TravelImage
+              src={trip.image}
+              alt={`${trip.title}行程風景`}
+              priority
+              sizes="(max-width: 900px) 100vw, 52vw"
+            />
+            <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>
+          </div>
+          <div className="trip-overview-copy">
+            <p className="eyebrow">
+              <span />
+              DEPARTURE DATES
+            </p>
+            <SplitText as="h1" text={trip.title} />
+            <p className="dates-meta">
+              <span>{trip.region}</span>
+              <span>{trip.days}</span>
+            </p>
             <h2>旅程亮點</h2>
             <p>{trip.summary}</p>
-            <strong>{formatPrice(trip.price, true)}</strong>
-            <p>各團期航空、住宿與費用細節請參閱下方方案及完整行程。</p>
-            <Link
-              className="button"
-              href={`/contact?trip=${encodeURIComponent(trip.id)}`}
-            >
-              諮詢這趟旅行
-            </Link>
+            <div className="trip-overview-price">
+              <small>參考價格</small>
+              <strong>{formatPrice(trip.price, true)}</strong>
+            </div>
+            <p className="trip-overview-note">各團期航空、住宿與費用細節請參閱下方方案及完整行程。</p>
+            <div className="trip-overview-actions">
+              <Link
+                className="button"
+                href={`/contact?trip=${encodeURIComponent(trip.id)}`}
+              >
+                諮詢這趟旅行
+              </Link>
+              <a className="fh-link" href="#plans">
+                查看航空與方案 <span aria-hidden="true">↓</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -152,5 +165,7 @@ export default async function TripDatesPage({ params }: PageProps) {
 
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>
+    <SiteFooter content={content} />
+    </>
   );
 }
