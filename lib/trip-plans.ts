@@ -46,3 +46,22 @@ export function plansForDeparture(plans: TripPlan[], departureId: string) {
       Boolean(plan.documentUrl) && planAppliesToDeparture(plan, departureId),
   );
 }
+
+/** 這個版本是否涵蓋了行程裡的每一個出發日期。 */
+export function planCoversAllDepartures(plan: TripPlan, departures: TripDeparture[]) {
+  return departures.every((departure) => planAppliesToDeparture(plan, departure.id));
+}
+
+/**
+ * 只有一個版本的行程不需要「指定哪些團期適用」。新增團期前這個版本若涵蓋全部團期，
+ * 新增後就維持「適用所有團期」，這樣之後新增的日期不會變成沒有版本可套用。
+ * 新增前就沒涵蓋全部（例如刪掉另一個版本後留下的日期）時不動，改由後台明確提示。
+ */
+export function keepSinglePlanCoveringAll(before: Trip, after: Trip): Trip {
+  if (after.plans.length !== 1 || before.plans.length !== 1) return after;
+  if (!planCoversAllDepartures(before.plans[0], before.departures)) return after;
+  return {
+    ...after,
+    plans: [{ ...after.plans[0], departureMode: "all", departureIds: [] }],
+  };
+}

@@ -71,3 +71,79 @@
 @media (max-width: 760px) {
   .contact-search, .trip-search { flex: none; width: 100%; }
 }
+
+/* ===== 第二輪：行程列表、起始價格、封面上傳、單一版本 ===== */
+
+/* 收合的行程列：縮圖 + 名稱 + 價格／下一團／文件狀態 */
+.studio-trip-bar { align-items: center; }
+.studio-trip-toggle { align-items: center; gap: 12px; }
+.studio-trip-thumb { flex: 0 0 auto; display: grid; place-items: center; width: 76px; height: 52px; overflow: hidden; border-radius: 10px; background: #eef0e8; color: var(--muted); font-size: 11px; }
+.studio-trip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.studio-trip-thumb i { font-style: normal; }
+.studio-trip-summary { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.studio-trip-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
+.studio-trip-line .studio-trip-name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.studio-trip-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+.studio-trip-meta span + span::before { content: "・"; margin-right: 14px; margin-left: -10px; color: #c7ccc0; }
+.studio-trip-meta .is-warn { color: #a33a2b; font-weight: 700; }
+.studio-trip-meta span:first-child { color: var(--ink); font-weight: 800; }
+
+/* 刪除與排序分開，並收斂成不搶眼的文字按鈕，降低誤點 */
+.studio-trip-controls { gap: 14px; }
+.studio-trip-controls .trip-editor-actions { gap: 4px; align-items: center; }
+.studio-trip-controls .trip-editor-actions .danger { margin-left: 14px; min-height: 30px; padding-inline: 8px; border-color: transparent; background: transparent; color: #8a5a52; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.studio-trip-controls .trip-editor-actions .danger:hover:not(:disabled) { border-color: transparent; color: #a33a2b; }
+
+/* 起始價格 */
+.start-price-field { display: grid; gap: 8px; align-content: start; }
+.start-price-field > span { font-weight: 800; }
+.start-price-auto { display: grid; gap: 4px; padding: 12px 14px; border: 1px dashed #b9c6b0; border-radius: 14px; background: #fbfaf5; }
+.start-price-auto strong { font-size: 18px; }
+.start-price-auto small { color: var(--muted); line-height: 1.6; }
+.start-price-warn { margin: 0; padding: 10px 12px; border-radius: 12px; background: #fff3e3; color: #8a4b12; font-size: 13px; line-height: 1.7; }
+.start-price-warn button { margin-left: 8px; padding: 2px 10px; border: 1px solid #e0b27a; border-radius: 99px; background: #fff; color: #8a4b12; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+/* 封面圖片：預覽 + 上傳 + 網址 */
+.cover-field { display: grid; gap: 8px; }
+.cover-field > span { font-weight: 800; }
+.cover-field-body { display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cover-field-preview { aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #eef0e8; display: grid; place-items: center; }
+.cover-field-preview .cover-preview { width: 100%; height: 100%; border: 0; border-radius: 0; }
+.cover-empty { color: var(--muted); font-size: 13px; }
+.cover-field-controls { display: grid; gap: 10px; align-content: start; }
+.cover-field-controls small { color: var(--muted); line-height: 1.6; }
+.cover-upload { display: inline-flex; width: fit-content; max-width: 100%; }
+@media (max-width: 760px) {
+  .cover-field-body { grid-template-columns: 1fr; }
+  .studio-trip-thumb { width: 60px; height: 44px; }
+}
+
+/* 只有一個版本的行程：精簡版 */
+.button-quiet { background: transparent; border: 1px solid var(--line); color: var(--muted); box-shadow: none; }
+.button-quiet:hover { border-color: var(--coral); color: var(--coral-deep); }
+.plan-editor-single { padding: 4px 0 0; border: 0; background: transparent; box-shadow: none; }
+.plan-more-settings { border: 1px solid var(--line); border-radius: 14px; background: #fbfaf5; padding: 0 14px; }
+.plan-more-settings > summary { padding: 12px 0; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; }
+.plan-more-settings[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.plan-more-settings > .field-grid { padding-bottom: 14px; }
+.departure-uncovered { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: #fff3e3; color: #8a4b12; font-size: 13px; line-height: 1.7; }
+.departure-uncovered button { margin-left: 8px; padding: 2px 10px; border: 1px solid #e0b27a; border-radius: 99px; background: #fff; color: #8a4b12; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+/* 出發日期表：桌機一列一個日期（日期、備註、價格同一行），30 個團期不用再捲 4000px */
+@media (min-width: 761px) {
+  .departure-editor .departure-row { grid-template-columns: minmax(0, 2.4fr) minmax(120px, 0.8fr) 156px; }
+  .departure-editor .departure-row > div:first-child { display: grid; grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1.5fr); gap: 8px; }
+  .departure-editor .departure-row > div:first-child input + input { margin-top: 0; }
+  .departure-editor .departure-version-label { grid-column: 1 / -1; margin-bottom: -2px; }
+  .departure-editor .departure-row input { padding-block: 9px; }
+}
+
+/* 手機：行程列分兩行（上：縮圖＋名稱＋重點；下：精選與排序），不再把文字擠成一欄 */
+@media (max-width: 760px) {
+  .studio-trip-toggle { flex: 1 1 100%; align-items: flex-start; }
+  .studio-trip-thumb { margin-top: 2px; }
+  .studio-trip-meta { flex-direction: column; gap: 1px; }
+  .studio-trip-meta span + span::before { display: none; }
+  .studio-trip-controls { flex: 1 1 100%; justify-content: space-between; padding: 0 6px 4px; }
+  .studio-trip-controls .trip-editor-actions .danger { margin-left: 6px; }
+}

@@ -1,5 +1,6 @@
 import { getSiteContentWithMeta, defaultSiteContent } from "@/lib/site-content";
 import { taipeiTodayTime } from "@/lib/trip-values";
+import { applyAutoPrices } from "@/lib/trip-summary";
 import { TravelFinder } from "@/app/components/TravelFinder";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
@@ -10,7 +11,7 @@ export const metadata = { title: "幫我找適合的旅行", description: "先�
 
 export default async function FindTripPage() {
   const { content, available } = await getSiteContentWithMeta()
-    .then(({ content }) => ({ content, available: true }))
+    .then(({ content }) => ({ content: applyAutoPrices(content, taipeiTodayTime()), available: true }))
     .catch(() => ({ content: { ...defaultSiteContent, trips: [] }, available: false }));
   return <>
   <main className="finder-shell public-page">

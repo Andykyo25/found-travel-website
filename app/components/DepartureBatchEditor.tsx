@@ -6,11 +6,13 @@ import { formatDepartureDate } from "@/lib/trip-values";
 import { tripPlanLabel } from "@/lib/trip-plans";
 import { parseDeparturePaste, validateDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
 
-export function DepartureBatchEditor({ trip, plan, todayTime, onAdd }: {
+// single：行程只有一個版本時，不需要談「加入哪個版本」，說明文字改成簡單版。
+export function DepartureBatchEditor({ trip, plan, todayTime, onAdd, single = false }: {
   trip: Trip;
   plan: TripPlan;
   todayTime: number;
   onAdd: (rows: DepartureBatchRow[]) => string | null;
+  single?: boolean;
 }) {
   const id = useId();
   const [method, setMethod] = useState<"calendar" | "paste">("calendar");
@@ -37,8 +39,8 @@ export function DepartureBatchEditor({ trip, plan, todayTime, onAdd }: {
   };
   return (
     <details className="departure-batch-editor">
-      <summary>＋ 批次新增團期到此版本</summary>
-      <p>套用到：<strong>{tripPlanLabel(plan)}</strong>。日期不規則也能一次新增。</p>
+      <summary>{single ? "＋ 批次新增團期（月曆多選或貼上 Excel）" : "＋ 批次新增團期到此版本"}</summary>
+      {single ? <p>日期不規則也能一次新增。</p> : <p>套用到：<strong>{tripPlanLabel(plan)}</strong>。日期不規則也能一次新增。</p>}
       <div className="document-type-switch" role="group" aria-label="批次新增方式">
         <button type="button" aria-pressed={method === "calendar"} className={method === "calendar" ? "active" : ""} onClick={() => { setMethod("calendar"); invalidate(); }}>月曆多選</button>
         <button type="button" aria-pressed={method === "paste"} className={method === "paste" ? "active" : ""} onClick={() => { setMethod("paste"); invalidate(); }}>貼上 Excel</button>
@@ -84,13 +86,13 @@ export function DepartureBatchEditor({ trip, plan, todayTime, onAdd }: {
           <button type="button" className="batch-remove" aria-label={`移除第 ${index + 1} 列`} onClick={() => { setPreview(rows => rows?.filter((_, i) => i !== index) ?? null); setError(""); }}>移除</button>
           {validation.issues[index] && <p id={`${id}-${index}`} className="batch-error" role="alert">第 {index + 1} 列：{validation.issues[index]}</p>}
         </div>)}
-        <p className="batch-assignment-note">這批日期僅加入此版本。既有版本的團期對應會保留；原本「適用所有團期」會改為指定目前日期，往後新增的日期需另外套用。</p>
+        <p className="batch-assignment-note">{single ? "這批日期會直接套用到這份行程文件，加入後請按最下方的儲存。" : "這批日期僅加入此版本。既有版本的團期對應會保留；原本「適用所有團期」會改為指定目前日期，往後新增的日期需另外套用。"}</p>
         <button type="button" className="button button-small" disabled={!validation.valid} onClick={() => {
           const result = onAdd(preview);
           if (result) { setError(result); return; }
-          setMessage(`已將 ${preview.length} 個團期加入「${tripPlanLabel(plan)}」草稿，請按儲存更新網站。`);
+          setMessage(single ? `已將 ${preview.length} 個團期加入草稿，請按儲存更新網站。` : `已將 ${preview.length} 個團期加入「${tripPlanLabel(plan)}」草稿，請按儲存更新網站。`);
           setPreview(null); setSelected([]); setPaste(""); setError("");
-        }}>將 {preview.length} 個團期加入此版本草稿</button>
+        }}>{single ? `將 ${preview.length} 個團期加入草稿` : `將 ${preview.length} 個團期加入此版本草稿`}</button>
       </div>}
       {message && <p className="batch-success" role="status">{message}</p>}
     </details>

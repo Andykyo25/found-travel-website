@@ -71,8 +71,10 @@ export function useSiteContentDraft(
     markChanged();
   };
 
-  const save = async () => {
-    const invalid = validateTripDates(draft);
+  // prepare：儲存前最後一次整理內容（例如把自動計算的起始價格寫進去）。
+  const save = async (prepare?: (content: SiteContent) => SiteContent) => {
+    const payload = prepare ? prepare(draft) : draft;
+    const invalid = validateTripDates(payload);
     if (invalid) {
       setStatus({ kind: "error", message: invalid });
       return;
@@ -82,7 +84,7 @@ export function useSiteContentDraft(
       const response = await fetch("/api/studio/content", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...draft, _baseUpdatedAt: baseUpdatedAt }),
+        body: JSON.stringify({ ...payload, _baseUpdatedAt: baseUpdatedAt }),
       });
       const result = (await response.json()) as {
         content?: SiteContent;

@@ -12,7 +12,20 @@ import type {
 import { parseDepartureDate, formatDepartureDate, upcomingDepartures, formatPrice } from "@/lib/trip-values";
 import { addDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
 import { firstUnfinishedTrip, tripDraftProblems } from "@/lib/trip-validation";
-import { planAppliesToDeparture, tripPlanLabel } from "@/lib/trip-plans";
+import {
+  keepSinglePlanCoveringAll,
+  planAppliesToDeparture,
+  planCoversAllDepartures,
+  tripPlanLabel,
+} from "@/lib/trip-plans";
+import {
+  coverThumbnail,
+  formatStartPrice,
+  lowestUpcomingPrice,
+  priceMismatch,
+  resolveTripPrice,
+  tripListSummary,
+} from "@/lib/trip-summary";
 import { DepartureBatchEditor } from "./DepartureBatchEditor";
 import { TripPlanCard } from "./TripPlanCard";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
@@ -59,8 +72,11 @@ function createTrip(): Trip {
     title: "",
     summary: "",
     price: "價格請洽詢",
+    // 新行程的起始價格預設跟著團期最低價走，不用再手動維護。
+    priceMode: "auto",
     image: "",
-    plans: [createPlan()],
+    // 大多數行程只有一個版本：預設就適用所有團期，版本名稱先用「標準行程」。
+    plans: [{ ...createPlan(), title: "標準行程", departureMode: "all" }],
     departures: [],
   };
 }
@@ -95,6 +111,8 @@ function tripIssues(trip: Trip, todayTime: number) {
   } else if (trip.plans.some((plan) => !plan.documentUrl)) {
     issues.push("方案待補");
   }
+
+  if (priceMismatch(trip, todayTime) !== null) issues.push("起價與團期不符");
 
   if (trip.departures.length === 0) {
     issues.push("缺團期");
@@ -140,6 +158,7 @@ export function TripsEditor({
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<TripFilter>("all");
   const [uploadingPlanKey, setUploadingPlanKey] = useState<string | null>(null);
+  const [uploadingCoverId, setUploadingCoverId] = useState<string | null>(null);
   const [openPlanIds, setOpenPlanIds] = useState<Set<string>>(() => new Set(initialContent.trips.flatMap(trip => trip.plans.slice(0, 1).map(plan => plan.id))));
   const setPlanOpen = (planId: string, open: boolean) => setOpenPlanIds(current => {
     if (current.has(planId) === open) return current;
@@ -257,7 +276,8 @@ export function TripsEditor({
     const trip = draft.trips.find(item => item.id === tripId);
     if (!trip) return "此行程已不存在，請重新開啟。";
     try {
-      const updated = addDepartureBatch(trip, planId, rows, () => crypto.randomUUID());
+      // 只有一個版本時維持「適用所有團期」，之後新增的日期才不會變成沒有版本可套用。
+      const updated = keepSinglePlanCoveringAll(trip, addDepartureBatch(trip, planId, rows, () => crypto.randomUUID()));
       setDraft(current => ({ ...current, trips: current.trips.map(item => item.id === tripId ? updated : item) }));
       markChanged();
       return null;
@@ -374,11 +394,83 @@ export function TripsEditor({
   };
 
   const addDeparture = (tripIndex: number) => {
-    updateTripDepartures(tripIndex, (departures) => [
-      ...departures,
-      createDeparture(),
-    ]);
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, index) =>
+        index === tripIndex
+          ? keepSinglePlanCoveringAll(trip, {
+              ...trip,
+              departures: [...trip.departures, createDeparture()],
+            })
+          : trip,
+      ),
+    }));
+    markChanged();
   };
+
+  // 起始價格：自動＝跟著團期最低價；手動＝自己填。切成自動時，只有一個版本的行程
+  // 會一併清掉版本起價（原本與行程起價相同），避免前台卡片顯示舊價格。
+  const setPriceMode = (tripIndex: number, mode: "auto" | "manual") => {
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, index) => {
+        if (index !== tripIndex) return trip;
+        if (mode === "manual") {
+          return { ...trip, priceMode: undefined, price: resolveTripPrice(trip, todayTime) };
+        }
+        return {
+          ...trip,
+          priceMode: "auto",
+          price: resolveTripPrice({ ...trip, priceMode: "auto" }, todayTime),
+          plans:
+            trip.plans.length === 1
+              ? trip.plans.map((plan) => ({ ...plan, price: "" }))
+              : trip.plans,
+        };
+      }),
+    }));
+    markChanged();
+  };
+
+  // 封面圖片直接上傳：沿用首頁輪播照片的上傳服務（同樣會縮圖並轉成 WebP）。
+  const uploadCover = async (tripIndex: number, file: File) => {
+    const trip = draft.trips[tripIndex];
+    if (!trip) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setStatus({ kind: "error", message: "請選擇 8 MB 以內的照片" });
+      return;
+    }
+    setUploadingCoverId(trip.id);
+    setStatus({ kind: "saving", message: `正在上傳 ${file.name}…` });
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/studio/hero-image", { method: "POST", body });
+      const result = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !result.url) throw new Error(result.error ?? "照片上傳失敗");
+      const url = result.url;
+      setDraft((current) => ({
+        ...current,
+        trips: current.trips.map((item) => (item.id === trip.id ? { ...item, image: url } : item)),
+      }));
+      setStatus({ kind: "success", message: "照片已上傳，請再按「儲存並更新網站」完成發布" });
+    } catch (error) {
+      setStatus({
+        kind: "error",
+        message: error instanceof Error ? error.message : "照片上傳失敗，請再試一次",
+      });
+    } finally {
+      setUploadingCoverId(null);
+    }
+  };
+
+  // 儲存前把「自動計算」的起始價格寫成目前的最新值。
+  const withAutoPrices = (content: SiteContent): SiteContent => ({
+    ...content,
+    trips: content.trips.map((trip) =>
+      trip.priceMode === "auto" ? { ...trip, price: resolveTripPrice(trip, todayTime) } : trip,
+    ),
+  });
 
   const updateDeparture = <K extends keyof TripDeparture>(
     tripIndex: number,
@@ -565,7 +657,7 @@ export function TripsEditor({
           setStatus({ kind: "error", message: unfinished.message });
           return;
         }
-        void save();
+        void save(withAutoPrices);
       }}
     >
       <section className="studio-section studio-guide">
@@ -680,7 +772,10 @@ export function TripsEditor({
         ) : null}
 
         <div className="studio-trip-list">
-          {visibleTrips.map(({ trip, index, issues }) => (
+          {visibleTrips.map(({ trip, index, issues }) => {
+            const summary = tripListSummary(trip, todayTime);
+            const simple = trip.plans.length === 1;
+            return (
             <div
               id={`studio-trip-${trip.id}`}
               className={`studio-trip${openTripIds.has(trip.id) ? " open" : ""}`}
@@ -696,16 +791,45 @@ export function TripsEditor({
                   <span className="studio-trip-chevron" aria-hidden="true">
                     {openTripIds.has(trip.id) ? "▾" : "▸"}
                   </span>
-                  <span className="studio-trip-index">行程 {index + 1}</span>
-                  <span className="studio-trip-name">{trip.title || "（尚未命名的新行程）"}</span>
-                  {!trip.featured ? (
-                    <span className="studio-trip-tag">其他</span>
-                  ) : null}
-                  {issues.map((issue) => (
-                    <span className="studio-trip-issue" key={issue}>
-                      {issue}
+                  <span className="studio-trip-thumb" aria-hidden="true">
+                    {trip.image.trim() ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coverThumbnail(trip.image)} alt="" loading="lazy" decoding="async" />
+                    ) : (
+                      <i>無封面</i>
+                    )}
+                  </span>
+                  <span className="studio-trip-summary">
+                    <span className="studio-trip-line">
+                      <span className="studio-trip-index">{index + 1}</span>
+                      <span className="studio-trip-name">{trip.title || "（尚未命名的新行程）"}</span>
+                      {!trip.featured ? (
+                        <span className="studio-trip-tag">其他</span>
+                      ) : null}
+                      {issues.map((issue) => (
+                        <span className="studio-trip-issue" key={issue}>
+                          {issue}
+                        </span>
+                      ))}
                     </span>
-                  ))}
+                    <span className="studio-trip-meta">
+                      <span>{summary.price || "價格未填"}</span>
+                      <span>
+                        {summary.nextDate
+                          ? `下一團 ${summary.nextDate}・共 ${summary.upcomingCount} 團`
+                          : summary.totalDepartures > 0
+                            ? "團期都已過"
+                            : "尚無團期"}
+                      </span>
+                      <span className={summary.documentsReady < summary.documentsTotal || summary.documentsTotal === 0 ? "is-warn" : undefined}>
+                        {summary.documentsTotal === 0
+                          ? "尚無行程文件"
+                          : summary.documentsTotal === 1
+                            ? summary.documentsReady === 1 ? "行程文件已備妥" : "行程文件待補"
+                            : `行程文件 ${summary.documentsReady}/${summary.documentsTotal} 已備妥`}
+                      </span>
+                    </span>
+                  </span>
                 </button>
                 <div className="studio-trip-controls">
                   <button
@@ -800,46 +924,112 @@ export function TripsEditor({
                         }
                       />
                     </Field>
-                    <Field
-                      label="起始價格"
-                      hint="請寫成「NT$31,900 起」。這裡不會自動跟團期價格同步。"
-                    >
-                      <input
-                        required
-                        placeholder="例如：NT$31,900 起"
-                        value={trip.price}
-                        onChange={(event) =>
-                          updateTrip(index, "price", event.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field
-                      label="封面圖片網址或網站路徑"
-                      hint="貼上圖片網址，建議橫幅、寬度 1600px 以上。下方會顯示預覽。"
-                    >
-                      <input
-                        required
-                        placeholder="https://…"
-                        value={trip.image}
-                        onChange={(event) =>
-                          updateTrip(index, "image", event.target.value)
-                        }
-                      />
-                      {trip.image.trim() ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          className="cover-preview"
-                          src={trip.image.trim()}
-                          alt={`${trip.title || "新行程"}封面預覽`}
-                          onError={(event) => {
-                            event.currentTarget.dataset.broken = "true";
-                          }}
-                          onLoad={(event) => {
-                            delete event.currentTarget.dataset.broken;
-                          }}
-                        />
-                      ) : null}
-                    </Field>
+                    <div className="field start-price-field">
+                      <span>起始價格</span>
+                      <small>顯示在行程卡片與日期頁。選「自動」會取目前最低的團期價格，不用再手動維護。</small>
+                      <div className="document-type-switch" role="group" aria-label="起始價格計算方式">
+                        <button
+                          type="button"
+                          aria-pressed={trip.priceMode === "auto"}
+                          className={trip.priceMode === "auto" ? "active" : ""}
+                          onClick={() => setPriceMode(index, "auto")}
+                        >
+                          自動（團期最低價）
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={trip.priceMode !== "auto"}
+                          className={trip.priceMode !== "auto" ? "active" : ""}
+                          onClick={() => setPriceMode(index, "manual")}
+                        >
+                          自己填寫
+                        </button>
+                      </div>
+                      {trip.priceMode === "auto" ? (
+                        <output className="start-price-auto">
+                          <strong>{summary.price || "價格請洽詢"}</strong>
+                          <small>
+                            {lowestUpcomingPrice(trip, todayTime) !== null
+                              ? `取自還沒出發的團期中最低的價格（共 ${summary.upcomingCount} 團）。新增或修改團期價格後會自動更新。`
+                              : "還沒有可計算的團期價格，先顯示這段文字。新增團期並填上價格後會自動換成最低價。"}
+                          </small>
+                        </output>
+                      ) : (
+                        <>
+                          <input
+                            required
+                            placeholder="例如：NT$31,900 起／人"
+                            value={trip.price}
+                            onChange={(event) =>
+                              updateTrip(index, "price", event.target.value)
+                            }
+                          />
+                          {priceMismatch(trip, todayTime) !== null ? (
+                            <p className="start-price-warn" role="status">
+                              團期裡目前最低價是 <b>{formatStartPrice(priceMismatch(trip, todayTime)!)}</b>，和上面填的不一樣。
+                              <button type="button" onClick={() => setPriceMode(index, "auto")}>
+                                改成自動計算
+                              </button>
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                    <div className="field field-wide cover-field" role="group" aria-label="封面圖片">
+                      <span>封面圖片</span>
+                      <small>橫幅照片、寬度 1600px 以上效果最好。可直接從電腦上傳，或貼上圖片網址。</small>
+                      <div className="cover-field-body">
+                        <div className="cover-field-preview">
+                          {trip.image.trim() ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              className="cover-preview"
+                              src={trip.image.trim()}
+                              alt={`${trip.title || "新行程"}封面預覽`}
+                              onError={(event) => {
+                                event.currentTarget.dataset.broken = "true";
+                              }}
+                              onLoad={(event) => {
+                                delete event.currentTarget.dataset.broken;
+                              }}
+                            />
+                          ) : (
+                            <span className="cover-empty">尚未選擇封面</span>
+                          )}
+                        </div>
+                        <div className="cover-field-controls">
+                          <label className="file-picker cover-upload">
+                            <span>
+                              {uploadingCoverId === trip.id
+                                ? "照片上傳中…"
+                                : trip.image.trim()
+                                  ? "更換照片（從電腦上傳）"
+                                  : "從電腦上傳照片"}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              disabled={uploadingCoverId !== null}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (file) void uploadCover(index, file);
+                                event.target.value = "";
+                              }}
+                            />
+                          </label>
+                          <small>JPG、PNG 或 WebP，8 MB 以內。上傳後請按最下方的儲存。</small>
+                          <input
+                            required
+                            aria-label="封面圖片網址"
+                            placeholder="或貼上圖片網址 https://…"
+                            value={trip.image}
+                            onChange={(event) =>
+                              updateTrip(index, "image", event.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <Field label="行程簡介" wide>
                       <textarea
                         required
@@ -855,18 +1045,19 @@ export function TripsEditor({
                   <div className="plan-editor">
                     <div className="plan-editor-heading">
                       <div>
-                        <h4>航空／行程版本</h4>
+                        <h4>{simple ? "航空與行程文件" : "航空／行程版本"}</h4>
                         <small>
-                          每一份 PDF 或 Drive
-                          行程建立成一個版本。展開航空名稱即可管理差異、文件與團期。
+                          {simple
+                            ? "這個行程只需要一份行程文件。如果同一行程有不同航空或不同內容，可以再加一個版本。"
+                            : "每一份 PDF 或 Drive 行程建立成一個版本。展開航空名稱即可管理差異、文件與團期。"}
                         </small>
                       </div>
                       <button
-                        className="button button-secondary button-small"
+                        className={`button button-small${simple ? " button-quiet" : " button-secondary"}`}
                         type="button"
                         onClick={() => addPlan(index)}
                       >
-                        ＋新增版本
+                        {simple ? "＋ 加另一個航空版本" : "＋新增版本"}
                       </button>
                     </div>
 
@@ -879,89 +1070,8 @@ export function TripsEditor({
                               ? trip.departures.length
                               : plan.departureIds.length;
 
-                          return (
-                            <details
-                              className="plan-editor-card"
-                              id={`studio-plan-${plan.id}`}
-                              key={plan.id}
-                              open={openPlanIds.has(plan.id)}
-                              onToggle={event => setPlanOpen(plan.id, event.currentTarget.open)}
-                              onInvalidCapture={event => { event.currentTarget.open = true; setPlanOpen(plan.id, true); }}
-                            >
-                              <summary className="plan-editor-card-heading">
-                                <div>
-                                  <span>行程版本 {planIndex + 1} · {plan.documentUrl ? (plan.documentType === "pdf" ? "PDF 已備妥" : "Drive 已設定") : "待補行程文件"} · {selectedDepartureCount} 個團期</span>
-                                  <strong>
-                                    {plan.airline || "航空公司待填"}｜
-                                    {plan.title || "版本名稱待填"}
-                                  </strong>
-                                </div>
-                                <span>{openPlanIds.has(plan.id) ? "收合 −" : "編輯 ＋"}</span>
-                              </summary>
-                                <div className="trip-editor-actions">
-                                  <button type="button" onClick={() => copyPlan(index, plan)}>複製版本</button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      movePlan(index, planIndex, -1)
-                                    }
-                                    disabled={planIndex === 0}
-                                    aria-label={`將方案 ${planIndex + 1} 往上移`}
-                                  >
-                                    ↑
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      movePlan(index, planIndex, 1)
-                                    }
-                                    disabled={
-                                      planIndex === trip.plans.length - 1
-                                    }
-                                    aria-label={`將方案 ${planIndex + 1} 往下移`}
-                                  >
-                                    ↓
-                                  </button>
-                                  <button
-                                    className="danger"
-                                    type="button"
-                                    onClick={() => removePlan(index, planIndex)}
-                                  >
-                                    刪除
-                                  </button>
-                                </div>
-                              <h5 className="plan-step-title">1. 航空與版本差異</h5>
-                              <div className="field-grid plan-fields">
-                                <Field label="航空公司">
-                                  <input
-                                    required
-                                    placeholder="例如：長榮航空"
-                                    value={plan.airline}
-                                    onChange={(event) =>
-                                      updatePlan(
-                                        index,
-                                        planIndex,
-                                        "airline",
-                                        event.target.value,
-                                      )
-                                    }
-                                  />
-                                </Field>
-                                <Field label="版本名稱">
-                                  <input
-                                    required
-                                    placeholder="例如：早去晚回精選版"
-                                    value={plan.title}
-                                    onChange={(event) =>
-                                      updatePlan(
-                                        index,
-                                        planIndex,
-                                        "title",
-                                        event.target.value,
-                                      )
-                                    }
-                                  />
-                                </Field>
+                          const extraFields = (
+                            <>
                                 <Field
                                   label="版本起價（選填）"
                                   hint="留空時顯示行程的共用起價。"
@@ -1003,7 +1113,7 @@ export function TripsEditor({
                                 </Field>
                                 <Field label="版本差異摘要" wide>
                                   <textarea
-                                    required
+                                    required={!simple}
                                     placeholder="說明航班時間、住宿或行程內容差異。"
                                     value={plan.summary}
                                     onChange={(event) =>
@@ -1016,10 +1126,55 @@ export function TripsEditor({
                                     }
                                   />
                                 </Field>
+                            </>
+                          );
+
+                          const body = (
+                            <>
+                              <h5 className="plan-step-title">{simple ? "1. 航空公司" : "1. 航空與版本差異"}</h5>
+                              <div className="field-grid plan-fields">
+                                <Field label="航空公司">
+                                  <input
+                                    required
+                                    placeholder="例如：長榮航空"
+                                    value={plan.airline}
+                                    onChange={(event) =>
+                                      updatePlan(
+                                        index,
+                                        planIndex,
+                                        "airline",
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </Field>
+                                <Field label="版本名稱">
+                                  <input
+                                    required
+                                    placeholder="例如：早去晚回精選版"
+                                    value={plan.title}
+                                    onChange={(event) =>
+                                      updatePlan(
+                                        index,
+                                        planIndex,
+                                        "title",
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </Field>
+                                {simple ? (
+                                  <details className="field-wide plan-more-settings">
+                                    <summary>更多設定（航班、住宿、備註，通常不用填）</summary>
+                                    <div className="field-grid">{extraFields}</div>
+                                  </details>
+                                ) : (
+                                  extraFields
+                                )}
                               </div>
 
                               <div className="plan-document-editor">
-                                <h5 className="plan-step-title">2. 此版本的行程文件</h5>
+                                <h5 className="plan-step-title">{simple ? "2. 行程文件" : "2. 此版本的行程文件"}</h5>
                                 <div
                                   className="document-type-switch"
                                   role="group"
@@ -1120,6 +1275,7 @@ export function TripsEditor({
                                 {plan.documentUrl && <a className="plan-document-preview" href={plan.documentUrl} target="_blank" rel="noreferrer">預覽：{plan.documentName || tripPlanLabel(plan)} ↗</a>}
                               </div>
 
+                              {!simple ? (
                               <div className="plan-departure-editor">
                                 <h5 className="plan-step-title">3. 此版本的出發日期與價格</h5>
                                 <DepartureBatchEditor trip={trip} plan={plan} todayTime={todayTime} onAdd={rows => addBatchToPlan(trip.id, plan.id, rows)} />
@@ -1215,10 +1371,68 @@ export function TripsEditor({
                                 ) : null}
                                 </details>
                               </div>
+                              ) : null}
                               <details className="plan-public-preview">
-                                <summary>4. 預覽旅客看到的版本卡片</summary>
-                                {plan.documentUrl ? <TripPlanCard plan={plan} departures={upcomingDepartures(trip.departures, todayTime)} fallbackPrice={trip.price} tripId={trip.id} days={trip.days} openInquiryInNewTab /> : <p>設定 PDF 或 Drive 網址後即可預覽。未設定文件的版本不會顯示在前臺。</p>}
+                                <summary>{simple ? "3." : "4."} 預覽旅客看到的版本卡片</summary>
+                                {plan.documentUrl ? <TripPlanCard plan={plan} departures={upcomingDepartures(trip.departures, todayTime)} fallbackPrice={summary.price} tripId={trip.id} days={trip.days} openInquiryInNewTab /> : <p>設定 PDF 或 Drive 網址後即可預覽。未設定文件的版本不會顯示在前臺。</p>}
                               </details>
+                            </>
+                          );
+
+                          return simple ? (
+                            <div
+                              className="plan-editor-card plan-editor-single"
+                              id={`studio-plan-${plan.id}`}
+                              key={plan.id}
+                            >
+                              {body}
+                            </div>
+                          ) : (
+                            <details
+                              className="plan-editor-card"
+                              id={`studio-plan-${plan.id}`}
+                              key={plan.id}
+                              open={openPlanIds.has(plan.id)}
+                              onToggle={event => setPlanOpen(plan.id, event.currentTarget.open)}
+                              onInvalidCapture={event => { event.currentTarget.open = true; setPlanOpen(plan.id, true); }}
+                            >
+                              <summary className="plan-editor-card-heading">
+                                <div>
+                                  <span>行程版本 {planIndex + 1} · {plan.documentUrl ? (plan.documentType === "pdf" ? "PDF 已備妥" : "Drive 已設定") : "待補行程文件"} · {selectedDepartureCount} 個團期</span>
+                                  <strong>
+                                    {plan.airline || "航空公司待填"}｜
+                                    {plan.title || "版本名稱待填"}
+                                  </strong>
+                                </div>
+                                <span>{openPlanIds.has(plan.id) ? "收合 −" : "編輯 ＋"}</span>
+                              </summary>
+                              <div className="trip-editor-actions">
+                                <button type="button" onClick={() => copyPlan(index, plan)}>複製版本</button>
+                                <button
+                                  type="button"
+                                  onClick={() => movePlan(index, planIndex, -1)}
+                                  disabled={planIndex === 0}
+                                  aria-label={`將方案 ${planIndex + 1} 往上移`}
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => movePlan(index, planIndex, 1)}
+                                  disabled={planIndex === trip.plans.length - 1}
+                                  aria-label={`將方案 ${planIndex + 1} 往下移`}
+                                >
+                                  ↓
+                                </button>
+                                <button
+                                  className="danger"
+                                  type="button"
+                                  onClick={() => removePlan(index, planIndex)}
+                                >
+                                  刪除
+                                </button>
+                              </div>
+                              {body}
                             </details>
                           );
                         })}
@@ -1233,10 +1447,12 @@ export function TripsEditor({
                   <div className="departure-editor">
                     <div className="departure-editor-heading">
                       <div>
-                        <h4>出發日期表</h4>
+                        <h4>{simple ? "出發日期與價格" : "出發日期表"}</h4>
                         <small>
-                          可在上方各版本內批次新增，並在此修改既有團期。共用團期的價格修改會影響所有套用版本。日期輸入
-                          20260402 會自動轉成 2026/04/02，價格輸入 26800
+                          {simple
+                            ? "用下方的月曆或 Excel 一次新增多個日期，也可以逐筆新增與修改。"
+                            : "可在上方各版本內批次新增，並在此修改既有團期。共用團期的價格修改會影響所有套用版本。"}
+                          日期輸入 20260402 會自動轉成 2026/04/02，價格輸入 26800
                           會自動加上逗號；日期無效或空白的列必須修正或移除後才能儲存。
                         </small>
                       </div>
@@ -1248,6 +1464,31 @@ export function TripsEditor({
                         ＋ 新增日期
                       </button>
                     </div>
+
+                    {simple ? (
+                      <>
+                        <DepartureBatchEditor
+                          trip={trip}
+                          plan={trip.plans[0]}
+                          todayTime={todayTime}
+                          single
+                          onAdd={(rows) => addBatchToPlan(trip.id, trip.plans[0].id, rows)}
+                        />
+                        {!planCoversAllDepartures(trip.plans[0], trip.departures) ? (
+                          <p className="departure-uncovered" role="status">
+                            有{" "}
+                            {trip.departures.filter((d) => !planAppliesToDeparture(trip.plans[0], d.id)).length}{" "}
+                            個日期還沒套用到這份行程文件，前台不會顯示它們。
+                            <button
+                              type="button"
+                              onClick={() => changePlanDepartureMode(index, 0, "all")}
+                            >
+                              全部套用
+                            </button>
+                          </p>
+                        ) : null}
+                      </>
+                    ) : null}
 
                     {trip.departures.length > 0 ? (
                       <div className="departure-rows">
@@ -1262,7 +1503,7 @@ export function TripsEditor({
                         {trip.departures.map((departure, departureIndex) => (
                           <div className="departure-row" key={departure.id}>
                             <div>
-                              <small className="departure-version-label">{trip.plans.filter(plan => planAppliesToDeparture(plan, departure.id)).map(tripPlanLabel).join("、") || "尚未套用任何版本"}</small>
+                              {simple ? null : <small className="departure-version-label">{trip.plans.filter(plan => planAppliesToDeparture(plan, departure.id)).map(tripPlanLabel).join("、") || "尚未套用任何版本"}</small>}
                               <input
                                 aria-label="出發日期"
                                 placeholder="2026/09/09"
@@ -1373,11 +1614,12 @@ export function TripsEditor({
                 </div>
               ) : null}
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
-      <StudioSaveBar status={status} busy={Boolean(uploadingPlanKey)} dirty={dirty} />
+      <StudioSaveBar status={status} busy={Boolean(uploadingPlanKey || uploadingCoverId)} dirty={dirty} />
     </form>
   );
 }

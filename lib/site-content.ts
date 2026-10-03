@@ -1,5 +1,6 @@
 import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
-import { formatDepartureDate } from "@/lib/trip-values";
+import { formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
+import { applyAutoPrices } from "@/lib/trip-summary";
 import { cache } from "react";
 import {
   readSiteContentObject,
@@ -53,6 +54,8 @@ export type Trip = {
   title: string;
   summary: string;
   price: string;
+  // "auto"：起始價格取目前所有出發日中最低的團期價格；未設定代表手動填寫（舊資料維持原樣）。
+  priceMode?: "auto";
   image: string;
   plans: TripPlan[];
   departures: TripDeparture[];
@@ -389,6 +392,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
         title: safeString(source.title, fallback.title, 100),
         summary: safeString(source.summary, fallback.summary, 500),
         price: safeString(source.price, fallback.price, 60),
+        ...(source.priceMode === "auto" ? { priceMode: "auto" as const } : {}),
         image: safeString(source.image, fallback.image, 800),
         plans,
         departures,
@@ -550,12 +554,14 @@ export const getSiteContentWithMeta = cache(
 );
 
 let lastSuccessfulContent: SiteContent | null = null;
+// 前台讀取用：自動計算起始價格的行程，在這裡依「今天」的團期算出最新價格。
+// 後台編輯用 getSiteContentWithMeta()，拿到的是原樣儲存的內容。
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    return (await getSiteContentWithMeta()).content;
+    return applyAutoPrices((await getSiteContentWithMeta()).content, taipeiTodayTime());
   } catch (error) {
     console.error("Unable to read published content", error);
-    if (lastSuccessfulContent) return lastSuccessfulContent;
+    if (lastSuccessfulContent) return applyAutoPrices(lastSuccessfulContent, taipeiTodayTime());
     throw error;
   }
 }
