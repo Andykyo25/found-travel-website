@@ -65,7 +65,7 @@ export function SiteSettingsEditor({
   initialContent: SiteContent;
   initialUpdatedAt: string | null;
 }) {
-  const { draft, status, updateRoot, save } = useSiteContentDraft(
+  const { draft, status, updateRoot, save, dirty } = useSiteContentDraft(
     initialContent,
     initialUpdatedAt,
   );
@@ -93,7 +93,10 @@ export function SiteSettingsEditor({
         <h2>首頁主內容</h2>
         <p>商標與首頁影片已固定使用公司提供的正式素材。</p>
         <div className="field-grid">
-          <Field label="公告文字">
+          <Field
+            label="公告文字"
+            hint="首頁封面下方的跑馬燈文字。要分成多段時，用「・」隔開。"
+          >
             <input
               value={draft.announcement}
               onChange={(event) =>
@@ -101,26 +104,24 @@ export function SiteSettingsEditor({
               }
             />
           </Field>
-          <Field label="主標上方小字">
+          <Field label="主標上方小字" hint="封面大標題上方的小字，例如：FOUND TRAVEL。">
             <input
               value={draft.heroKicker}
               onChange={(event) => updateRoot("heroKicker", event.target.value)}
             />
           </Field>
-          <Field label="首頁主標" wide>
+          <Field
+            label="首頁主標"
+            hint="封面的大標題。遇到逗號、句號會自動換行，例如：好旅行，不只抵達，也被好好照顧。"
+            wide
+          >
             <textarea
               value={draft.heroTitle}
               onChange={(event) => updateRoot("heroTitle", event.target.value)}
             />
           </Field>
-          <Field label="首頁介紹" wide>
-            <textarea
-              value={draft.heroText}
-              onChange={(event) => updateRoot("heroText", event.target.value)}
-            />
-          </Field>
           <HeroImagesEditor images={draft.heroImages} onChange={(images) => updateRoot("heroImages", images)} onBusy={setUploadingImage} />
-          <Field label="影片區標題" wide>
+          <Field label="影片區標題" hint="顯示在影片播放鈕下方的標題。" wide>
             <input
               value={draft.videoTitle}
               onChange={(event) => updateRoot("videoTitle", event.target.value)}
@@ -220,7 +221,7 @@ export function SiteSettingsEditor({
         </div>
       </section>
 
-      <StudioSaveBar status={status} busy={uploadingImage} />
+      <StudioSaveBar status={status} busy={uploadingImage} dirty={dirty} />
     </form>
   );
 }

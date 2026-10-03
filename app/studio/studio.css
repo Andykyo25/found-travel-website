@@ -1,0 +1,73 @@
+/* ==========================================================================
+   後台（業務維護介面）的操作細節：未儲存提示、版面對齊、輪播照片編輯器、聯絡處理狀態。
+   沿用既有的後台配色，只補強易用性，不改變整體風格。
+   ========================================================================== */
+
+/* 儲存列：未儲存變更要一眼看得到 */
+.studio-status-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; min-width: 0; }
+.studio-dirty { display: inline-flex; align-items: center; gap: 8px; color: #8a4b00; font-size: 14px; font-weight: 800; }
+.studio-dirty i { width: 9px; height: 9px; border-radius: 50%; background: #e08a00; box-shadow: 0 0 0 4px rgba(224, 138, 0, 0.18); }
+.studio-status { font-size: 14px; }
+.studio-status-link { color: var(--sage-deep); font-size: 14px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+.studio-status-link:hover { color: var(--coral-deep); }
+
+/* 區塊標題與按鈕：說明文字不要擠在按鈕底下，按鈕文字不換行 */
+.studio-section-heading { align-items: flex-start; }
+.studio-section-heading > div:first-child { flex: 1; min-width: 0; }
+.studio-section-heading p { max-width: 62em; line-height: 1.7; }
+.studio-heading-actions .button, .departure-editor-heading .button, .plan-editor-heading .button { white-space: nowrap; flex: none; }
+.departure-editor-heading > div:first-child, .plan-editor-heading > div:first-child { flex: 1; min-width: 0; }
+
+/* 欄位說明與封面預覽 */
+.field small { line-height: 1.6; }
+.cover-preview { width: min(240px, 100%); aspect-ratio: 16 / 10; object-fit: cover; border: 1px solid var(--line); border-radius: 10px; background: #eef0e8; }
+.cover-preview[data-broken="true"] { opacity: 0.35; outline: 2px dashed #c7684f; }
+
+/* 首頁輪播照片編輯器：與其他欄位同一套外觀 */
+.hero-images-editor h3 { margin: 0 0 6px; font-size: 16px; }
+.hero-images-editor > p { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.hero-images-editor > small { display: block; color: var(--muted); line-height: 1.7; }
+.hero-image-add label, .hero-image-upload { display: grid; gap: 8px; color: var(--ink); font-size: 13px; font-weight: 800; }
+.hero-image-add input[type="text"], .hero-image-add input:not([type]) { width: 100%; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); padding: 12px 14px; font-weight: 500; }
+.hero-image-upload input[type="file"] { width: 100%; border: 1px dashed #b9c6b0; border-radius: 14px; background: #fbfaf5; padding: 12px; font-weight: 500; color: var(--muted); }
+.hero-image-upload input[type="file"]::file-selector-button { margin-right: 12px; border: 1px solid #ccd5c9; border-radius: 8px; background: #f5f7f2; color: var(--ink); padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+.hero-image-add button { align-self: end; white-space: nowrap; }
+
+/* 聯絡諮詢：處理狀態 */
+.contact-status-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.contact-cell-status { min-width: 118px; }
+.contact-cell-status > * { display: block; }
+.contact-cell-status small { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.contact-cell-status .button { margin-top: 8px; white-space: nowrap; }
+.contact-state { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 800; }
+.contact-state.pending { background: #fdebd2; color: #8a4b00; }
+.contact-state.contacted { background: #e1ebdc; color: var(--sage-deep); }
+.contact-undo { margin-top: 6px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.contact-undo:hover:not(:disabled) { color: var(--ink); }
+.contact-table tr.is-pending td { background: #fffaf0; }
+.contact-table tr.is-contacted td { color: var(--muted); }
+.contact-table tr.is-contacted .contact-name { font-weight: 500; }
+.contact-delete-button { opacity: 0.75; }
+.contact-delete-button:hover:not(:disabled) { opacity: 1; }
+
+@media (max-width: 640px) {
+  .contact-cell-status { min-width: 100px; }
+}
+
+/* 聯絡表格：客人欄合併姓名、電話與時間，整張表不必橫向捲動 */
+.contact-cell-customer { min-width: 150px; }
+.contact-cell-customer > * { display: block; }
+.contact-cell-customer .contact-name { display: inline-block; }
+.contact-phone { margin-top: 8px; font-size: 16px; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
+.contact-phone:hover { color: var(--coral-deep); }
+.contact-cell-customer small { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.contact-notice { margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.contact-notice.warn { color: #a33a2b; }
+.contact-notice button { padding: 2px 10px; border: 1px solid rgba(184, 54, 47, 0.4); border-radius: 99px; background: #fff; color: #a33a2b; font-size: 12px; font-weight: 800; cursor: pointer; }
+.contact-notice button:disabled { opacity: 0.5; cursor: default; }
+.contact-cell-message { min-width: 220px; }
+
+/* 手機：搜尋框在直向排列時不要被撐成一大顆圓 */
+@media (max-width: 760px) {
+  .contact-search, .trip-search { flex: none; width: 100%; }
+}

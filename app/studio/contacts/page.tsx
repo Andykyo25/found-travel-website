@@ -32,7 +32,7 @@ export default async function StudioContactsPage() {
             <div>
               <h2>客人聯絡表單</h2>
               <p>
-                前台「聯絡表單」頁送出的諮詢，最新的排在最前面
+                客人在前台「聯絡表單」送出的諮詢，最新的排在最前面。聯絡過後請按「標示已聯絡」，同事就知道不用再打一次
                 {requests.length >= contactRequestListLimit
                   ? `（僅顯示最近 ${contactRequestListLimit} 筆）`
                   : ""}
@@ -43,12 +43,12 @@ export default async function StudioContactsPage() {
 
           {loadStatus === "unconfigured" ? (
             <div className="contact-table-empty">
-              尚未啟用 Railway Storage Bucket，因此無法讀取聯絡表單資料。
+              目前無法讀取聯絡表單資料（資料儲存空間尚未設定完成），請聯絡網站管理者。
             </div>
           ) : loadStatus === "error" ? (
             <p className="studio-warning" role="alert">
-              Railway Storage Bucket 目前無法讀取，因此無法確認是否有新的聯絡表單。
-              請稍後重新整理；在恢復前，請勿將此頁視為「目前沒有詢問」。
+              目前讀取不到客人的聯絡表單，所以無法確認有沒有新的詢問。
+              請稍後重新整理；在恢復前，請不要把這頁當成「目前沒有詢問」。若持續發生，請聯絡網站管理者。
             </p>
           ) : (
             <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   SiteContent,
   Trip,
@@ -11,6 +11,7 @@ import type {
 } from "@/lib/site-content";
 import { parseDepartureDate, formatDepartureDate, upcomingDepartures, formatPrice } from "@/lib/trip-values";
 import { addDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
+import { firstUnfinishedTrip, tripDraftProblems } from "@/lib/trip-validation";
 import { planAppliesToDeparture, tripPlanLabel } from "@/lib/trip-plans";
 import { DepartureBatchEditor } from "./DepartureBatchEditor";
 import { TripPlanCard } from "./TripPlanCard";
@@ -31,8 +32,8 @@ function createPlan(): TripPlan {
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `plan-${Date.now()}`,
-    airline: "航空公司待填",
-    title: "新行程版本",
+    airline: "",
+    title: "",
     summary: "",
     price: "",
     documentType: "pdf",
@@ -49,14 +50,16 @@ function createTrip(): Trip {
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `trip-${Date.now()}`,
+    // 名稱、天數、分類、地區與封面圖都先留白（欄位內有範例提示），
+    // 避免忘了修改就把預設字樣或別團的照片發布到網站。
     featured: true,
-    badge: "精選行程",
-    region: "DESTINATION",
-    days: "5日",
-    title: "新行程",
+    badge: "",
+    region: "",
+    days: "",
+    title: "",
     summary: "",
     price: "價格請洽詢",
-    image: "/trips/tokyo.jpg",
+    image: "",
     plans: [createPlan()],
     departures: [],
   };
@@ -85,6 +88,7 @@ function formatDeparturePrice(value: string) {
 // todayTime 由伺服端算好傳進來，避免前後端各自取當天日期造成 hydration 不一致。
 function tripIssues(trip: Trip, todayTime: number) {
   const issues: string[] = [];
+  if (tripDraftProblems(trip).length > 0) issues.push("資料未填完");
   if (trip.plans.length === 0) issues.push("缺航空方案");
   else if (!trip.plans.some((plan) => plan.documentUrl)) {
     issues.push("缺行程資料");
@@ -117,8 +121,21 @@ export function TripsEditor({
   initialUpdatedAt: string | null;
   todayTime: number;
 }) {
-  const { draft, setDraft, status, setStatus, markChanged, save } =
+  const { draft, setDraft, status, setStatus, markChanged, save, dirty } =
     useSiteContentDraft(initialContent, initialUpdatedAt);
+  // 新增行程／版本後，捲動到新的區塊並聚焦第一個欄位，避免按了卻看不出有反應。
+  const [revealId, setRevealId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!revealId) return;
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById(revealId);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.querySelector<HTMLInputElement>("input:not([type=file])")?.focus({ preventScroll: true });
+      setRevealId(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [revealId]);
 
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<TripFilter>("all");
@@ -222,9 +239,10 @@ export function TripsEditor({
     const plan = createPlan();
     updateTripPlans(tripIndex, (plans) => [...plans, plan]);
     setPlanOpen(plan.id, true);
+    setRevealId(`studio-plan-${plan.id}`);
     setStatus({
       kind: "idle",
-      message: "已新增行程方案，完成資料後請記得儲存",
+      message: "已新增行程版本，請填寫航空公司與版本名稱",
     });
   };
 
@@ -312,9 +330,10 @@ export function TripsEditor({
     trip.plans.forEach(plan => setPlanOpen(plan.id, true));
     setKeyword("");
     setFilter("all");
+    setRevealId(`studio-trip-${trip.id}`);
     setStatus({
       kind: "idle",
-      message: "已新增空白行程，填寫完成後請記得儲存",
+      message: "已新增空白行程（在清單最下方），填寫完成後請記得儲存",
     });
   };
 
@@ -535,6 +554,17 @@ export function TripsEditor({
       className="studio-form"
       onSubmit={(event) => {
         event.preventDefault();
+        // 收合起來的行程不會跑瀏覽器內建的必填檢查，所以儲存前再檢查一次，
+        // 並直接展開、捲到第一筆沒填完的行程。
+        const unfinished = firstUnfinishedTrip(draft);
+        if (unfinished) {
+          setFilter("all");
+          setKeyword("");
+          setOpenTripIds((current) => new Set(current).add(unfinished.id));
+          setRevealId(`studio-trip-${unfinished.id}`);
+          setStatus({ kind: "error", message: unfinished.message });
+          return;
+        }
         void save();
       }}
     >
@@ -652,6 +682,7 @@ export function TripsEditor({
         <div className="studio-trip-list">
           {visibleTrips.map(({ trip, index, issues }) => (
             <div
+              id={`studio-trip-${trip.id}`}
               className={`studio-trip${openTripIds.has(trip.id) ? " open" : ""}`}
               key={trip.id}
             >
@@ -666,7 +697,7 @@ export function TripsEditor({
                     {openTripIds.has(trip.id) ? "▾" : "▸"}
                   </span>
                   <span className="studio-trip-index">行程 {index + 1}</span>
-                  <span className="studio-trip-name">{trip.title}</span>
+                  <span className="studio-trip-name">{trip.title || "（尚未命名的新行程）"}</span>
                   {!trip.featured ? (
                     <span className="studio-trip-tag">其他</span>
                   ) : null}
@@ -726,6 +757,7 @@ export function TripsEditor({
                     <Field label="行程名稱">
                       <input
                         required
+                        placeholder="例如：東京慢旅 5日"
                         value={trip.title}
                         onChange={(event) =>
                           updateTrip(index, "title", event.target.value)
@@ -735,52 +767,83 @@ export function TripsEditor({
                     <Field label="天數">
                       <input
                         required
+                        placeholder="例如：5日"
                         value={trip.days}
                         onChange={(event) =>
                           updateTrip(index, "days", event.target.value)
                         }
                       />
                     </Field>
-                    <Field label="分類標籤">
+                    <Field
+                      label="分類標籤"
+                      hint="首頁會用它做成篩選分類，例如：日本、韓國、北歐。"
+                    >
                       <input
                         required
+                        placeholder="例如：日本"
                         value={trip.badge}
                         onChange={(event) =>
                           updateTrip(index, "badge", event.target.value)
                         }
                       />
                     </Field>
-                    <Field label="地區小字">
+                    <Field
+                      label="地區小字"
+                      hint="顯示在行程卡片上的小字，例如：東京・箱根。"
+                    >
                       <input
                         required
+                        placeholder="例如：東京・箱根"
                         value={trip.region}
                         onChange={(event) =>
                           updateTrip(index, "region", event.target.value)
                         }
                       />
                     </Field>
-                    <Field label="起始價格">
+                    <Field
+                      label="起始價格"
+                      hint="請寫成「NT$31,900 起」。這裡不會自動跟團期價格同步。"
+                    >
                       <input
                         required
+                        placeholder="例如：NT$31,900 起"
                         value={trip.price}
                         onChange={(event) =>
                           updateTrip(index, "price", event.target.value)
                         }
                       />
                     </Field>
-                    <Field label="封面圖片網址或網站路徑">
+                    <Field
+                      label="封面圖片網址或網站路徑"
+                      hint="貼上圖片網址，建議橫幅、寬度 1600px 以上。下方會顯示預覽。"
+                    >
                       <input
                         required
+                        placeholder="https://…"
                         value={trip.image}
                         onChange={(event) =>
                           updateTrip(index, "image", event.target.value)
                         }
                       />
+                      {trip.image.trim() ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          className="cover-preview"
+                          src={trip.image.trim()}
+                          alt={`${trip.title || "新行程"}封面預覽`}
+                          onError={(event) => {
+                            event.currentTarget.dataset.broken = "true";
+                          }}
+                          onLoad={(event) => {
+                            delete event.currentTarget.dataset.broken;
+                          }}
+                        />
+                      ) : null}
                     </Field>
                     <Field label="行程簡介" wide>
                       <textarea
                         required
-                        placeholder="說明這趟旅程的特色與適合對象。"
+                        placeholder="說明這趟旅程的特色與適合對象。行程卡片上只會顯示前 3 行，完整內容請放在行程文件。"
                         value={trip.summary}
                         onChange={(event) =>
                           updateTrip(index, "summary", event.target.value)
@@ -1314,7 +1377,7 @@ export function TripsEditor({
         </div>
       </section>
 
-      <StudioSaveBar status={status} busy={Boolean(uploadingPlanKey)} />
+      <StudioSaveBar status={status} busy={Boolean(uploadingPlanKey)} dirty={dirty} />
     </form>
   );
 }

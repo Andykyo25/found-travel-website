@@ -8,8 +8,15 @@ import {
   type ManagedContactRequest,
 } from "@/lib/contact-fields";
 import {
+  applyContactHandling,
+  parseContactHandling,
+  type ContactHandlingState,
+} from "@/lib/contact-handling";
+import {
   listContactRequestObjects,
+  readContactForNotification,
   type StoredContactRequestObject,
+  updateContactNotification,
   writeContactRequestObject,
 } from "@/lib/railway-storage";
 
@@ -94,8 +101,29 @@ function normalizeContactRequest(
     message: typeof source.message === "string" ? source.message : "",
     createdAt,
     storageKey,
+    handling: parseContactHandling(source.handling),
     notification: source.notification as ContactRequest["notification"],
   };
+}
+
+// 標記「已聯絡／待處理」。與通知補送使用同一份物件，因此用條件寫入，
+// 遇到同時更新（版本不符）時重新讀取再試，不會蓋掉通知狀態。
+export async function updateContactHandling(
+  key: string,
+  state: ContactHandlingState,
+  by: string,
+) {
+  for (let attempt = 0; ; attempt++) {
+    const { value, etag } = await readContactForNotification(key);
+    const next = applyContactHandling(value, state, by);
+    try {
+      await updateContactNotification(key, next, etag);
+      return next.handling ?? null;
+    } catch (error) {
+      const conflict = (error as { name?: string }).name === "PreconditionFailed";
+      if (!conflict || attempt >= 3) throw error;
+    }
+  }
 }
 
 export async function saveContactRequest(

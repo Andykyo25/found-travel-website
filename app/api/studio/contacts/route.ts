@@ -1,4 +1,9 @@
 import { deliverContact } from "@/lib/contact-delivery";
+import {
+  contactHandlingBatchLimit,
+  isContactHandlingState,
+} from "@/lib/contact-handling";
+import { updateContactHandling } from "@/lib/contact-requests";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteContactRequestObject } from "@/lib/railway-storage";
 import { isContactRequestKey } from "@/lib/storage-keys";
@@ -67,4 +72,52 @@ export async function POST(request: NextRequest) {
       { status: 503 },
     );
   }
+}
+
+// 標記一筆或多筆聯絡單為「已聯絡」或改回「待處理」。
+export async function PATCH(request: NextRequest) {
+  if (!isSameOriginRequest(request))
+    return NextResponse.json({ error: "無效的操作來源" }, { status: 403 });
+  const user = getStudioUserFromRequest(request);
+  if (!user) return NextResponse.json({ error: "請先登入" }, { status: 401 });
+
+  let body: { keys?: unknown; state?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "資料格式不正確" }, { status: 400 });
+  }
+
+  const keys = Array.isArray(body.keys) ? body.keys : [];
+  if (
+    keys.length === 0 ||
+    keys.length > contactHandlingBatchLimit ||
+    !keys.every(isContactRequestKey) ||
+    !isContactHandlingState(body.state)
+  ) {
+    return NextResponse.json({ error: "無效的聯絡表單識別碼" }, { status: 400 });
+  }
+  const state = body.state;
+
+  const updated: Array<{
+    key: string;
+    handling: { by: string; at: string } | null;
+  }> = [];
+  let failed = 0;
+  for (const key of keys) {
+    try {
+      updated.push({ key, handling: await updateContactHandling(key, state, user.email) });
+    } catch (error) {
+      failed += 1;
+      console.error("Unable to update contact handling", error);
+    }
+  }
+
+  if (updated.length === 0) {
+    return NextResponse.json(
+      { error: "暫時無法更新，請稍後再試" },
+      { status: 503 },
+    );
+  }
+  return NextResponse.json({ updated, failed });
 }

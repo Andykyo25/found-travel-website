@@ -10,6 +10,14 @@ export const contactTimeSlots = [
 
 export type ContactTimeSlotId = (typeof contactTimeSlots)[number]["id"];
 
+// 業務處理狀態：沒有 handling 代表「待處理」；有則代表已有人聯絡過。
+export type ContactHandling = {
+  /** 標記的後台帳號（Email）。 */
+  by: string;
+  /** 標記時間（ISO）。 */
+  at: string;
+};
+
 export type ContactRequest = {
   id: string;
   name: string;
@@ -17,6 +25,7 @@ export type ContactRequest = {
   preferredTimes: ContactTimeSlotId[];
   message: string;
   createdAt: string;
+  handling?: ContactHandling;
   notification?: {
     state: "pending" | "sending" | "delivered" | "failed";
     attempts: number;

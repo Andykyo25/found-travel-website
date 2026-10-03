@@ -1,4 +1,5 @@
-import Link from "next/link";
+// 分頁切換與「查看網站」刻意使用一般連結（整頁載入）：
+// 這樣有未儲存的變更時，瀏覽器的離開提醒才會生效；前台則另開分頁，不打斷編輯。
 
 const tabs = [
   { id: "trips", href: "/studio", label: "行程管理", title: "行程管理" },
@@ -35,9 +36,14 @@ export function StudioHeader({
           <h1>找到了旅行社・{activeTab.title}</h1>
         </div>
         <nav aria-label="內容管理導覽">
-          <Link className="button button-secondary button-small" href="/">
-            查看網站
-          </Link>
+          <a
+            className="button button-secondary button-small"
+            href="/"
+            target="_blank"
+            rel="noopener"
+          >
+            查看網站 ↗
+          </a>
           <form method="post" action="/api/studio/logout">
             <button
               className="button button-secondary button-small"
@@ -51,14 +57,14 @@ export function StudioHeader({
 
       <nav className="studio-tabs" aria-label="後台分頁">
         {tabs.map((tab) => (
-          <Link
+          <a
             key={tab.id}
             className={`studio-tab${tab.id === active ? " active" : ""}`}
             href={tab.href}
             aria-current={tab.id === active ? "page" : undefined}
           >
             {tab.label}
-          </Link>
+          </a>
         ))}
       </nav>
     </>

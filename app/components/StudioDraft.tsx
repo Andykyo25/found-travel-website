@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { validateTripDates } from "@/lib/trip-validation";
 import type { SiteContent } from "@/lib/site-content";
 
@@ -43,9 +43,24 @@ export function useSiteContentDraft(
     kind: "idle",
     message: "尚未有變更",
   });
+  // 以「目前草稿」對照「上次儲存的內容」判斷有沒有未儲存的變更，
+  // 比逐一記錄每個動作可靠（新增、刪除、上傳 PDF 都會被算進去）。
+  const [saved, setSaved] = useState(() => JSON.stringify(initialContent));
+  const dirty = useMemo(() => JSON.stringify(draft) !== saved, [draft, saved]);
+
+  // 有未儲存的變更時，關閉分頁、重新整理或離開本頁，瀏覽器會先詢問。
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   const markChanged = () => {
-    setStatus({ kind: "idle", message: "有尚未儲存的變更" });
+    setStatus({ kind: "idle", message: "" });
   };
 
   const updateRoot = <K extends keyof SiteContent>(
@@ -85,6 +100,7 @@ export function useSiteContentDraft(
       }
 
       setDraft(result.content);
+      setSaved(JSON.stringify(result.content));
       setBaseUpdatedAt(result.savedAt ?? null);
       const cleanupMessage = result.pdfCleanup?.failed
         ? "已儲存，但 PDF 清理暫時失敗；下次儲存時會再試一次"
@@ -103,19 +119,35 @@ export function useSiteContentDraft(
     }
   };
 
-  return { draft, setDraft, status, setStatus, markChanged, updateRoot, save };
+  return { draft, setDraft, status, setStatus, markChanged, updateRoot, save, dirty };
 }
 
 export function StudioSaveBar({
   status,
   busy = false,
+  dirty = false,
 }: {
   status: Status;
   busy?: boolean;
+  dirty?: boolean;
 }) {
+  const message = status.message || (dirty ? "" : "尚未有變更");
   return (
     <div className="studio-actions">
-      <span className={`studio-status ${status.kind}`}>{status.message}</span>
+      <div className="studio-status-group" aria-live="polite">
+        {dirty && status.kind !== "saving" ? (
+          <span className="studio-dirty">
+            <i aria-hidden="true" />
+            有尚未儲存的變更
+          </span>
+        ) : null}
+        {message ? <span className={`studio-status ${status.kind}`}>{message}</span> : null}
+        {status.kind === "success" && !dirty ? (
+          <a className="studio-status-link" href="/" target="_blank" rel="noopener">
+            查看網站 ↗
+          </a>
+        ) : null}
+      </div>
       <button
         className="button"
         type="submit"
