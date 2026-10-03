@@ -26,7 +26,15 @@ import {
   resolveTripPrice,
   tripListSummary,
 } from "@/lib/trip-summary";
+import {
+  countExpiredDepartures,
+  isExpiredDeparture,
+  removeExpiredDepartures,
+  sortDeparturesByDate,
+} from "@/lib/departure-tools";
 import { DepartureBatchEditor } from "./DepartureBatchEditor";
+import { DeparturePriceTool } from "./DeparturePriceTool";
+import { ContentHistoryPanel } from "./ContentHistoryPanel";
 import { TripPlanCard } from "./TripPlanCard";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
 
@@ -175,6 +183,27 @@ export function TripsEditor({
       ),
   );
 
+  // 已過期的團期預設收合，只留還有用的；要核對或編輯時再展開。
+  const [expiredShownIds, setExpiredShownIds] = useState<Set<string>>(() => new Set());
+  // 剛新增或正在編輯的團期，就算日期已過也不要收起來，否則輸入到一半列就消失了。
+  const [revealedDepartureIds, setRevealedDepartureIds] = useState<Set<string>>(() => new Set());
+  const revealDepartures = (ids: string[]) =>
+    setRevealedDepartureIds((current) => {
+      if (ids.every((id) => current.has(id))) return current;
+      const next = new Set(current);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+  const toggleExpiredShown = (id: string) => {
+    if (expiredShownIds.has(id)) setRevealedDepartureIds(new Set());
+    setExpiredShownIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const toggleTripOpen = (id: string) => {
     setOpenTripIds((current) => {
       const next = new Set(current);
@@ -278,6 +307,8 @@ export function TripsEditor({
     try {
       // 只有一個版本時維持「適用所有團期」，之後新增的日期才不會變成沒有版本可套用。
       const updated = keepSinglePlanCoveringAll(trip, addDepartureBatch(trip, planId, rows, () => crypto.randomUUID()));
+      const known = new Set(trip.departures.map(item => item.id));
+      revealDepartures(updated.departures.filter(item => !known.has(item.id)).map(item => item.id));
       setDraft(current => ({ ...current, trips: current.trips.map(item => item.id === tripId ? updated : item) }));
       markChanged();
       return null;
@@ -394,13 +425,15 @@ export function TripsEditor({
   };
 
   const addDeparture = (tripIndex: number) => {
+    const created = createDeparture();
+    revealDepartures([created.id]);
     setDraft((current) => ({
       ...current,
       trips: current.trips.map((trip, index) =>
         index === tripIndex
           ? keepSinglePlanCoveringAll(trip, {
               ...trip,
-              departures: [...trip.departures, createDeparture()],
+              departures: [...trip.departures, created],
             })
           : trip,
       ),
@@ -478,11 +511,37 @@ export function TripsEditor({
     key: K,
     value: TripDeparture[K],
   ) => {
+    const editedId = draft.trips[tripIndex]?.departures[departureIndex]?.id;
+    if (editedId) revealDepartures([editedId]);
     updateTripDepartures(tripIndex, (departures) =>
       departures.map((departure, index) =>
         index === departureIndex ? { ...departure, [key]: value } : departure,
       ),
     );
+  };
+
+  const replaceTrip = (tripIndex: number, next: Trip) => {
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, index) => (index === tripIndex ? next : trip)),
+    }));
+    markChanged();
+  };
+
+  const clearExpiredDepartures = (tripIndex: number) => {
+    const trip = draft.trips[tripIndex];
+    if (!trip) return;
+    const { trip: cleaned, removed } = removeExpiredDepartures(trip, todayTime);
+    if (removed === 0) return;
+    if (
+      !window.confirm(
+        `確定清除「${trip.title || "這個行程"}」已過期的 ${removed} 個團期嗎？這些團期不會再顯示在前台；按儲存後才會生效，儲存前重新整理頁面即可放棄。`,
+      )
+    ) {
+      return;
+    }
+    replaceTrip(tripIndex, cleaned);
+    setStatus({ kind: "idle", message: `已清除 ${removed} 個已過期團期，請按儲存更新網站` });
   };
 
   const removeDeparture = (tripIndex: number, departureIndex: number) => {
@@ -775,6 +834,12 @@ export function TripsEditor({
           {visibleTrips.map(({ trip, index, issues }) => {
             const summary = tripListSummary(trip, todayTime);
             const simple = trip.plans.length === 1;
+            const expiredCount = countExpiredDepartures(trip, todayTime);
+            const showExpired = expiredShownIds.has(trip.id);
+            const hideExpired = expiredCount > 0 && !showExpired;
+            const isHiddenRow = (departure: TripDeparture) =>
+              hideExpired && isExpiredDeparture(departure, todayTime) && !revealedDepartureIds.has(departure.id);
+            const visibleDepartureCount = trip.departures.filter((departure) => !isHiddenRow(departure)).length;
             return (
             <div
               id={`studio-trip-${trip.id}`}
@@ -1285,7 +1350,7 @@ export function TripsEditor({
                                   <strong>適用團期</strong>
                                   <small>
                                     {trip.departures.length === 0
-                                      ? "可使用上方月曆多選或貼上 Excel 新增"
+                                      ? "可使用上方的月曆多選新增"
                                       : `目前套用 ${selectedDepartureCount} 個團期`}
                                   </small>
                                 </div>
@@ -1450,7 +1515,7 @@ export function TripsEditor({
                         <h4>{simple ? "出發日期與價格" : "出發日期表"}</h4>
                         <small>
                           {simple
-                            ? "用下方的月曆或 Excel 一次新增多個日期，也可以逐筆新增與修改。"
+                            ? "用下方的月曆一次新增多個日期，也可以逐筆新增與修改。"
                             : "可在上方各版本內批次新增，並在此修改既有團期。共用團期的價格修改會影響所有套用版本。"}
                           日期輸入 20260402 會自動轉成 2026/04/02，價格輸入 26800
                           會自動加上逗號；日期無效或空白的列必須修正或移除後才能儲存。
@@ -1490,7 +1555,50 @@ export function TripsEditor({
                       </>
                     ) : null}
 
-                    {trip.departures.length > 0 ? (
+                    {trip.departures.length > 1 ? (
+                      <div className="departure-tools">
+                        <button
+                          type="button"
+                          className="button button-secondary button-small"
+                          onClick={() => replaceTrip(index, sortDeparturesByDate(trip))}
+                        >
+                          依日期排序
+                        </button>
+                        {expiredCount > 0 ? (
+                          <>
+                            <span className="departure-expired-count">已過期 {expiredCount} 個</span>
+                            <button
+                              type="button"
+                              className="button button-secondary button-small"
+                              aria-pressed={showExpired}
+                              onClick={() => toggleExpiredShown(trip.id)}
+                            >
+                              {showExpired ? "收合已過期團期" : "顯示已過期團期"}
+                            </button>
+                            <button
+                              type="button"
+                              className="button button-quiet button-small"
+                              onClick={() => clearExpiredDepartures(index)}
+                            >
+                              清除已過期團期
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <DeparturePriceTool
+                      trip={trip}
+                      todayTime={todayTime}
+                      onApply={(next) => replaceTrip(index, next)}
+                    />
+
+                    {trip.departures.length > 0 && visibleDepartureCount === 0 ? (
+                      <div className="departure-empty">
+                        目前沒有還沒出發的團期。已過期的 {expiredCount} 個團期已收合，可新增新的日期。
+                      </div>
+                    ) : null}
+
+                    {visibleDepartureCount > 0 ? (
                       <div className="departure-rows">
                         <div
                           className="departure-row departure-row-head"
@@ -1501,7 +1609,11 @@ export function TripsEditor({
                           <span />
                         </div>
                         {trip.departures.map((departure, departureIndex) => (
-                          <div className="departure-row" key={departure.id}>
+                          isHiddenRow(departure) ? null : (
+                          <div
+                            className={`departure-row${isExpiredDeparture(departure, todayTime) ? " is-expired" : ""}`}
+                            key={departure.id}
+                          >
                             <div>
                               {simple ? null : <small className="departure-version-label">{trip.plans.filter(plan => planAppliesToDeparture(plan, departure.id)).map(tripPlanLabel).join("、") || "尚未套用任何版本"}</small>}
                               <input
@@ -1605,11 +1717,12 @@ export function TripsEditor({
                               </button>
                             </div>
                           </div>
+                          )
                         ))}
                       </div>
-                    ) : (
+                    ) : trip.departures.length === 0 ? (
                       <div className="departure-empty">尚未填寫出發日期。</div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -1618,6 +1731,19 @@ export function TripsEditor({
           })}
         </div>
       </section>
+
+      <ContentHistoryPanel
+        current={draft}
+        dirty={dirty}
+        onRestore={(content, label) => {
+          setDraft(content);
+          markChanged();
+          setStatus({
+            kind: "idle",
+            message: `已載入「${label}」的內容，確認沒問題後請按「儲存並更新網站」才會生效`,
+          });
+        }}
+      />
 
       <StudioSaveBar status={status} busy={Boolean(uploadingPlanKey || uploadingCoverId)} dirty={dirty} />
     </form>

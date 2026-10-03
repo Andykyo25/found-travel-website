@@ -33,6 +33,9 @@ export default async function StudioLoginPage() {
           請使用業務團隊核准的 Email 與密碼登入。前台網站不需要登入即可瀏覽。
         </p>
         <StudioLoginForm />
+        <p className="studio-login-help">
+          忘記密碼？請聯絡網站管理者重設。
+        </p>
         <Link className="text-link studio-login-back" href="/">
           ← 回到公開網站
         </Link>

@@ -12,6 +12,7 @@ export function StudioLoginForm() {
     kind: "idle",
     message: "",
   });
+  const [reveal, setReveal] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,11 +55,19 @@ export function StudioLoginForm() {
         <span>密碼</span>
         <input
           name="password"
-          type="password"
+          type={reveal ? "text" : "password"}
           autoComplete="current-password"
           minLength={8}
           required
         />
+      </label>
+      <label className="studio-password-reveal">
+        <input
+          type="checkbox"
+          checked={reveal}
+          onChange={(event) => setReveal(event.target.checked)}
+        />
+        顯示密碼
       </label>
       {status.message ? (
         <p

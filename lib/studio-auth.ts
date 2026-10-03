@@ -3,6 +3,17 @@ import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  isRailwayStorageConfigured,
+  readStudioPasswordObject,
+  writeStudioPasswordObject,
+} from "@/lib/railway-storage";
+import {
+  checkPasswordRecord,
+  createPasswordRecord,
+  parsePasswordRecord,
+  passwordRecordKey,
+} from "@/lib/studio-passwords";
 
 export const studioSessionCookie = "found_studio_session";
 export const studioSessionMaxAge = 8 * 60 * 60;
@@ -114,18 +125,51 @@ export function studioAccountSummary() {
   };
 }
 
-export function verifyStudioCredentials(email: string, password: string) {
-  const users = configuredUsers();
-  if (users.length === 0) return false;
-
+function findConfiguredUser(email: string) {
   const normalized = email.trim().toLowerCase();
-  let matched = false;
-  for (const user of users) {
-    const emailMatches = safeEqual(normalized, user.email);
-    const passwordMatches = safeEqual(password, user.password);
-    if (emailMatches && passwordMatches) matched = true;
+  let found: StudioAccount | null = null;
+  for (const user of configuredUsers()) {
+    if (safeEqual(normalized, user.email)) found = user;
   }
-  return matched;
+  return found;
+}
+
+/** 業務能不能在後台自己改密碼（需要 Bucket 來存放雜湊後的新密碼）。 */
+export function canChangeStudioPassword() {
+  return isRailwayStorageConfigured();
+}
+
+// 帳號有沒有權限，仍由環境變數決定。密碼則是：業務自己改過就只認新密碼；
+// 管理者之後又在 Railway 重設過密碼時，自己改的密碼自動作廢（見 lib/studio-passwords.ts）。
+export async function verifyStudioCredentials(email: string, password: string) {
+  const user = findConfiguredUser(email);
+  if (!user) return false;
+
+  if (isRailwayStorageConfigured()) {
+    let record;
+    try {
+      record = parsePasswordRecord(
+        await readStudioPasswordObject(passwordRecordKey(user.email)),
+      );
+    } catch (error) {
+      // 讀不到就無法確定這個帳號有沒有改過密碼；寧可暫時不能登入，也不放行舊密碼。
+      console.error("Unable to read studio password record", error);
+      return false;
+    }
+    if (record) {
+      const outcome = await checkPasswordRecord(record, password, user.password);
+      if (outcome === "ok") return true;
+      if (outcome === "wrong") return false;
+    }
+  }
+  return safeEqual(password, user.password);
+}
+
+export async function setStudioPassword(email: string, newPassword: string) {
+  const user = findConfiguredUser(email);
+  if (!user) throw new Error("Unknown studio account");
+  const record = await createPasswordRecord(newPassword, user.password);
+  await writeStudioPasswordObject(passwordRecordKey(user.email), record);
 }
 
 export function createStudioSession(email: string) {

@@ -40,13 +40,14 @@ export async function POST(request: NextRequest) {
 
   const retryAfter = loginRetryAfter(request, email);
   if (retryAfter > 0) {
+    const minutes = Math.max(1, Math.ceil(retryAfter / 60));
     return NextResponse.json(
-      { error: "登入嘗試次數過多，請稍後再試" },
+      { error: `登入錯誤次數太多，為了安全暫時鎖定。請在約 ${minutes} 分鐘後再試，或聯絡網站管理者。` },
       { status: 429, headers: { "retry-after": String(retryAfter) } },
     );
   }
 
-  if (!verifyStudioCredentials(email, password)) {
+  if (!(await verifyStudioCredentials(email, password))) {
     recordLoginFailure(request, email);
     return NextResponse.json(
       { error: "Email 或密碼不正確" },

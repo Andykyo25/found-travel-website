@@ -4,6 +4,10 @@ const contactRequestKeyPattern = new RegExp(
   `^contact-requests/\\d{13}-${uuidPattern}\\.json$`,
   "i",
 );
+const contentHistoryKeyPattern = new RegExp(
+  `^content-history/\\d{13}-${uuidPattern}\\.json$`,
+  "i",
+);
 const tripPdfKeyPattern = new RegExp(
   `^trip-pdfs/\\d{13}-${uuidPattern}\\.pdf$`,
   "i",
@@ -13,6 +17,10 @@ export const orphanPdfGracePeriodMs = 24 * 60 * 60 * 1000;
 
 export function isContactRequestKey(value: unknown): value is string {
   return typeof value === "string" && contactRequestKeyPattern.test(value);
+}
+
+export function isContentHistoryKey(value: unknown): value is string {
+  return typeof value === "string" && contentHistoryKeyPattern.test(value);
 }
 
 export function isTripPdfKey(value: unknown): value is string {

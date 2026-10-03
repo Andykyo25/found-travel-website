@@ -2183,7 +2183,6 @@ img {
 .batch-calendar button[aria-pressed="true"], .plan-month-actions button[aria-pressed="true"] { background: var(--sage-deep); color: #fff; border-color: var(--sage-deep); }
 .batch-selected-dates, .plan-month-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .batch-selected-dates button { overflow-wrap: anywhere; }
-.batch-paste-label { margin: 16px 0; }
 .batch-preview { margin-top: 20px; }
 .batch-preview h5 { margin: 0; font-size: 14px; }
 .batch-preview-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; padding: 14px 0; border-bottom: 1px solid var(--line); }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { HeroImagesEditor } from "./HeroImagesEditor";
+import { ContentHistoryPanel } from "./ContentHistoryPanel";
 import type { Destination, SiteContent } from "@/lib/site-content";
 import { Field, StudioSaveBar, useSiteContentDraft } from "./StudioDraft";
 
@@ -65,7 +66,7 @@ export function SiteSettingsEditor({
   initialContent: SiteContent;
   initialUpdatedAt: string | null;
 }) {
-  const { draft, status, updateRoot, save, dirty } = useSiteContentDraft(
+  const { draft, setDraft, setStatus, markChanged, status, updateRoot, save, dirty } = useSiteContentDraft(
     initialContent,
     initialUpdatedAt,
   );
@@ -220,6 +221,19 @@ export function SiteSettingsEditor({
           </Field>
         </div>
       </section>
+
+      <ContentHistoryPanel
+        current={draft}
+        dirty={dirty}
+        onRestore={(content, label) => {
+          setDraft(content);
+          markChanged();
+          setStatus({
+            kind: "idle",
+            message: `已載入「${label}」的內容，確認沒問題後請按「儲存並更新網站」才會生效`,
+          });
+        }}
+      />
 
       <StudioSaveBar status={status} busy={uploadingImage} dirty={dirty} />
     </form>

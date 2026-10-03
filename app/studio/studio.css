@@ -147,3 +147,48 @@
   .studio-trip-controls { flex: 1 1 100%; justify-content: space-between; padding: 0 6px 4px; }
   .studio-trip-controls .trip-editor-actions .danger { margin-left: 6px; }
 }
+
+/* ===== 第三輪：團期整理工具 ===== */
+.departure-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 12px; }
+.departure-expired-count { padding: 3px 10px; border-radius: 999px; background: #edeef0; color: #5c6670; font-size: 12px; font-weight: 700; }
+.departure-price-tool { margin: 0 0 12px; padding: 0 14px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fbfaf5; }
+.departure-price-tool > summary { padding: 12px 0; cursor: pointer; color: var(--ink); font-size: 13px; font-weight: 800; }
+.departure-price-tool[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.departure-price-tool .field select { width: 100%; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); padding: 10px 12px; }
+.departure-price-tool .field span { font-weight: 700; font-size: 13px; }
+.departure-price-preview { margin: 12px 0; padding: 10px 12px; border-radius: 12px; background: #eef6ea; color: #2f5a35; font-size: 13px; line-height: 1.7; }
+.departure-price-note { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+
+/* ===== 第三輪：還原先前的版本 ===== */
+.history-panel { margin: 0 0 16px; padding: 0 18px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.history-panel > summary { padding: 16px 0; cursor: pointer; color: var(--ink); font-size: 14px; font-weight: 800; }
+.history-panel[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.history-intro, .history-note { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.history-list { display: grid; gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; }
+.history-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fbfaf5; }
+.history-list li.is-selected { border-color: var(--coral); background: #fff6f1; }
+.history-list li > div { display: grid; gap: 2px; min-width: 0; }
+.history-list strong { font-size: 14px; }
+.history-list span { color: var(--sage-deep); font-size: 12.5px; font-weight: 700; }
+.history-list small { color: var(--muted); font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere; }
+.history-list .button { flex: none; white-space: nowrap; }
+.history-preview { margin: 0 0 16px; padding: 16px 18px; border: 1px solid var(--coral); border-radius: 14px; background: #fff6f1; }
+.history-preview h4 { margin: 0 0 8px; font-size: 15px; }
+.history-preview ul { margin: 0 0 10px; padding-left: 20px; font-size: 13.5px; line-height: 1.9; }
+.history-warn { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; background: #fff3e3; color: #8a4b12; font-size: 13px; }
+.history-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 760px) {
+  .history-list li { flex-direction: column; align-items: stretch; }
+}
+
+/* ===== 第三輪：修改密碼、顯示密碼 ===== */
+.studio-password-form { display: grid; gap: 16px; max-width: 460px; }
+.studio-password-form .field input { width: 100%; }
+.studio-password-reveal { display: inline-flex; align-items: center; gap: 8px; width: fit-content; color: var(--muted); font-size: 13px; cursor: pointer; }
+.studio-password-note { margin: 18px 0 0; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.studio-login-help { margin: 14px 0 0; color: var(--muted); font-size: 13px; }
+.studio-login-status.success { background: #eef6ea; color: #2f5a35; }
+.departure-row.is-expired { opacity: 0.55; }
+.departure-row.is-expired input { background: #f3f1ea; }
+.studio-section .studio-password-form { margin-top: 24px; }
+.studio-section-heading + .studio-password-note { margin-top: 20px; }

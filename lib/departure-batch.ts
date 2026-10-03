@@ -5,32 +5,6 @@ import { formatDepartureDate, parseDepartureDate } from "./trip-values";
 export type DepartureBatchRow = Pick<TripDeparture, "date" | "price" | "note">;
 export const departureBatchLimit = 366;
 
-// Excel copies cells as TSV, quoting cells containing tabs, newlines or quotes.
-export function parseDeparturePaste(text: string): DepartureBatchRow[] {
-  if (text.length > 200_000) throw new Error("資料過多，請分批貼上，每批最多 366 個團期。");
-  const records: string[][] = [];
-  let record: string[] = [], cell = "", quoted = false;
-  const source = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i];
-    if (char === '"') {
-      if (quoted && source[i + 1] === '"') { cell += '"'; i++; }
-      else if (quoted || cell.length === 0) quoted = !quoted;
-      else cell += char;
-    } else if (!quoted && (char === "\t" || char === "\n")) {
-      record.push(cell); cell = "";
-      if (char === "\n") { records.push(record); record = []; }
-    } else cell += char;
-  }
-  if (quoted) throw new Error("貼上的儲存格引號未閉合，請重新從 Excel 複製完整資料。");
-  record.push(cell); records.push(record);
-  const rows = records.filter(row => row.some(value => value.trim()));
-  if (/^(出發日期|日期|date)$/i.test(rows[0]?.[0].trim() ?? "")) rows.shift();
-  if (rows.length > departureBatchLimit) throw new Error("每批最多 366 個團期，請分批加入。");
-  if (rows.some(row => row.length > 3)) throw new Error("請只複製「日期、價格、備註」三欄，欄位之間使用 Tab 分隔。");
-  return rows.map(([date, price = "", note = ""]) => ({ date: date.trim(), price: price.trim(), note: note.trim() }));
-}
-
 export function validateDepartureBatch(trip: Trip, planId: string, rows: DepartureBatchRow[]) {
   const plan = trip.plans.find(p => p.id === planId);
   const error = !plan ? "此版本已不存在，請重新選擇。"

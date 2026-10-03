@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addDepartureBatch, parseDeparturePaste, validateDepartureBatch } from "../lib/departure-batch.ts";
+import { addDepartureBatch, validateDepartureBatch } from "../lib/departure-batch.ts";
 import { departuresForPlan } from "../lib/trip-plans.ts";
 import { validateTripDates } from "../lib/trip-validation.ts";
 import { defaultSiteContent, normalizeSiteContent } from "../lib/site-content.ts";
@@ -15,24 +15,6 @@ function fixture() {
     ],
   };
 }
-
-test("Excel paste handles headers, comma prices, CRLF, quoted multiline notes and compact dates", () => {
-  const rows = parseDeparturePaste('\uFEFF日期\t價格\t備註\r\n20261008\t32,900\t"兩晚升等\n含\"\"早餐\"\""\r\n2026/11/3\t34900\t\r\n');
-  assert.equal(rows.length, 2);
-  assert.equal(rows[0].note, '兩晚升等\n含"早餐"');
-  const result = validateDepartureBatch(fixture(), "eva", rows);
-  assert.equal(result.valid, true);
-  assert.equal(result.rows[0].date, "2026/10/08");
-  assert.equal(result.rows[1].date, "2026/11/03");
-  assert.equal(result.rows[1].price, "34,900");
-});
-
-test("paste rejects incomplete cells, extra columns and oversized batches", () => {
-  assert.throws(() => parseDeparturePaste('2026/10/08\t32900\t"未閉合'), /引號/);
-  assert.throws(() => parseDeparturePaste("2026/10/08\t32900\t備註\t多餘欄"), /三欄/);
-  assert.throws(() => parseDeparturePaste(Array(367).fill("2026/10/08\t32900").join("\n")), /366/);
-  assert.throws(() => parseDeparturePaste("x".repeat(200001)), /資料過多/);
-});
 
 test("preview marks impossible dates, unsafe prices, empty batches and repeated days", () => {
   for (const date of ["2026/02/29", "2026/04/31", "10/08", ""]) {

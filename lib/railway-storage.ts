@@ -12,11 +12,13 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   isContactRequestKey,
+  isContentHistoryKey,
   orphanedTripPdfDecision,
 } from "@/lib/storage-keys";
 
 const contentKey = "content/site-content.json";
 const contactPrefix = "contact-requests/";
+const historyPrefix = "content-history/";
 const tripPdfPrefix = "trip-pdfs/";
 let cachedClient: S3Client | null = null;
 
@@ -416,4 +418,82 @@ export async function readHeroImage(key: string) {
   if (!storage) throw new Error("Storage unavailable");
   const result = await storage.client.send(new GetObjectCommand({ Bucket: storage.config.bucket, Key: key }));
   return result.Body?.transformToByteArray();
+}
+
+// 每次儲存前，系統都會把「儲存前的內容」另存成一個不可變更的快照。
+// 檔名前綴是毫秒時間戳，字典排序即等於時間排序。回傳最新的 limit 個。
+export async function listContentHistoryKeys(limit: number): Promise<string[] | null> {
+  const storage = getClient();
+  if (!storage) return null;
+
+  const keys: string[] = [];
+  let continuationToken: string | undefined;
+  do {
+    const page = await storage.client.send(
+      new ListObjectsV2Command({
+        Bucket: storage.config.bucket,
+        Prefix: historyPrefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
+    for (const object of page.Contents ?? []) {
+      if (isContentHistoryKey(object.Key)) keys.push(object.Key);
+    }
+    continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return keys.sort().reverse().slice(0, limit);
+}
+
+// 回傳未經驗證的原始快照，呼叫端要自行正規化。找不到時回傳 null。
+export async function readContentHistoryObject(key: string): Promise<unknown | null> {
+  if (!isContentHistoryKey(key)) return null;
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  try {
+    const result = await storage.client.send(
+      new GetObjectCommand({ Bucket: storage.config.bucket, Key: key }),
+    );
+    if (!result.Body) return null;
+    return JSON.parse(await result.Body.transformToString("utf-8")) as unknown;
+  } catch (error) {
+    const name = (error as { name?: string } | null)?.name;
+    if (error instanceof NoSuchKey || name === "NoSuchKey" || name === "NotFound") return null;
+    throw error;
+  }
+}
+
+// 業務自己改的密碼（雜湊後的記錄），一個帳號一個物件。找不到代表沒改過。
+const studioPasswordKeyPattern = /^studio-passwords\/[0-9a-f]{64}\.json$/;
+
+export async function readStudioPasswordObject(key: string): Promise<unknown | null> {
+  if (!studioPasswordKeyPattern.test(key)) throw new Error("Invalid password key");
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  try {
+    const result = await storage.client.send(
+      new GetObjectCommand({ Bucket: storage.config.bucket, Key: key }),
+    );
+    if (!result.Body) return null;
+    return JSON.parse(await result.Body.transformToString("utf-8")) as unknown;
+  } catch (error) {
+    const name = (error as { name?: string } | null)?.name;
+    if (error instanceof NoSuchKey || name === "NoSuchKey" || name === "NotFound") return null;
+    throw error;
+  }
+}
+
+export async function writeStudioPasswordObject(key: string, value: unknown) {
+  if (!studioPasswordKeyPattern.test(key)) throw new Error("Invalid password key");
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  await storage.client.send(
+    new PutObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: key,
+      Body: JSON.stringify(value),
+      ContentType: "application/json",
+      CacheControl: "no-store",
+    }),
+  );
 }

@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import type { Trip, TripPlan } from "@/lib/site-content";
 import { formatDepartureDate } from "@/lib/trip-values";
 import { tripPlanLabel } from "@/lib/trip-plans";
-import { parseDeparturePaste, validateDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
+import { validateDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
 
 // single：行程只有一個版本時，不需要談「加入哪個版本」，說明文字改成簡單版。
 export function DepartureBatchEditor({ trip, plan, todayTime, onAdd, single = false }: {
@@ -15,12 +15,10 @@ export function DepartureBatchEditor({ trip, plan, todayTime, onAdd, single = fa
   single?: boolean;
 }) {
   const id = useId();
-  const [method, setMethod] = useState<"calendar" | "paste">("calendar");
   const [month, setMonth] = useState(() => new Date(todayTime).toISOString().slice(0, 7));
   const [selected, setSelected] = useState<string[]>([]);
   const [price, setPrice] = useState("");
   const [note, setNote] = useState("");
-  const [paste, setPaste] = useState("");
   const [preview, setPreview] = useState<DepartureBatchRow[] | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -39,13 +37,8 @@ export function DepartureBatchEditor({ trip, plan, todayTime, onAdd, single = fa
   };
   return (
     <details className="departure-batch-editor">
-      <summary>{single ? "＋ 批次新增團期（月曆多選或貼上 Excel）" : "＋ 批次新增團期到此版本"}</summary>
+      <summary>{single ? "＋ 用月曆一次新增多個團期" : "＋ 用月曆批次新增團期到此版本"}</summary>
       {single ? <p>日期不規則也能一次新增。</p> : <p>套用到：<strong>{tripPlanLabel(plan)}</strong>。日期不規則也能一次新增。</p>}
-      <div className="document-type-switch" role="group" aria-label="批次新增方式">
-        <button type="button" aria-pressed={method === "calendar"} className={method === "calendar" ? "active" : ""} onClick={() => { setMethod("calendar"); invalidate(); }}>月曆多選</button>
-        <button type="button" aria-pressed={method === "paste"} className={method === "paste" ? "active" : ""} onClick={() => { setMethod("paste"); invalidate(); }}>貼上 Excel</button>
-      </div>
-      {method === "calendar" ? <>
         <div className="batch-month-nav">
           <button type="button" aria-label="上一個月" onClick={() => shiftMonth(-1)}>←</button>
           <label>選擇月份<input type="month" value={month} min="1900-01" max="9999-12" onChange={event => { if (/^\d{4}-\d{2}$/.test(event.target.value)) setMonth(event.target.value); }} /></label>
@@ -65,14 +58,9 @@ export function DepartureBatchEditor({ trip, plan, todayTime, onAdd, single = fa
           <label className="field">共同價格（NT$／人）<input inputMode="numeric" value={price} placeholder="例如：32900" onChange={event => { setPrice(event.target.value); invalidate(); }} /></label>
           <label className="field">共同備註（選填）<input value={note} maxLength={120} placeholder="例如：加開團期" onChange={event => { setNote(event.target.value); invalidate(); }} /></label>
         </div>
-      </> : <label className="field batch-paste-label">從 Excel 複製「日期、價格、備註」三欄
-        <small>每列一個日期，可含標題列。日期請含年份，例如 2026/10/03 或 20261003；備註可留空。</small>
-        <textarea value={paste} maxLength={200000} placeholder={"日期\t價格\t備註\n2026/10/03\t32900\t加開團期\n2026/10/19\t34900"} onChange={event => { setPaste(event.target.value); invalidate(); }} />
-      </label>}
       <button className="button button-secondary button-small" type="button" onClick={() => {
         setError(""); setMessage("");
-        try { setPreview(method === "paste" ? parseDeparturePaste(paste) : selected.map(date => ({ date, price, note }))); }
-        catch (err) { setPreview(null); setError(err instanceof Error ? err.message : "無法讀取貼上的資料"); }
+        setPreview(selected.map(date => ({ date, price, note })));
       }}>預覽這批團期</button>
       {error && <p className="batch-error" role="alert">{error}</p>}
       {preview && validation && <div className="batch-preview">
@@ -91,7 +79,7 @@ export function DepartureBatchEditor({ trip, plan, todayTime, onAdd, single = fa
           const result = onAdd(preview);
           if (result) { setError(result); return; }
           setMessage(single ? `已將 ${preview.length} 個團期加入草稿，請按儲存更新網站。` : `已將 ${preview.length} 個團期加入「${tripPlanLabel(plan)}」草稿，請按儲存更新網站。`);
-          setPreview(null); setSelected([]); setPaste(""); setError("");
+          setPreview(null); setSelected([]); setError("");
         }}>{single ? `將 ${preview.length} 個團期加入草稿` : `將 ${preview.length} 個團期加入此版本草稿`}</button>
       </div>}
       {message && <p className="batch-success" role="status">{message}</p>}

@@ -24,9 +24,13 @@ export function StudioHeader({
   active,
 }: {
   email: string;
-  active: StudioTabId;
+  // account：修改密碼頁，不在分頁列上。
+  active: StudioTabId | "account";
 }) {
-  const activeTab = tabs.find((tab) => tab.id === active) ?? tabs[0];
+  const activeTab =
+    active === "account"
+      ? { id: "account", title: "修改密碼" }
+      : (tabs.find((tab) => tab.id === active) ?? tabs[0]);
 
   return (
     <>
@@ -43,6 +47,13 @@ export function StudioHeader({
             rel="noopener"
           >
             查看網站 ↗
+          </a>
+          <a
+            className="button button-secondary button-small"
+            href="/studio/account"
+            aria-current={active === "account" ? "page" : undefined}
+          >
+            修改密碼
           </a>
           <form method="post" action="/api/studio/logout">
             <button
