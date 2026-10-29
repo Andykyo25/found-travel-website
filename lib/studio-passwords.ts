@@ -94,3 +94,40 @@ export async function checkPasswordRecord(
   const candidate = await derive(password, Buffer.from(record.salt, "base64"));
   return equal(candidate, Buffer.from(record.hash, "base64")) ? "ok" : "wrong";
 }
+
+/**
+ * 登入密碼的判定結果。只有 status 會影響回給瀏覽器的訊息；reason 只寫進伺服器 log，
+ * 讓管理者在 Railway 查得到原因，又不會讓外人知道哪個帳號存在、有沒有改過密碼。
+ */
+export type PasswordVerdict =
+  | { status: "ok" }
+  | { status: "invalid"; reason: "wrong-password" }
+  | { status: "invalid"; reason: "self-set-password"; changedAt: string }
+  | { status: "unavailable"; error: unknown };
+
+/**
+ * loadRecord：讀 Bucket 裡這個帳號自己改的密碼記錄，沒有就回傳 null、讀取失敗就丟錯。
+ * matchesEnv：輸入的密碼是否等於環境變數裡的密碼（由呼叫端用 timing-safe 比對）。
+ */
+export async function judgePassword(options: {
+  password: string;
+  envPassword: string;
+  matchesEnv: boolean;
+  loadRecord: () => Promise<unknown | null>;
+}): Promise<PasswordVerdict> {
+  let record;
+  try {
+    record = parsePasswordRecord(await options.loadRecord());
+  } catch (error) {
+    // 讀不到就無法確定這個帳號有沒有改過密碼；寧可暫時不能登入，也不放行舊密碼。
+    return { status: "unavailable", error };
+  }
+  if (record) {
+    const outcome = await checkPasswordRecord(record, options.password, options.envPassword);
+    if (outcome === "ok") return { status: "ok" };
+    if (outcome === "wrong") {
+      return { status: "invalid", reason: "self-set-password", changedAt: record.changedAt };
+    }
+  }
+  return options.matchesEnv ? { status: "ok" } : { status: "invalid", reason: "wrong-password" };
+}

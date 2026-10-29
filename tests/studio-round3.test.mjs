@@ -13,6 +13,7 @@ import { isContentHistoryKey, isContactRequestKey } from "../lib/storage-keys.ts
 import {
   checkPasswordRecord,
   createPasswordRecord,
+  judgePassword,
   parsePasswordRecord,
   passwordRecordKey,
   validateNewPassword,
@@ -204,6 +205,38 @@ test("when the admin resets the env password, the self-set password is voided", 
   const record = await createPasswordRecord("新的好記密碼 2026", "env-password-1");
   assert.equal(await checkPasswordRecord(record, "新的好記密碼 2026", "env-password-2"), "void");
   assert.equal(await checkPasswordRecord(record, "env-password-2", "env-password-2"), "void");
+});
+
+test("login verdict tells a storage outage apart from a wrong password", async () => {
+  const judge = (password, loadRecord, envPassword = "env-password-1") =>
+    judgePassword({ password, envPassword, matchesEnv: password === envPassword, loadRecord });
+  const none = async () => null;
+
+  assert.deepEqual(await judge("env-password-1", none), { status: "ok" });
+  assert.deepEqual(await judge("typo-password", none), { status: "invalid", reason: "wrong-password" });
+
+  // Bucket 讀不到：即使密碼正確也不放行，但要標成 unavailable 而不是密碼錯誤。
+  const outage = new Error("AccessDenied");
+  const down = await judge("env-password-1", async () => {
+    throw outage;
+  });
+  assert.equal(down.status, "unavailable");
+  assert.equal(down.error, outage);
+
+  const record = await createPasswordRecord("新的好記密碼 2026", "env-password-1", new Date("2026-10-20T01:00:00Z"));
+  const stored = async () => JSON.parse(JSON.stringify(record));
+  assert.deepEqual(await judge("新的好記密碼 2026", stored), { status: "ok" });
+  assert.deepEqual(await judge("env-password-1", stored), {
+    status: "invalid",
+    reason: "self-set-password",
+    changedAt: "2026-10-20T01:00:00.000Z",
+  });
+
+  // 管理者在 Railway 換了新密碼：自己改的記錄作廢，新的環境變數密碼可以登入。
+  assert.deepEqual(await judge("env-password-2", stored, "env-password-2"), { status: "ok" });
+
+  // 損壞的記錄當作沒有改過。
+  assert.deepEqual(await judge("env-password-1", async () => ({ v: 1, salt: "x" })), { status: "ok" });
 });
 
 test("two records for the same password never share salt or hash", async () => {

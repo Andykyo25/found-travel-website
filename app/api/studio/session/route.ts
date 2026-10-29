@@ -47,7 +47,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!(await verifyStudioCredentials(email, password))) {
+  const check = await verifyStudioCredentials(email, password);
+  if (check.status === "unavailable") {
+    // 系統讀不到帳號資料，不是密碼錯，不算進錯誤次數。
+    return NextResponse.json(
+      {
+        error:
+          "系統暫時無法驗證登入（讀不到帳號資料），這不是密碼錯誤。請過幾分鐘再試；若一直如此，請聯絡網站管理者。",
+      },
+      { status: 503 },
+    );
+  }
+  if (check.status !== "ok") {
     recordLoginFailure(request, email);
     return NextResponse.json(
       { error: "Email 或密碼不正確" },

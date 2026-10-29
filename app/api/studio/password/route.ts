@@ -46,7 +46,14 @@ export async function POST(request: NextRequest) {
       { status: 429, headers: { "retry-after": String(retryAfter) } },
     );
   }
-  if (!(await verifyStudioCredentials(user.email, currentPassword))) {
+  const check = await verifyStudioCredentials(user.email, currentPassword);
+  if (check.status === "unavailable") {
+    return NextResponse.json(
+      { error: "系統暫時讀不到帳號資料，無法確認目前的密碼，請稍後再試。" },
+      { status: 503 },
+    );
+  }
+  if (check.status !== "ok") {
     recordLoginFailure(request, user.email);
     return NextResponse.json({ error: "目前的密碼不正確" }, { status: 400 });
   }

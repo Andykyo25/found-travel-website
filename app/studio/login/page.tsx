@@ -34,7 +34,7 @@ export default async function StudioLoginPage() {
         </p>
         <StudioLoginForm />
         <p className="studio-login-help">
-          忘記密碼？請聯絡網站管理者重設。
+          曾在後台「修改密碼」換過密碼的話，請用換過的新密碼，原本的密碼已經不能用。忘記密碼？請聯絡網站管理者重設。
         </p>
         <Link className="text-link studio-login-back" href="/">
           ← 回到公開網站

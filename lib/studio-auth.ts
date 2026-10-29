@@ -9,10 +9,10 @@ import {
   writeStudioPasswordObject,
 } from "@/lib/railway-storage";
 import {
-  checkPasswordRecord,
   createPasswordRecord,
-  parsePasswordRecord,
+  judgePassword,
   passwordRecordKey,
+  type PasswordVerdict,
 } from "@/lib/studio-passwords";
 
 export const studioSessionCookie = "found_studio_session";
@@ -139,30 +139,47 @@ export function canChangeStudioPassword() {
   return isRailwayStorageConfigured();
 }
 
+export type CredentialCheck =
+  | PasswordVerdict
+  | { status: "invalid"; reason: "unknown-account" };
+
 // 帳號有沒有權限，仍由環境變數決定。密碼則是：業務自己改過就只認新密碼；
 // 管理者之後又在 Railway 重設過密碼時，自己改的密碼自動作廢（見 lib/studio-passwords.ts）。
-export async function verifyStudioCredentials(email: string, password: string) {
+// 失敗原因會寫進伺服器 log（不含密碼），讓管理者到 Railway Logs 查得到。
+export async function verifyStudioCredentials(
+  email: string,
+  password: string,
+): Promise<CredentialCheck> {
   const user = findConfiguredUser(email);
-  if (!user) return false;
+  const verdict: CredentialCheck = user
+    ? await judgePassword({
+        password,
+        envPassword: user.password,
+        matchesEnv: safeEqual(password, user.password),
+        loadRecord: isRailwayStorageConfigured()
+          ? () => readStudioPasswordObject(passwordRecordKey(user.email))
+          : async () => null,
+      })
+    : { status: "invalid", reason: "unknown-account" };
 
-  if (isRailwayStorageConfigured()) {
-    let record;
-    try {
-      record = parsePasswordRecord(
-        await readStudioPasswordObject(passwordRecordKey(user.email)),
-      );
-    } catch (error) {
-      // 讀不到就無法確定這個帳號有沒有改過密碼；寧可暫時不能登入，也不放行舊密碼。
-      console.error("Unable to read studio password record", error);
-      return false;
-    }
-    if (record) {
-      const outcome = await checkPasswordRecord(record, password, user.password);
-      if (outcome === "ok") return true;
-      if (outcome === "wrong") return false;
-    }
+  const account = user?.email ?? email.trim().toLowerCase();
+  if (verdict.status === "unavailable") {
+    console.error("Unable to read studio password record", verdict.error);
+  } else if (verdict.status === "invalid") {
+    const detail = {
+      "unknown-account": "this email is not in STUDIO_ADMIN_EMAIL or STUDIO_USERS",
+      "wrong-password": "password does not match the one set in Railway",
+      "self-set-password":
+        "this account changed its password in the studio, so the Railway password is no longer accepted; to reset it, set a new password for the account in Railway",
+    }[verdict.reason];
+    console.warn("Studio login rejected", {
+      account,
+      reason: verdict.reason,
+      detail,
+      ...(verdict.reason === "self-set-password" ? { changedAt: verdict.changedAt } : {}),
+    });
   }
-  return safeEqual(password, user.password);
+  return verdict;
 }
 
 export async function setStudioPassword(email: string, newPassword: string) {
