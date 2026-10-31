@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
+import { instagramUrl } from "./SocialLinks";
 
 export type NavLink = { href: string; label: string };
 
@@ -180,6 +181,15 @@ export function MobileNav({
                     onClick={closeForNavigation}
                   >
                     LINE 聯絡顧問 <span aria-hidden="true">↗</span>
+                  </a>
+                  <a
+                    className="button button-secondary"
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={closeForNavigation}
+                  >
+                    Instagram <span aria-hidden="true">↗</span>
                   </a>
                 </div>
               </div>

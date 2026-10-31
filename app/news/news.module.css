@@ -17,6 +17,9 @@
 .latest:hover h2 a { background-size: 100% 1px; }
 .latestCopy > p:not(.meta) { margin: 20px 0 0; max-width: 34em; color: var(--f-ink-2); font-size: 16.5px; line-height: 2; letter-spacing: 0.02em; }
 .latestCopy > a { margin-top: 18px; }
+.latestPoster { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr); }
+.latestPoster .latestMedia { aspect-ratio: 4 / 5; }
+.latestPoster .latestMedia img { transform: none; }
 
 .rows { margin: clamp(56px, 7vw, 96px) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--f-ink); }
 .rows li { border-bottom: 1px solid var(--f-line); }
@@ -37,6 +40,8 @@
 .cover { position: relative; margin: clamp(36px, 5vw, 64px) 0 0; aspect-ratio: 5 / 4; overflow: hidden; background: var(--f-mist); }
 .cover img { width: 100%; height: 100%; object-fit: cover; }
 .cover :global(.fh-marks) { inset: 20px; opacity: 0.85; }
+.heroPoster { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+.heroPoster .cover { aspect-ratio: 4 / 5; }
 
 .articleBody { display: grid; grid-template-columns: 200px minmax(0, 820px); gap: clamp(40px, 7vw, 120px); align-items: start; margin-top: clamp(56px, 7vw, 96px); }
 .toc { position: sticky; top: calc(var(--hdr) + 24px); }
@@ -111,6 +116,8 @@
 }
 @media (max-width: 900px) {
   .latest, .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  /* 圖卡不滿版：寬度夠讀就好，避免直式圖在平板上佔滿整個畫面 */
+  .latestPoster .latestMedia, .heroPoster .cover { width: 100%; max-width: 480px; margin-inline: auto; }
   .rows a { grid-template-columns: auto minmax(0, 1fr) auto; }
   .rows strong { grid-column: 1 / -1; grid-row: 2; }
   .rows i { grid-column: 3; grid-row: 1; }

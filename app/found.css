@@ -303,7 +303,7 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
 .fh-film-frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .fh-film-frame::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, rgba(8, 24, 20, 0.05) 30%, rgba(8, 24, 20, 0.5) 100%); opacity: 1; transition: opacity 0.6s; }
 .fh-film-frame[data-playing="true"]::after { opacity: 0; }
-.fh-film-play { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; border: 0; background: transparent; color: #fff; cursor: pointer; }
+.fh-film-play { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 0 0 14%; border: 0; background: transparent; color: #fff; cursor: pointer; }
 .fh-film-disc { width: clamp(76px, 8vw, 116px); height: clamp(76px, 8vw, 116px); display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.75); border-radius: 50%; backdrop-filter: blur(6px); background: rgba(255, 255, 255, 0.08); transition: background 0.6s var(--f-ease), transform 0.8s var(--f-ease), color 0.6s; }
 .fh-film-disc svg { margin-left: 4px; width: 28px; height: 28px; }
 .fh-film-play:hover .fh-film-disc { background: var(--f-pink); border-color: var(--f-pink); transform: scale(1.1); }
@@ -406,7 +406,7 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
   .fh-grid.is-all { display: grid; grid-template-columns: 1fr; overflow: visible; margin-inline: 0; padding-inline: 0; }
   .fh-grid.is-all > .fh-card { flex: none; }
   .fh-more { justify-content: flex-start; }
-  .fh-film-frame { clip-path: inset(calc((1 - var(--e)) * 4vw) calc((1 - var(--e)) * 5vw) round 2px); aspect-ratio: 4 / 3; }
+  .fh-film-frame { clip-path: inset(calc((1 - var(--e)) * 4vw) calc((1 - var(--e)) * 5vw) round 2px); }
   .fh-values { grid-template-columns: 1fr; gap: 40px; }
   .fh-footer-grid { grid-template-columns: 1fr; }
   .fh-footer-links { grid-template-columns: repeat(2, auto); }
@@ -480,7 +480,6 @@ html[data-intro="skip"] .fh-intro { display: none; }
 @media (max-width: 760px) {
   .fh-card-foot { flex-direction: column; align-items: stretch; gap: 16px; }
   .fh-card-book { justify-content: space-between; }
-  .fh-film-frame video { object-position: 8% 50%; }
 }
 
 /* ==========================================================================
@@ -645,3 +644,17 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .fh-card h3 { text-wrap: balance; }
 .fh-card-foot { flex-wrap: wrap; }
 .fh-card-price { min-width: 0; }
+
+/* ---------- LINE／Instagram 連結 ---------- */
+.site-social { display: flex; align-items: center; gap: 2px; }
+.site-social a { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 40px; min-height: 40px; color: inherit; transition: background 0.3s, color 0.3s; }
+.site-social svg { width: 21px; height: 21px; flex: none; }
+.site-header .site-social a:hover { background: var(--f-pink-deep); color: #fff; }
+.fh-footer-social { gap: 4px 26px; margin-top: 16px; }
+.fh-footer-social a { min-height: 44px; color: #e8ecdf; font-size: 14.5px; }
+.fh-footer-social a:hover { color: #ff9dc3; }
+@media (max-width: 520px) { .site-header-actions { gap: 6px; } }
+/* 窄手機的影片框只放得下播放鈕，片名留給 aria-label */
+@media (max-width: 480px) { .fh-film-play { gap: 12px; } .fh-film-label i { display: none; } }
+/* 太窄時標頭放不下，改由選單內的連結提供 */
+@media (max-width: 355px) { .site-header .site-social { display: none; } }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MobileNav, type NavLink } from "./MobileNav";
+import { SocialLinks } from "./SocialLinks";
 
 const navigation: NavLink[] = [
   { href: "/#journeys", label: "精選行程" },
@@ -30,6 +31,7 @@ export function SiteHeader({ brandName, lineUrl, active = "", home = false, tone
         aria-current={active === link.href ? "page" : undefined}>{link.label}</Link>)}
     </nav>
     <div className="site-header-actions">
+      <SocialLinks lineUrl={lineUrl} />
       <Link className="site-header-contact" href="/contact" aria-current={active === "/contact" ? "page" : undefined}>聊聊你的旅行 <span aria-hidden="true">↗</span></Link>
       <MobileNav links={navigation} lineUrl={lineUrl} brandName={brandName} />
     </div>

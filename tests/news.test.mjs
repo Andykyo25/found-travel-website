@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 import { findNewsArticle, newsArticles, newsDateLabel, publishedNews } from "../lib/news.ts";
 
 const validDate = /^\d{4}-\d{2}-\d{2}$/;
 const articleText = (article) => JSON.stringify(article);
 
-test("every news article has a usable address, valid dates and a cover", () => {
+test("every news article has a usable address, valid dates and a cover", async () => {
   const slugs = newsArticles.map((article) => article.slug);
   assert.equal(new Set(slugs).size, slugs.length);
   for (const article of newsArticles) {
@@ -16,6 +16,7 @@ test("every news article has a usable address, valid dates and a cover", () => {
     if (article.updatedAt) assert.match(article.updatedAt, validDate);
     assert.ok(article.title && article.shortTitle && article.summary && article.category);
     assert.ok(article.image.startsWith("/") && article.imageAlt);
+    await access(new URL(`../public${article.image}`, import.meta.url));
   }
 });
 
@@ -48,6 +49,22 @@ test("the Japan tax-free article keeps the facts travelers rely on", () => {
   // 退款方式依店家而定：機台與 0 手續費都必須保留但書。
   assert.ok(text.includes("依店家公告為準"));
   assert.ok(text.includes("仍須完成海關確認"));
+});
+
+test("LINE and Instagram links sit in the header, footer and mobile menu", async () => {
+  const [links, header, footer, mobileNav] = await Promise.all(
+    [
+      "../app/components/SocialLinks.tsx",
+      "../app/components/SiteHeader.tsx",
+      "../app/components/SiteFooter.tsx",
+      "../app/components/MobileNav.tsx",
+    ].map((file) => readFile(new URL(file, import.meta.url), "utf8")),
+  );
+  assert.match(links, /https:\/\/www\.instagram\.com\/yusyun1218\//);
+  assert.match(links, /href=\{lineUrl\}/);
+  assert.match(header, /<SocialLinks lineUrl=\{lineUrl\}/);
+  assert.match(footer, /<SocialLinks lineUrl=\{content\.lineUrl\}/);
+  assert.match(mobileNav, /href=\{instagramUrl\}/);
 });
 
 test("news is reachable from the navigation, footer, sitemap and host redirect", async () => {

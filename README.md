@@ -174,6 +174,7 @@ LINE 使用固定 retry key，Webhook 帶有 `Idempotency-Key`，接收端需依
 `/news` 列表、`/news/<slug>` 內頁與網站地圖會自動帶出；內文由 `blocks` 組成，
 可用 `text`、`facts`、`compare`、`methods`、`names`、`tips` 六種區塊。
 涉及規定或費用的內容請附上 `sources`，改版時填寫 `updatedAt`。
+封面放在 `public/news/`；圖片本身含文字的 4:5 圖卡請設 `imagePoster: true`，會完整顯示不裁切。
 
 ## 網址與搜尋引擎
 

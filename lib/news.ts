@@ -42,6 +42,8 @@ export type NewsArticle = {
   summary: string;
   image: string;
   imageAlt: string;
+  /** 圖片本身含文字（4:5 圖卡）：完整顯示，不裁切也不加取景框。 */
+  imagePoster?: boolean;
   blocks: NewsBlock[];
   video?: { title: string; text: string; link: NewsLink };
   sources: NewsLink[];
@@ -59,8 +61,10 @@ export const newsArticles: NewsArticle[] = [
     author: "Yui",
     summary:
       "2026 年 11 月 1 日起，日本購物改為先付含稅價，離境完成海關確認後才退稅。看了這麼多攻略還是霧颯颯？Yui 幫大家整理好了，其實退稅主要就是這 3 種方式。",
-    image: "/trips/tokyo.jpg",
-    imageAlt: "箱根蘆之湖畔的紅色鳥居，立在平靜的湖水之中",
+    image: "/news/japan-tax-free-2026.jpg",
+    imageAlt:
+      "日本退稅新制圖卡：2026.11.01 起先付含稅價、出境海關確認、店家退款；同店同日未稅滿 5,000 日圓，購買後 90 天內出境確認。圖中旅人躺在滿地的購物袋之間。",
+    imagePoster: true,
     blocks: [
       {
         kind: "facts",

@@ -278,7 +278,7 @@ export default async function Home({
           </div>
         </div>
         <div className="fh-film-stage" data-track="enter">
-          <FilmPlayer src={content.videoUrl} title={content.videoTitle} poster="/media/film-poster.jpg" />
+          <FilmPlayer src={content.videoUrl} title={content.videoTitle} poster="/media/film-poster-danang.jpg" />
         </div>
         <p className="fh-film-caption fh-wrap" data-rv>
           <span>TRAVEL, IN MOTION</span>

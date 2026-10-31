@@ -68,7 +68,7 @@ export default async function NewsArticlePage({ params }: Params) {
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/news" />
       <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/news">最新消息</Link><span aria-hidden="true">/</span><span aria-current="page">{article.shortTitle}</span></nav>
 
-      <div className={styles.hero}>
+      <div className={`${styles.hero}${article.imagePoster ? ` ${styles.heroPoster}` : ""}`}>
         <header className={styles.articleHead}>
           <p className="eyebrow">
             <span />
@@ -85,7 +85,7 @@ export default async function NewsArticlePage({ params }: Params) {
 
         <figure className={styles.cover}>
           <TravelImage src={article.image} alt={article.imageAlt} priority sizes="(max-width: 900px) 100vw, 46vw" />
-          <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>
+          {article.imagePoster ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
         </figure>
       </div>
 

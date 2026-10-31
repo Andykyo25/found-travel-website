@@ -38,10 +38,10 @@ export default async function NewsPage() {
       </section>
 
       <section id="news-list" aria-label="消息列表">
-        <article className={styles.latest}>
+        <article className={`${styles.latest}${latest.imagePoster ? ` ${styles.latestPoster}` : ""}`}>
           <Link className={styles.latestMedia} href={`/news/${latest.slug}`} tabIndex={-1} aria-hidden="true">
             <TravelImage src={latest.image} alt="" priority sizes="(max-width: 900px) 100vw, 54vw" />
-            <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>
+            {latest.imagePoster ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
           </Link>
           <div className={styles.latestCopy}>
             <p className={styles.meta}><time dateTime={latest.publishedAt}>{newsDateLabel(latest.publishedAt)}</time><span>{latest.category}</span></p>

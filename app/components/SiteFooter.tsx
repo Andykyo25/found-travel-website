@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { SiteContent } from "@/lib/site-content";
+import { SocialLinks } from "./SocialLinks";
 
 // 全站共用頁尾：首頁與內頁使用同一套公司資訊與字標，錨點在首頁走頁內捲動。
 export function SiteFooter({
@@ -8,7 +9,7 @@ export function SiteFooter({
 }: {
   content: Pick<
     SiteContent,
-    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address"
+    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "lineUrl"
   >;
   home?: boolean;
 }) {
@@ -22,6 +23,7 @@ export function SiteFooter({
             <span>{content.brandName}</span>
           </Link>
           <p>內容與報價以業務顧問最終確認為準</p>
+          <SocialLinks lineUrl={content.lineUrl} labels className="fh-footer-social" />
         </div>
         <div className="fh-footer-company">
           <strong>{content.companyName}</strong>
