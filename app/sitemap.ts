@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { publishedNews } from "@/lib/news";
 import { getSiteContentWithMeta } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
 import {
@@ -44,6 +45,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${origin}/dates/month/${month.id}`,
       lastModified,
       changeFrequency: "daily" as const,
+      priority: 0.7,
+    })),
+    { url: `${origin}/news`, changeFrequency: "weekly", priority: 0.7 },
+    ...publishedNews().map((article) => ({
+      url: `${origin}/news/${article.slug}`,
+      lastModified: new Date(article.updatedAt ?? article.publishedAt),
+      changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
     {

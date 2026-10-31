@@ -168,6 +168,13 @@ LINE 使用固定 retry key，Webhook 帶有 `Idempotency-Key`，接收端需依
 - 前台依台北日期排除過期與無效團期，支援目的地、月份及預算篩選，總表每頁 24 筆。
 - 行程卡先進入介紹與團期頁；諮詢連結帶入行程、日期、備註、參考價格或所選方案。
 
+## 最新消息
+
+消息內容寫在 `lib/news.ts` 的 `newsArticles`，不經過後台。新增一則時加一筆資料即可，
+`/news` 列表、`/news/<slug>` 內頁與網站地圖會自動帶出；內文由 `blocks` 組成，
+可用 `text`、`facts`、`compare`、`methods`、`names`、`tips` 六種區塊。
+涉及規定或費用的內容請附上 `sources`，改版時填寫 `updatedAt`。
+
 ## 網址與搜尋引擎
 
 目前使用 `https://found-travel-website-production.up.railway.app`，`SITE_URL` 保持空白。

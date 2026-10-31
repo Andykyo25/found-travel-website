@@ -36,6 +36,7 @@ export function SiteFooter({
           <Link href={home ? "#journeys" : "/#journeys"}>精選行程</Link>
           <Link href="/dates">出發團期</Link>
           <Link href="/find-trip">幫我找旅行</Link>
+          <Link href="/news">最新消息</Link>
           <Link href="/about">關於我們</Link>
           <Link href="/contact">聯絡表單</Link>
           <a href="/studio">內容管理</a>
