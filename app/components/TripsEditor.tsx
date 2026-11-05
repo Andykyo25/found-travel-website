@@ -9,7 +9,8 @@ import type {
   TripPlan,
   TripPlanDepartureMode,
 } from "@/lib/site-content";
-import { parseDepartureDate, formatDepartureDate, upcomingDepartures, formatPrice } from "@/lib/trip-values";
+import { parseDepartureDate, formatDepartureDate, upcomingDepartures, formatPrice, cleanTripSlug, typingTripSlug, tripPath } from "@/lib/trip-values";
+import { TripContentEditor } from "./TripContentEditor";
 import { addDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
 import { firstUnfinishedTrip, tripDraftProblems } from "@/lib/trip-validation";
 import {
@@ -232,6 +233,16 @@ export function TripsEditor({
       ...current,
       trips: current.trips.map((trip, tripIndex) =>
         tripIndex === index ? { ...trip, [key]: value } : trip,
+      ),
+    }));
+    markChanged();
+  };
+
+  const patchTrip = (index: number, patch: Partial<Trip>) => {
+    setDraft((current) => ({
+      ...current,
+      trips: current.trips.map((trip, tripIndex) =>
+        tripIndex === index ? { ...trip, ...patch } : trip,
       ),
     }));
     markChanged();
@@ -1105,6 +1116,26 @@ export function TripsEditor({
                         }
                       />
                     </Field>
+                    <Field
+                      label="網址代稱（英文，選填）"
+                      hint={`行程頁網址：${tripPath({ id: trip.id, slug: cleanTripSlug(trip.slug ?? "") })}。只能用英文小寫、數字和 -，例如 hokkaido-icebreaker-6d。上線後請不要再改，改了之前分享出去的連結會失效。`}
+                      wide
+                    >
+                      <input
+                        inputMode="url"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        placeholder="例如：hokkaido-icebreaker-6d"
+                        value={trip.slug ?? ""}
+                        onChange={(event) =>
+                          patchTrip(index, { slug: typingTripSlug(event.target.value) })
+                        }
+                      />
+                    </Field>
+                    <TripContentEditor
+                      trip={trip}
+                      onChange={(patch) => patchTrip(index, patch)}
+                    />
                   </div>
 
                   <div className="plan-editor">

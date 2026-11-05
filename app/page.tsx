@@ -75,7 +75,7 @@ export default async function Home({
   const atlasJourneys = orderedTrips
     .filter((trip, index, all) => all.findIndex((item) => item.badge === trip.badge) === index)
     .slice(0, 4)
-    .map(({ id, title, region, badge, summary, image }) => ({ id, title, region, badge, summary, image }));
+    .map(({ id, slug, title, region, badge, summary, image }) => ({ id, slug, title, region, badge, summary, image }));
   // 公告可由後台編輯：以「・」分段，重複排列成跑馬燈。
   const origin = await getSiteOrigin();
   // 結構化資料：讓搜尋引擎辨識這是一家旅行社，並帶出公司資訊。

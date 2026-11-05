@@ -23,7 +23,8 @@ export function TravelImage({
     (src.startsWith("/") &&
       !src.startsWith("//") &&
       !src.startsWith("/api/")) ||
-    src.startsWith("https://images.unsplash.com/");
+    src.startsWith("https://images.unsplash.com/") ||
+    src.startsWith("https://plus.unsplash.com/");
   if (optimizable)
     return (
       <Image

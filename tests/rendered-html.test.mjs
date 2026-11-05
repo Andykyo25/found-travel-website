@@ -48,7 +48,7 @@ test("the finished travel site replaces all starter content", async () => {
     readFile(new URL("../lib/studio-auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../railway.json", import.meta.url), "utf8"),
     readFile(
-      new URL("../app/dates/[tripId]/page.tsx", import.meta.url),
+      new URL("../app/trips/[slug]/page.tsx", import.meta.url),
       "utf8",
     ),
     readFile(new URL("../app/contact/page.tsx", import.meta.url), "utf8"),
@@ -116,7 +116,7 @@ test("the finished travel site replaces all starter content", async () => {
   assert.match(content, /source\.documentUrl/);
   assert.match(content, /departures/);
   assert.match(packageCard, /出發時間/);
-  assert.match(packageCard, /dates\//);
+  assert.match(packageCard, /tripPath\(trip\)/);
   assert.match(page, /href="\/dates"/);
   assert.match(departureBoard, /upcomingDepartureRows/);
   assert.match(robotsRoute, /isTemporaryHost/);

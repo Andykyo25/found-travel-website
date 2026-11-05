@@ -1,4 +1,4 @@
-import { parseDepartureDate, priceValue } from "./trip-values.ts";
+import { cleanTripSlug, parseDepartureDate, priceValue } from "./trip-values.ts";
 
 export function validateTripDates(value: unknown): string | null {
   if (
@@ -145,4 +145,29 @@ export function validateContactInfo(value: unknown): string | null {
   if (mail && (mail.length > 120 || !isPublicEmail(mail)))
     return "聯絡 Email 格式不正確；不公開請留空";
   return null;
+}
+
+/** 網址代稱：可留空；有填就不能和其他行程重複，也不能和別的行程 ID 相同。 */
+export function validateTripSlugs(value: unknown): string | null {
+  const trips = (value as { trips?: unknown })?.trips;
+  if (!Array.isArray(trips)) return null;
+  const owners = new Map<string, string>();
+  const ids = new Set(trips.map((trip) => (trip as { id?: unknown })?.id).filter((id) => typeof id === "string"));
+  for (const item of trips) {
+    const trip = (item ?? {}) as { id?: unknown; slug?: unknown; title?: unknown };
+    const raw = typeof trip.slug === "string" ? trip.slug : "";
+    const slug = cleanTripSlug(raw);
+    const name = typeof trip.title === "string" && trip.title.trim() ? trip.title.trim() : "未命名行程";
+    if (raw.trim() && !slug) return `「${name}」的網址代稱只能用英文、數字和 -，例如 hokkaido-icebreaker-6d`;
+    if (!slug) continue;
+    if (owners.has(slug)) return `「${owners.get(slug)}」和「${name}」的網址代稱都是 ${slug}，請改成不同的代稱`;
+    if (ids.has(slug) && trip.id !== slug) return `「${name}」的網址代稱 ${slug} 和另一個行程的系統編號相同，請換一個`;
+    owners.set(slug, name);
+  }
+  return null;
+}
+
+/** 後台儲存前的完整檢查（瀏覽器與伺服器共用），回傳第一個要修正的問題。 */
+export function validateContentDraft(value: unknown): string | null {
+  return validateTripDates(value) ?? validateTripSlugs(value) ?? validateContactInfo(value);
 }

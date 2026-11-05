@@ -60,6 +60,29 @@ export function upcomingDepartures<T extends { date: string }>(
     );
 }
 
+// 行程網址：有英文代稱就用代稱，沒有就用行程 ID（兩者都只含英數與連字號）。
+export function tripPath(trip: { id: string; slug?: string }) {
+  return `/trips/${encodeURIComponent(trip.slug || trip.id)}`;
+}
+
+/** 網址列上的代稱或舊連結裡的行程 ID，都能找到同一個行程；代稱優先。 */
+export function findTripByPathKey<T extends { id: string; slug?: string }>(
+  trips: T[],
+  key: string,
+) {
+  return trips.find((trip) => trip.slug && trip.slug === key) ?? trips.find((trip) => trip.id === key);
+}
+
+/** 輸入中的代稱：轉小寫、空白換成 -、去掉其他字元（保留尾端的 -，才打得出 a-b）。 */
+export function typingTripSlug(value: string) {
+  return value.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 80);
+}
+
+/** 儲存用的代稱：再去掉頭尾與重複的 -。 */
+export function cleanTripSlug(value: string) {
+  return typingTripSlug(value).replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
 // Parse the amount only; numbers in notes such as “228連假” are not prices.
 export function priceValue(value: string) {
   const match = value

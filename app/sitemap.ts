@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { publishedNews } from "@/lib/news";
 import { getSiteContentWithMeta } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
+import { tripPath } from "@/lib/trip-values";
 import {
   departureMonthOptions,
   departureRows,
@@ -36,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     ...content.trips.map((trip) => ({
-      url: `${origin}/dates/${trip.id}`,
+      url: `${origin}${tripPath(trip)}`,
       lastModified,
       changeFrequency: "weekly" as const,
       priority: 0.8,

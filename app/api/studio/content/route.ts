@@ -1,4 +1,4 @@
-import { validateContactInfo, validateTripDates } from "@/lib/trip-validation";
+import { validateContentDraft } from "@/lib/trip-validation";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getStudioUserFromRequest,
@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "內容格式不正確" }, { status: 400 });
   }
 
-  const invalid = validateTripDates(body) ?? validateContactInfo(body);
+  const invalid = validateContentDraft(body);
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
   const baseUpdatedAt =

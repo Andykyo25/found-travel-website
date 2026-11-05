@@ -1,8 +1,8 @@
 // 搜尋引擎與 AI 讀的結構化資料（schema.org JSON-LD）。
 // 只 import type 與純函式：頁尾等元件也會用到 telephoneHref。
-import type { SiteContent, Trip } from "@/lib/site-content";
+import type { SiteContent, Trip, TripFaq } from "@/lib/site-content";
 import { googleMapsPlaceUrl } from "@/lib/traveler-reviews";
-import { priceValue, upcomingDepartures } from "@/lib/trip-values";
+import { priceValue, tripPath, upcomingDepartures } from "@/lib/trip-values";
 
 type JsonLdObject = Record<string, unknown>;
 
@@ -89,7 +89,7 @@ export function travelAgencyJsonLd(content: AgencyFields, origin: string): JsonL
     description: siteDescription,
     url: `${origin}/`,
     logo: `${origin}/brand/logo.png`,
-    image: `${origin}/og-railway.png`,
+    image: `${origin}/og-cover.jpg`,
     taxID: content.taxId,
     telephone: content.telephone || undefined,
     email: content.email || undefined,
@@ -131,12 +131,13 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[], origin: string): JsonL
  * 沒有團期價格時退回行程的參考起價；都讀不出數字就不放 offers，不猜價格。
  */
 export function tripJsonLd(
-  trip: Pick<Trip, "id" | "title" | "summary" | "region" | "days" | "image" | "price" | "departures">,
+  trip: Pick<Trip, "id" | "slug" | "title" | "summary" | "region" | "days" | "image" | "price" | "departures" | "itinerary">,
   content: Pick<SiteContent, "companyName">,
   origin: string,
   today: number,
 ): JsonLdObject {
-  const url = `${origin}/dates/${trip.id}`;
+  const url = `${origin}${tripPath(trip)}`;
+  const days = trip.itinerary ?? [];
   const prices = upcomingDepartures(trip.departures, today)
     .map((departure) => priceValue(departure.price))
     .filter((amount): amount is number => amount !== null && amount > 0);
@@ -170,9 +171,21 @@ export function tripJsonLd(
     description: trip.summary,
     url,
     image: trip.image ? absoluteUrl(trip.image, origin) : undefined,
-    itinerary: trip.region
-      ? { "@type": "Place", name: trip.region }
-      : undefined,
+    // 有每日行程就列出每一天；沒有就至少標出目的地。
+    itinerary: days.length
+      ? {
+          "@type": "ItemList",
+          numberOfItems: days.length,
+          itemListElement: days.map((day, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: `第 ${index + 1} 天${day.title ? `：${day.title}` : ""}`,
+            description: day.description || undefined,
+          })),
+        }
+      : trip.region
+        ? { "@type": "Place", name: trip.region }
+        : undefined,
     provider: {
       "@type": "TravelAgency",
       "@id": agencyId(origin),
@@ -180,6 +193,20 @@ export function tripJsonLd(
       url: `${origin}/`,
     },
     offers,
+  };
+}
+
+/** 行程頁的常見問題。Google 已不對一般網站顯示 FAQ 摘要，但 AI 搜尋仍會讀這種問答。 */
+export function faqJsonLd(faqs: Pick<TripFaq, "question" | "answer">[], url: string): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    url,
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
   };
 }
 

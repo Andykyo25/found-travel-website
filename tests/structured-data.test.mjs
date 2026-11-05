@@ -71,7 +71,7 @@ test("trip data uses upcoming departure prices, falls back to the start price an
   };
   const data = tripJsonLd(trip, defaultSiteContent, origin, today);
   assert.equal(data["@type"], "TouristTrip");
-  assert.equal(data.url, `${origin}/dates/hokkaido`);
+  assert.equal(data.url, `${origin}/trips/hokkaido`);
   assert.equal(data.image, `${origin}/trips/hokkaido.jpg`);
   assert.equal(data.provider["@id"], agencyId(origin));
   assert.deepEqual(
@@ -146,7 +146,7 @@ test("public pages publish structured data for the agency, trips and breadcrumbs
   const [home, trip, dates, month, article, layout] = await Promise.all(
     [
       "../app/page.tsx",
-      "../app/dates/[tripId]/page.tsx",
+      "../app/trips/[slug]/page.tsx",
       "../app/dates/page.tsx",
       "../app/dates/month/[month]/page.tsx",
       "../app/news/[slug]/page.tsx",

@@ -7,6 +7,7 @@ import type { Trip } from "@/lib/site-content";
 import { basisLabels, emptyNeeds, findTravel, needsSummary, serviceLabels, validateNeeds, type TravelNeeds, type TravelCandidate } from "@/lib/travel-finder";
 import { departureAirport, priceBasis } from "@/lib/travel-facts";
 import { tripPlanSummary } from "@/lib/trip-plans";
+import { tripPath } from "@/lib/trip-values";
 import { ContactForm } from "./ContactForm";
 import { TravelImage } from "./TravelImage";
 
@@ -36,7 +37,7 @@ function ChoiceCard({ candidate: c, departureId, selected, disabled, compact, on
       <label className="field"><span>想選哪一天？</span><select aria-label={`${c.trip.title} ${c.plan.title}出發日${compact ? "（比較）" : ""}`} value={d.id} onChange={e => onDate(e.target.value)}>{c.departures.map(date => <option key={date.id} value={date.id}>{date.date} · {date.price || c.plan.price || c.trip.price}{priceBasis(c.plan, date.price || c.plan.price || c.trip.price) !== "unknown" ? `（${basisLabels[priceBasis(c.plan, date.price || c.plan.price || c.trip.price)]}）` : ""}</option>)}</select></label>
       {d.note && <p className="finder-note">團期備註：{d.note}</p>}
       <p className="finder-match">{c.reasons.join(" · ")}</p>
-      <div className="finder-actions"><button type="button" className="button button-secondary" aria-pressed={selected} disabled={disabled} onClick={onSelect}>{selected ? "✓ 已收藏，點此移除" : "♡ 放進比較清單"}</button><Link className="button" href={`/dates/${encodeURIComponent(c.trip.id)}#plan-${encodeURIComponent(c.plan.id)}`}>查看行程 →</Link><a href={c.plan.documentUrl} target="_blank" rel="noreferrer">{c.plan.documentType === "pdf" ? "開啟行程 PDF ↗" : "開啟行程文件 ↗"}</a></div>
+      <div className="finder-actions"><button type="button" className="button button-secondary" aria-pressed={selected} disabled={disabled} onClick={onSelect}>{selected ? "✓ 已收藏，點此移除" : "♡ 放進比較清單"}</button><Link className="button" href={`${tripPath(c.trip)}#plan-${encodeURIComponent(c.plan.id)}`}>查看行程 →</Link><a href={c.plan.documentUrl} target="_blank" rel="noreferrer">{c.plan.documentType === "pdf" ? "開啟行程 PDF ↗" : "開啟行程文件 ↗"}</a></div>
     </div>
   </article>;
 }

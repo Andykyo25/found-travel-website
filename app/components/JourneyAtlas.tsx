@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TravelImage } from "./TravelImage";
+import { tripPath } from "@/lib/trip-values";
 
-type Journey = { id: string; title: string; region: string; badge: string; summary: string; image: string };
+type Journey = { id: string; slug?: string; title: string; region: string; badge: string; summary: string; image: string };
 
 export function JourneyAtlas({ journeys }: { journeys: Journey[] }) {
   // previous 讓新照片由下往上「擦」進來，舊照片留在底下直到動畫結束。
@@ -33,7 +34,7 @@ export function JourneyAtlas({ journeys }: { journeys: Journey[] }) {
           </button>
         ))}
       </div>
-      <Link id="atlas-journey" className="fh-atlas-card" href={`/dates/${journey.id}`} aria-label={`探索${journey.title}`} data-cursor="探索">
+      <Link id="atlas-journey" className="fh-atlas-card" href={tripPath(journey)} aria-label={`探索${journey.title}`} data-cursor="探索">
         <div className="fh-atlas-photo">
           {journeys.map((item) => (
             <div

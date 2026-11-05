@@ -12,6 +12,7 @@ import {
   upcomingDepartures,
   priceValue,
   formatDepartureDate,
+  tripPath,
 } from "@/lib/trip-values";
 export { parseDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 
@@ -189,6 +190,8 @@ export function filterTrips(trips: Trip[], filters: TripFilters) {
 
 export type DepartureRow = {
   tripId: string;
+  /** 行程頁網址（有代稱用代稱）。 */
+  tripPath: string;
   tripTitle: string;
   region: string;
   days: string;
@@ -213,6 +216,7 @@ export function departureRows(trips: Trip[]): DepartureRow[] {
       const plans = plansForDeparture(trip.plans, departure.id);
       rows.push({
         tripId: trip.id,
+        tripPath: tripPath(trip),
         tripTitle: trip.title,
         region: trip.region,
         days: trip.days,

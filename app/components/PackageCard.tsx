@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { TravelImage } from "./TravelImage";
-import { upcomingDepartures, formatPrice } from "@/lib/trip-values";
+import { upcomingDepartures, formatPrice, tripPath } from "@/lib/trip-values";
 import Link from "next/link";
 import type { Trip } from "@/lib/site-content";
 import { nextDepartureLabel } from "@/lib/trip-filters";
@@ -51,7 +51,7 @@ export function PackageCard({
 
   return (
     <article className="fh-card" data-rv style={{ "--rv-i": index % 3 } as CSSProperties} data-cursor="看行程">
-      <Link className="fh-card-media" href={`/dates/${trip.id}`} aria-label={`探索${trip.title}`} tabIndex={-1} aria-hidden="true">
+      <Link className="fh-card-media" href={tripPath(trip)} aria-label={`探索${trip.title}`} tabIndex={-1} aria-hidden="true">
         <span className="fh-card-img">
           <TravelImage src={trip.image} alt={`${trip.title}行程風景`} priority={priority} sizes="(max-width: 760px) 86vw, (max-width: 1100px) 46vw, 30vw" />
         </span>
@@ -62,7 +62,7 @@ export function PackageCard({
 
       <div className="fh-card-body">
       <h3>
-        <Link href={`/dates/${trip.id}`}>{trip.title}</Link>
+        <Link href={tripPath(trip)}>{trip.title}</Link>
       </h3>
       <p className="fh-card-summary">{trip.summary}</p>
 
@@ -82,7 +82,7 @@ export function PackageCard({
       </ul>
 
       {departures.length > 0 ? (
-        <Link className="fh-card-dates" href={`/dates/${trip.id}`} aria-label={`查看${trip.title}出發時間`}>
+        <Link className="fh-card-dates" href={tripPath(trip)} aria-label={`查看${trip.title}出發時間`}>
           查看全部 {departures.length} 個出發日 <span aria-hidden="true">→</span>
         </Link>
       ) : null}
@@ -96,7 +96,7 @@ export function PackageCard({
             {trip.days}行程{plans.length > 1 ? `・${plans.length} 個方案` : ""}
           </small>
         </div>
-        <Link className="fh-card-book" href={`/dates/${trip.id}`} aria-label={`查看${trip.title}行程內容`}>
+        <Link className="fh-card-book" href={tripPath(trip)} aria-label={`查看${trip.title}行程內容`}>
           查看行程
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
         </Link>

@@ -94,7 +94,7 @@ export function DepartureBoard({
 
                 <div className="board-trip">
                   <h3>
-                    <Link href={`/dates/${row.tripId}`}>{row.tripTitle}</Link>
+                    <Link href={row.tripPath}>{row.tripTitle}</Link>
                   </h3>
                   <p>
                     <span>{row.region}</span>
@@ -132,7 +132,7 @@ export function DepartureBoard({
                   ) : row.planCount > 1 ? (
                     <Link
                       className="board-link"
-                      href={`/dates/${row.tripId}#plans`}
+                      href={`${row.tripPath}#plans`}
                       aria-label={`比較${row.tripTitle}的${row.planCount}個行程方案`}
                     >
                       {row.planCount} 個方案
@@ -140,7 +140,7 @@ export function DepartureBoard({
                   ) : null}
                   <Link
                     className="board-link"
-                    href={`/dates/${row.tripId}`}
+                    href={row.tripPath}
                     aria-label={`查看${row.tripTitle}全部團期`}
                   >
                     全部團期

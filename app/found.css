@@ -541,6 +541,36 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .trip-overview-price strong { font: 500 clamp(1.8rem, 1.3rem + 1.4vw, 2.6rem)/1.2 var(--f-serif); letter-spacing: 0; }
 .trip-overview-copy .trip-overview-note { margin-top: 14px; color: var(--f-ink-3); font-size: 14.5px; line-height: 1.9; }
 .trip-overview-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 32px; margin-top: 28px; }
+
+/* 行程頁：每日行程、費用說明、注意事項、常見問題 */
+.trip-days { display: grid; margin: 8px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--f-line); }
+.trip-day { display: grid; grid-template-columns: clamp(76px, 9vw, 128px) minmax(0, 1fr); gap: clamp(16px, 3vw, 48px); padding: clamp(22px, 3vw, 34px) 0; border-bottom: 1px solid var(--f-line); }
+.trip-day-no { color: var(--f-clay); font: 500 11px/1.4 var(--f-sans); letter-spacing: 0.2em; }
+.trip-day-no b { display: block; margin-top: 4px; color: var(--f-ink); font: 400 clamp(2rem, 1.4rem + 1.6vw, 3rem)/1 var(--f-display); letter-spacing: 0; }
+.trip-day-body h3 { margin: 0; font: 500 clamp(1.15rem, 1rem + 0.5vw, 1.45rem)/1.5 var(--f-serif); }
+.trip-day-body p { max-width: 46em; margin: 10px 0 0; color: var(--f-ink-2); font-size: 16px; line-height: 1.95; white-space: pre-line; }
+.trip-day-facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 16px 0 0; font-size: 14px; }
+.trip-day-facts div { display: flex; gap: 10px; }
+.trip-day-facts dt { color: var(--f-moss); font-weight: 700; letter-spacing: 0.08em; }
+.trip-day-facts dd { margin: 0; color: var(--f-ink-2); }
+.trip-cost-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 4vw, 64px); }
+.trip-cost-grid h3, .trip-notes h3 { margin: 0 0 12px; font: 500 15px/1.4 var(--f-sans); letter-spacing: 0.08em; }
+.trip-cost-grid ul, .trip-notes ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.trip-cost-grid li, .trip-notes li { position: relative; padding-left: 22px; color: var(--f-ink-2); font-size: 15.5px; line-height: 1.8; }
+.trip-cost-grid li::before, .trip-notes li::before { content: ""; position: absolute; left: 2px; top: 0.75em; width: 8px; height: 8px; border: 1.5px solid var(--f-moss); border-radius: 50%; }
+.trip-cost-grid .is-excluded li::before { border-radius: 0; width: 9px; height: 1.5px; border: 0; background: var(--f-clay); top: 0.9em; }
+.trip-faq-list { border-top: 1px solid var(--f-line); }
+.trip-faq-list details { border-bottom: 1px solid var(--f-line); }
+.trip-faq-list summary { display: flex; justify-content: space-between; gap: 16px; padding: 20px 0; cursor: pointer; font: 500 16.5px/1.6 var(--f-serif); list-style: none; }
+.trip-faq-list summary::-webkit-details-marker { display: none; }
+.trip-faq-list summary::after { content: "+"; flex: none; color: var(--f-moss); font: 300 22px/1 var(--f-sans); transition: transform 0.3s var(--f-ease); }
+.trip-faq-list details[open] summary::after { transform: rotate(45deg); }
+.trip-faq-list p { max-width: 46em; margin: 0 0 22px; color: var(--f-ink-2); font-size: 15.5px; line-height: 1.95; white-space: pre-line; }
+@media (max-width: 640px) {
+  .trip-day { grid-template-columns: 1fr; gap: 8px; }
+  .trip-day-no b { display: inline; margin: 0 0 0 6px; font-size: 1.4rem; }
+  .trip-cost-grid { grid-template-columns: 1fr; }
+}
 .trip-plans-section { border-top: 1px solid var(--f-line); }
 .trip-plans-intro h2, .trip-departures-heading h2 { font-size: clamp(1.7rem, 1.2rem + 1.5vw, 2.7rem); font-weight: 500; }
 .trip-plans-intro > p:last-child, .trip-departures-heading p { font-size: 15.5px; color: var(--f-ink-2); }

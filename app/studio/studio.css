@@ -192,3 +192,21 @@
 .departure-row.is-expired input { background: #f3f1ea; }
 .studio-section .studio-password-form { margin-top: 24px; }
 .studio-section-heading + .studio-password-note { margin-top: 20px; }
+
+/* 行程內容（每日行程、費用說明、常見問題） */
+.trip-content-editor { border: 1px solid var(--line); border-radius: 14px; background: #fbfaf5; padding: 0 16px; }
+.trip-content-editor > summary { display: grid; gap: 2px; padding: 14px 0; cursor: pointer; }
+.trip-content-editor > summary span { font-weight: 800; font-size: 14px; }
+.trip-content-editor > summary small { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.trip-content-editor[open] > summary { border-bottom: 1px solid var(--line); }
+.trip-content-body { padding: 4px 0 18px; }
+.trip-content-body h4 { margin: 22px 0 10px; font-size: 14px; }
+.trip-content-intro { margin: 12px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+.trip-content-paste { margin-bottom: 12px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; padding: 0 14px 14px; }
+.trip-content-paste > summary { padding: 12px 0; cursor: pointer; color: var(--sage-deep); font-size: 13px; font-weight: 800; }
+.trip-content-status { margin: 8px 0 12px; color: var(--sage-deep); font-size: 13px; font-weight: 700; }
+.trip-content-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.trip-day-editor-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.trip-day-editor { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.trip-day-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.trip-day-editor-head strong { font-size: 13.5px; }

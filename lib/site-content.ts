@@ -1,5 +1,5 @@
 import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
-import { formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
+import { cleanTripSlug, formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 import { applyAutoPrices } from "@/lib/trip-summary";
 import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
 import { cache } from "react";
@@ -46,8 +46,27 @@ export type TripPlan = {
   departureIds: string[];
 };
 
+export type TripDay = {
+  id: string;
+  title: string;
+  description: string;
+  meals: string;
+  hotel: string;
+};
+
+export type TripFaq = { id: string; question: string; answer: string };
+
 export type Trip = {
   id: string;
+  /** 網址代稱（小寫英文、數字、-）；空白時網址用行程 ID。 */
+  slug?: string;
+  /** 每日行程。放在網頁上，旅客與搜尋引擎不必打開 PDF 就讀得到。 */
+  itinerary?: TripDay[];
+  /** 費用包含／不含、注意事項：每行一項。 */
+  includes?: string;
+  excludes?: string;
+  notes?: string;
+  faqs?: TripFaq[];
   featured: boolean;
   badge: string;
   region: string;
@@ -259,6 +278,48 @@ function safeDocumentUrl(value: unknown, type: TripDocumentType) {
   }
 }
 
+function uniqueId(value: unknown, fallback: string, used: Set<string>) {
+  const base = safeString(value, fallback, 80).replace(/[^A-Za-z0-9_-]/g, "-") || fallback;
+  let id = base;
+  for (let suffix = 2; used.has(id); suffix += 1) id = `${base}-${suffix}`;
+  used.add(id);
+  return id;
+}
+
+function normalizeItinerary(value: unknown): TripDay[] {
+  if (!Array.isArray(value)) return [];
+  const used = new Set<string>();
+  return value.slice(0, 40).flatMap((item, index) => {
+    if (!item || typeof item !== "object") return [];
+    const day = item as Partial<TripDay>;
+    const title = safeOptionalString(day.title, 120);
+    const description = safeOptionalString(day.description, 2000);
+    if (!title && !description) return [];
+    return [
+      {
+        id: uniqueId(day.id, `day-${index + 1}`, used),
+        title,
+        description,
+        meals: safeOptionalString(day.meals, 200),
+        hotel: safeOptionalString(day.hotel, 200),
+      },
+    ];
+  });
+}
+
+function normalizeFaqs(value: unknown): TripFaq[] {
+  if (!Array.isArray(value)) return [];
+  const used = new Set<string>();
+  return value.slice(0, 20).flatMap((item, index) => {
+    if (!item || typeof item !== "object") return [];
+    const faq = item as Partial<TripFaq>;
+    const question = safeOptionalString(faq.question, 200);
+    const answer = safeOptionalString(faq.answer, 1500);
+    if (!question || !answer) return [];
+    return [{ id: uniqueId(faq.id, `faq-${index + 1}`, used), question, answer }];
+  });
+}
+
 export function normalizeSiteContent(value: unknown): SiteContent {
   const input =
     typeof value === "object" && value ? (value as Partial<SiteContent>) : {};
@@ -270,6 +331,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
     ? input.trips
     : defaultSiteContent.trips;
   const usedIds = new Set<string>();
+  const usedSlugs = new Set<string>();
   const trips = sourceTrips.flatMap((tripValue, index) => {
     if (!tripValue || typeof tripValue !== "object") return [];
     const source = tripValue as Partial<Trip> & {
@@ -401,9 +463,27 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       ];
     });
 
+    // 代稱重複時（後台會擋，這裡防舊資料）後面的行程加上 -2、-3。
+    const baseSlug = cleanTripSlug(safeOptionalString(source.slug, 120));
+    let slug = baseSlug;
+    for (let suffix = 2; slug && usedSlugs.has(slug); suffix += 1) slug = `${baseSlug}-${suffix}`;
+    if (slug) usedSlugs.add(slug);
+    const itinerary = normalizeItinerary(source.itinerary);
+    const includes = safeOptionalString(source.includes, 3000);
+    const excludes = safeOptionalString(source.excludes, 3000);
+    const notes = safeOptionalString(source.notes, 3000);
+    const faqs = normalizeFaqs(source.faqs);
+
     return [
       {
         id,
+        // 新欄位只在有內容時寫入，舊行程的資料形狀維持不變。
+        ...(slug ? { slug } : {}),
+        ...(itinerary.length ? { itinerary } : {}),
+        ...(includes ? { includes } : {}),
+        ...(excludes ? { excludes } : {}),
+        ...(notes ? { notes } : {}),
+        ...(faqs.length ? { faqs } : {}),
         featured: typeof source.featured === "boolean" ? source.featured : true,
         badge: safeString(source.badge, fallback.badge, 40),
         region: safeString(source.region, fallback.region, 60),
@@ -575,11 +655,27 @@ export const getSiteContentWithMeta = cache(
 );
 
 let lastSuccessfulContent: SiteContent | null = null;
+
+// 前台每個請求都去讀 Bucket 會拖慢回應，發布內容在記憶體留 30 秒。
+// 後台儲存走同一台伺服器，存完立刻換成新內容（saveSiteContent），業務不用等；
+// 日後若開多台伺服器，其他台最多晚 30 秒更新。後台編輯一律直接讀 Bucket。
+const publicContentTtlMs = 30_000;
+let publicContent: { content: SiteContent; at: number } | null = null;
+
 // 前台讀取用：自動計算起始價格的行程，在這裡依「今天」的團期算出最新價格。
 // 後台編輯用 getSiteContentWithMeta()，拿到的是原樣儲存的內容。
 export async function getSiteContent(): Promise<SiteContent> {
+  const now = Date.now();
+  if (
+    publicContent &&
+    now - publicContent.at < publicContentTtlMs &&
+    process.env.NODE_ENV !== "development"
+  )
+    return applyAutoPrices(publicContent.content, taipeiTodayTime());
   try {
-    return applyAutoPrices((await getSiteContentWithMeta()).content, taipeiTodayTime());
+    const { content } = await getSiteContentWithMeta();
+    publicContent = { content, at: now };
+    return applyAutoPrices(content, taipeiTodayTime());
   } catch (error) {
     console.error("Unable to read published content", error);
     if (lastSuccessfulContent) return applyAutoPrices(lastSuccessfulContent, taipeiTodayTime());
@@ -619,5 +715,7 @@ export async function saveSiteContent(
     etag,
     previous,
   );
+  publicContent = { content, at: Date.now() };
+  lastSuccessfulContent = content;
   return { content, updatedAt };
 }
