@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { SiteContent } from "@/lib/site-content";
+import { telephoneHref } from "@/lib/structured-data";
 import { SocialLinks } from "./SocialLinks";
 
 // 全站共用頁尾：首頁與內頁使用同一套公司資訊與字標，錨點在首頁走頁內捲動。
@@ -9,7 +10,7 @@ export function SiteFooter({
 }: {
   content: Pick<
     SiteContent,
-    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "lineUrl"
+    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "telephone" | "email" | "lineUrl"
   >;
   home?: boolean;
 }) {
@@ -33,6 +34,12 @@ export function SiteFooter({
             統一編號 {content.taxId} │ 負責人 {content.representative}
           </span>
           <span>地址：{content.address}</span>
+          {content.telephone ? (
+            <span>電話：<a href={telephoneHref(content.telephone)}>{content.telephone}</a></span>
+          ) : null}
+          {content.email ? (
+            <span>Email：<a href={`mailto:${content.email}`}>{content.email}</a></span>
+          ) : null}
         </div>
         <nav className="fh-footer-links" aria-label="頁尾導覽">
           <Link href={home ? "#journeys" : "/#journeys"}>精選行程</Link>

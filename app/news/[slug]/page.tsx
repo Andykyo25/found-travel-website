@@ -10,6 +10,8 @@ import { TravelImage } from "@/app/components/TravelImage";
 import { findNewsArticle, newsDateLabel } from "@/lib/news";
 import { getSiteContent } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
+import { agencyId, breadcrumbJsonLd } from "@/lib/structured-data";
+import { JsonLd } from "@/app/components/JsonLd";
 import styles from "../news.module.css";
 
 export const dynamic = "force-dynamic";
@@ -54,16 +56,31 @@ export default async function NewsArticlePage({ params }: Params) {
     dateModified: article.updatedAt ?? article.publishedAt,
     url: `${origin}/news/${article.slug}`,
     author: article.author ? { "@type": "Person", name: article.author } : { "@type": "Organization", name: content.brandName },
-    publisher: { "@type": "TravelAgency", name: content.companyName, logo: `${origin}/brand/logo.png` },
+    mainEntityOfPage: `${origin}/news/${article.slug}`,
+    publisher: {
+      "@type": "TravelAgency",
+      "@id": agencyId(origin),
+      name: content.companyName,
+      url: `${origin}/`,
+      logo: { "@type": "ImageObject", url: `${origin}/brand/logo.png` },
+    },
   };
 
   return (
     <>
     <main className="public-page">
       <a className="skip-link" href="#article-content">跳至文章內容</a>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c") }}
+      <JsonLd
+        data={[
+          articleJsonLd,
+          breadcrumbJsonLd(
+            [
+              { name: "最新消息", path: "/news" },
+              { name: article.shortTitle, path: `/news/${article.slug}` },
+            ],
+            origin,
+          ),
+        ]}
       />
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/news" />
       <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/news">最新消息</Link><span aria-hidden="true">/</span><span aria-current="page">{article.shortTitle}</span></nav>

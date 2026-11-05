@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { validateTripDates } from "@/lib/trip-validation";
+import { validateContactInfo, validateTripDates } from "@/lib/trip-validation";
 import type { SiteContent } from "@/lib/site-content";
 
 export type Status =
@@ -74,7 +74,7 @@ export function useSiteContentDraft(
   // prepare：儲存前最後一次整理內容（例如把自動計算的起始價格寫進去）。
   const save = async (prepare?: (content: SiteContent) => SiteContent) => {
     const payload = prepare ? prepare(draft) : draft;
-    const invalid = validateTripDates(payload);
+    const invalid = validateTripDates(payload) ?? validateContactInfo(payload);
     if (invalid) {
       setStatus({ kind: "error", message: invalid });
       return;

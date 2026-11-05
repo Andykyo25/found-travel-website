@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { getSiteOrigin } from "@/lib/site-url";
+import { siteDescription } from "@/lib/structured-data";
 import { FoundMotion } from "./components/FoundMotion";
 import { display, latin, serif } from "./fonts";
 import "./globals.css";
@@ -16,12 +17,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase,
+    // 首頁標題放上搜尋會用的詞（目的地、跟團、客製）；品牌標語留給社群分享的 openGraph。
     title: {
-      default: "找到了旅行社｜好旅行，被好好照顧",
+      default: "找到了旅行社｜日本・韓國・歐洲跟團與客製旅遊",
       template: "%s｜找到了旅行社",
     },
-    description:
-      "找到了旅行社由熟悉目的地的旅行顧問，為你挑選合適的步調、住宿與體驗。查看精選行程與完整行程資料。",
+    description: siteDescription,
     openGraph: {
       title: "找到了旅行社｜好旅行，被好好照顧",
       description: "把每一段期待，排成剛剛好的旅程。",

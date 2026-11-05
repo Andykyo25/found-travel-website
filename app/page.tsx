@@ -4,6 +4,8 @@ import { ParticleGlobe } from "./components/ParticleGlobe";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
+import { travelAgencyJsonLd } from "@/lib/structured-data";
+import { JsonLd } from "./components/JsonLd";
 import {
   categoryOptions,
   filterTrips,
@@ -77,27 +79,13 @@ export default async function Home({
   // 公告可由後台編輯：以「・」分段，重複排列成跑馬燈。
   const origin = await getSiteOrigin();
   // 結構化資料：讓搜尋引擎辨識這是一家旅行社，並帶出公司資訊。
-  const agencyJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "TravelAgency",
-    name: content.companyName,
-    alternateName: content.brandName,
-    url: origin,
-    image: `${origin}/og-railway.png`,
-    logo: `${origin}/brand/logo.png`,
-    taxID: content.taxId,
-    address: { "@type": "PostalAddress", streetAddress: content.address, addressCountry: "TW" },
-    sameAs: [content.lineUrl],
-  };
+  const agencyJsonLd = travelAgencyJsonLd(content, origin);
   const marqueeItems = content.announcement.split(/[・|｜]/).map((item) => item.trim()).filter(Boolean);
 
   return (
     <main className="editorial-home fh" id="top">
       <a className="skip-link" href="#journeys">跳至精選行程</a>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(agencyJsonLd).replace(/</g, "\\u003c") }}
-      />
+      <JsonLd data={agencyJsonLd} />
       <HomeIntro />
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} home />
 

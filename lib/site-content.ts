@@ -1,6 +1,7 @@
 import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
 import { formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 import { applyAutoPrices } from "@/lib/trip-summary";
+import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
 import { cache } from "react";
 import {
   readSiteContentObject,
@@ -80,6 +81,10 @@ export type SiteContent = {
   taxId: string;
   representative: string;
   address: string;
+  /** 對外客服電話；留空時前台與結構化資料都不顯示。 */
+  telephone: string;
+  /** 對外聯絡 Email；留空時前台與結構化資料都不顯示。 */
+  email: string;
   destination: Destination;
   trips: Trip[];
 };
@@ -105,6 +110,8 @@ export const defaultSiteContent: SiteContent = {
   taxId: "00161819",
   representative: "艾施鴻",
   address: "台北市內湖區內湖路一段120巷15弄25號3樓",
+  telephone: "",
+  email: "",
   destination: {
     city: "東京",
     timezone: "Asia/Tokyo",
@@ -214,6 +221,18 @@ function safeNumber(
   return Number.isFinite(number) && number >= min && number <= max
     ? number
     : fallback;
+}
+
+// 後台儲存時已擋下格式錯誤（validateContactInfo）；這裡再防一次舊資料或手動改壞的檔案，
+// 格式不對就當作沒填，避免把錯的號碼送進搜尋引擎的公司資料。
+function safeTelephone(value: unknown) {
+  const phone = safeOptionalString(value, 30);
+  return isPublicTelephone(phone) ? phone : "";
+}
+
+function safeEmail(value: unknown) {
+  const email = safeOptionalString(value, 120);
+  return isPublicEmail(email) ? email : "";
 }
 
 function safeDocumentUrl(value: unknown, type: TripDocumentType) {
@@ -469,6 +488,8 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       40,
     ),
     address: safeString(input.address, defaultSiteContent.address, 200),
+    telephone: safeTelephone(input.telephone),
+    email: safeEmail(input.email),
     destination: {
       city: safeString(
         destinationInput.city,

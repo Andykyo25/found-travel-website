@@ -1,5 +1,8 @@
 import { TravelImage } from "@/app/components/TravelImage";
-import { upcomingDepartures, formatPrice } from "@/lib/trip-values";
+import { upcomingDepartures, formatPrice, taipeiTodayTime } from "@/lib/trip-values";
+import { getSiteOrigin } from "@/lib/site-url";
+import { breadcrumbJsonLd, tripJsonLd } from "@/lib/structured-data";
+import { JsonLd } from "@/app/components/JsonLd";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DepartureTable } from "@/app/components/DepartureTable";
@@ -39,7 +42,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function TripDatesPage({ params }: PageProps) {
   const { tripId } = await params;
-  const content = await getSiteContent();
+  const [content, origin] = await Promise.all([getSiteContent(), getSiteOrigin()]);
   const trip = content.trips.find((item) => item.id === tripId);
   if (!trip) notFound();
   const plans = publishedTripPlans(trip);
@@ -50,7 +53,20 @@ export default async function TripDatesPage({ params }: PageProps) {
     <main className="dates-shell public-page">
       <a className="skip-link" href="#trip-content">跳至行程內容</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} />
-      <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/#journeys">精選行程</Link><span aria-hidden="true">/</span><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">行程內容</span></nav>
+      <JsonLd
+        data={[
+          tripJsonLd(trip, content, origin, taipeiTodayTime()),
+          breadcrumbJsonLd(
+            [
+              { name: "精選行程", path: "/" },
+              { name: "全部團期", path: "/dates" },
+              { name: trip.title, path: `/dates/${trip.id}` },
+            ],
+            origin,
+          ),
+        ]}
+      />
+      <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/#journeys">精選行程</Link><span aria-hidden="true">/</span><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">{trip.title}</span></nav>
 
       <section className="dates-card" id="trip-content">
         <div className="trip-overview">

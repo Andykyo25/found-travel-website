@@ -6,6 +6,7 @@ import {
 import { publishedTripPlans, tripPlanLabel } from "@/lib/trip-plans";
 import { ContactForm } from "@/app/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
+import { telephoneHref } from "@/lib/structured-data";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
@@ -83,6 +84,12 @@ export default async function ContactPage({
           <span>{content.businessLicense}</span>
           <span>{content.qualityLicense}</span>
           <span>地址：{content.address}</span>
+          {content.telephone ? (
+            <span>電話：<a href={telephoneHref(content.telephone)}>{content.telephone}</a></span>
+          ) : null}
+          {content.email ? (
+            <span>Email：<a href={`mailto:${content.email}`}>{content.email}</a></span>
+          ) : null}
         </div>
         <a
           className="button button-secondary"

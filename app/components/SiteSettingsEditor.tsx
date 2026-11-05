@@ -150,7 +150,10 @@ export function SiteSettingsEditor({
 
       <section className="studio-section">
         <h2>公司與聯絡資訊</h2>
-        <p>公司登記資料會顯示於網站頁尾；LINE 連結是主要洽詢管道。</p>
+        <p>
+          公司登記資料會顯示於網站頁尾；LINE 連結是主要洽詢管道。名稱、地址與電話請和
+          Google 商家檔案一字不差，搜尋引擎才會認定是同一家公司。
+        </p>
         <div className="field-grid">
           <Field label="公司名稱" wide>
             <input
@@ -194,6 +197,23 @@ export function SiteSettingsEditor({
             <input
               value={draft.address}
               onChange={(event) => updateRoot("address", event.target.value)}
+            />
+          </Field>
+          <Field label="客服電話（留空則不顯示）">
+            <input
+              type="tel"
+              inputMode="tel"
+              placeholder="例如 02-2345-6789"
+              value={draft.telephone}
+              onChange={(event) => updateRoot("telephone", event.target.value)}
+            />
+          </Field>
+          <Field label="聯絡 Email（留空則不顯示）">
+            <input
+              type="email"
+              placeholder="例如 service@example.com"
+              value={draft.email}
+              onChange={(event) => updateRoot("email", event.target.value)}
             />
           </Field>
           <Field label="聯絡區標題" wide>

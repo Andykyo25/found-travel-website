@@ -4,6 +4,9 @@ import {
   DepartureBoardCta,
 } from "@/app/components/DepartureBoard";
 import { getSiteContent } from "@/lib/site-content";
+import { getSiteOrigin } from "@/lib/site-url";
+import { breadcrumbJsonLd } from "@/lib/structured-data";
+import { JsonLd } from "@/app/components/JsonLd";
 import {
   departureMonthOptions,
   departureRows,
@@ -24,7 +27,7 @@ export const metadata = {
 };
 
 export default async function AllDeparturesPage() {
-  const content = await getSiteContent();
+  const [content, origin] = await Promise.all([getSiteContent(), getSiteOrigin()]);
   const rows = upcomingDepartureRows(departureRows(content.trips));
   const months = departureMonthOptions(rows);
 
@@ -33,6 +36,7 @@ export default async function AllDeparturesPage() {
     <main className="board-shell public-page">
       <a className="skip-link" href="#departures-content">跳至出發團期</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/dates" />
+      <JsonLd data={breadcrumbJsonLd([{ name: "精選行程", path: "/" }, { name: "出發團期", path: "/dates" }], origin)} />
       <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/#journeys">精選行程</Link><span aria-hidden="true">/</span><span aria-current="page">出發團期</span></nav>
 
       <section className="board-head" id="departures-content">

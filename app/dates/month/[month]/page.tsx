@@ -5,6 +5,9 @@ import {
   DepartureBoardCta,
 } from "@/app/components/DepartureBoard";
 import { getSiteContent } from "@/lib/site-content";
+import { getSiteOrigin } from "@/lib/site-url";
+import { breadcrumbJsonLd } from "@/lib/structured-data";
+import { JsonLd } from "@/app/components/JsonLd";
 import {
   departureMonthOptions,
   departureRows,
@@ -44,7 +47,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
   const { month } = await params;
   if (!monthPattern.test(month)) notFound();
 
-  const content = await getSiteContent();
+  const [content, origin] = await Promise.all([getSiteContent(), getSiteOrigin()]);
   const allRows = upcomingDepartureRows(departureRows(content.trips));
   const rows = allRows.filter((row) => row.monthId === month);
 
@@ -59,6 +62,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
     <main className="board-shell public-page">
       <a className="skip-link" href="#month-content">跳至月份團期</a>
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/dates" />
+      <JsonLd data={breadcrumbJsonLd([{ name: "全部團期", path: "/dates" }, { name: label, path: `/dates/month/${month}` }], origin)} />
       <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">{label}</span></nav>
 
       <section className="board-head" id="month-content">

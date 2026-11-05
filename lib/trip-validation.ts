@@ -122,3 +122,27 @@ export function firstUnfinishedTrip(value: unknown) {
   }
   return null;
 }
+
+// 對外電話：數字、+、空白、-、括號，可加分機（# 或「轉」），至少 7 位數。
+export function isPublicTelephone(value: string) {
+  return (
+    /^\+?[\d\s()-]{6,}(?:\s*(?:#|轉)\s*\d{1,6})?$/.test(value) &&
+    (value.match(/\d/g)?.length ?? 0) >= 7
+  );
+}
+
+export function isPublicEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+/** 後台「公司與聯絡資訊」的電話與 Email：可留空，有填就要是正確格式。 */
+export function validateContactInfo(value: unknown): string | null {
+  const { telephone, email } = (value ?? {}) as { telephone?: unknown; email?: unknown };
+  const phone = typeof telephone === "string" ? telephone.trim() : "";
+  const mail = typeof email === "string" ? email.trim() : "";
+  if (phone && (phone.length > 30 || !isPublicTelephone(phone)))
+    return "客服電話格式不正確，例如 02-2345-6789 或 02-2345-6789#12；不公開請留空";
+  if (mail && (mail.length > 120 || !isPublicEmail(mail)))
+    return "聯絡 Email 格式不正確；不公開請留空";
+  return null;
+}
