@@ -165,7 +165,8 @@ test("the studio previews the PDF that the trip page uses and can copy it into e
   );
   assert.match(route, /getStudioUserFromRequest\(request\)/);
   assert.match(route, /isTripPdfKey\(key\)/);
-  assert.match(editor, /onToggle=/);
+  // 打開行程編輯頁就查一次；列表頁沒有這個元件，不會一次查所有行程。
+  assert.match(editor, /void fetchPdfLookup\(pdfKey\)\.then/);
   assert.match(editor, /\/api\/studio\/pdf-text\?key=/);
   assert.match(editor, /copyPdfContent\(pdfLookup\.content, newId\)/);
   assert.match(editor, /onChange\(\{ itinerary: \[\], includes: "", excludes: "" \}\)/);

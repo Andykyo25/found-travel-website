@@ -121,7 +121,8 @@ export function useSiteContentDraft(
     }
   };
 
-  return { draft, setDraft, status, setStatus, markChanged, updateRoot, save, dirty };
+  // savedJson：上次儲存的內容（JSON 字串），讓列表標出哪幾個行程還沒儲存。
+  return { draft, setDraft, status, setStatus, markChanged, updateRoot, save, dirty, savedJson: saved };
 }
 
 export function StudioSaveBar({

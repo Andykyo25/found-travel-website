@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Trip, TripDay, TripFaq } from "@/lib/site-content";
 import { copyPdfContent, parseItineraryText } from "@/lib/trip-itinerary";
 import type { TripPdfTextStatus } from "@/lib/trip-pdf-extract";
@@ -9,6 +9,16 @@ import { tripPdfKeyFromDocumentUrl } from "@/lib/storage-keys";
 import { Field } from "./StudioDraft";
 
 type PdfLookup = TripPdfTextStatus | { status: "loading" };
+
+async function fetchPdfLookup(key: string): Promise<PdfLookup> {
+  try {
+    const response = await fetch(`/api/studio/pdf-text?key=${encodeURIComponent(key)}`, { cache: "no-store" });
+    const result = (await response.json()) as TripPdfTextStatus;
+    return response.ok && result && "status" in result ? result : { status: "unavailable" };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
 
 // 上傳的行程 PDF 自動整理出的內容。業務在這裡確認抓得對不對，有錯再複製到下方修改。
 function TripPdfPreview({
@@ -156,19 +166,25 @@ export function TripContentEditor({
   const [pasteMessage, setPasteMessage] = useState("");
   const pdfSource = tripPdfSource(trip, tripPdfKeyFromDocumentUrl);
   const [pdf, setPdf] = useState<{ key: string; lookup: PdfLookup } | null>(null);
+  const pdfKey = pdfSource?.pdfKey ?? null;
 
-  // 打開這個區塊時才去查 PDF 的整理結果，進後台時不會一次查十幾個行程。
-  const loadPdf = async (key: string) => {
-    setPdf({ key, lookup: { status: "loading" } });
-    try {
-      const response = await fetch(`/api/studio/pdf-text?key=${encodeURIComponent(key)}`, { cache: "no-store" });
-      const result = (await response.json()) as TripPdfTextStatus;
-      setPdf({ key, lookup: response.ok && result && "status" in result ? result : { status: "unavailable" } });
-    } catch {
-      setPdf({ key, lookup: { status: "unavailable" } });
-    }
+  // 打開行程編輯頁（或換了 PDF）就去查整理結果；列表頁不會用到，所以不會一次查十幾個行程。
+  useEffect(() => {
+    if (!pdfKey) return;
+    let cancelled = false;
+    void fetchPdfLookup(pdfKey).then((lookup) => {
+      if (!cancelled) setPdf({ key: pdfKey, lookup });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfKey]);
+  const recheckPdf = async () => {
+    if (!pdfKey) return;
+    setPdf({ key: pdfKey, lookup: { status: "loading" } });
+    setPdf({ key: pdfKey, lookup: await fetchPdfLookup(pdfKey) });
   };
-  const pdfLookup = pdfSource && pdf?.key === pdfSource.pdfKey ? pdf.lookup : null;
+  const pdfLookup: PdfLookup | null = !pdfKey ? null : pdf?.key === pdfKey ? pdf.lookup : { status: "loading" };
 
   const copyFromPdf = () => {
     if (pdfLookup?.status !== "ready") return;
@@ -216,16 +232,11 @@ export function TripContentEditor({
   ].filter(Boolean);
 
   return (
-    <details
-      className="field-wide trip-content-editor"
-      onToggle={(event) => {
-        if (event.currentTarget.open && pdfSource && pdf?.key !== pdfSource.pdfKey) void loadPdf(pdfSource.pdfKey);
-      }}
-    >
-      <summary>
-        <span>行程內容（每日行程、費用說明、常見問題）</span>
-        <small>{filled.length ? `已填：${filled.join("・")}` : "選填・每日行程與費用說明會自動從上傳的 PDF 整理"}</small>
-      </summary>
+    <div className="trip-content-editor">
+      <div className="trip-content-head">
+        <h3>每日行程、費用說明與常見問題</h3>
+        <small>{filled.length ? `已手動填寫：${filled.join("・")}` : "選填・每日行程與費用說明會自動從上傳的 PDF 整理"}</small>
+      </div>
 
       <div className="trip-content-body">
         <p className="trip-content-intro">
@@ -238,7 +249,7 @@ export function TripContentEditor({
           planLabel={pdfSource?.planLabel ?? ""}
           lookup={pdfLookup}
           manualDays={days.length}
-          onRecheck={() => pdfSource && void loadPdf(pdfSource.pdfKey)}
+          onRecheck={() => void recheckPdf()}
           onCopy={copyFromPdf}
           onClear={clearManual}
         />
@@ -353,6 +364,6 @@ export function TripContentEditor({
           </button>
         </div>
       </div>
-    </details>
+    </div>
   );
 }
