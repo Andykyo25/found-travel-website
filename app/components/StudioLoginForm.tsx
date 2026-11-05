@@ -30,6 +30,8 @@ export function StudioLoginForm() {
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error ?? "登入失敗");
+      // 刻意整頁重新載入：剛拿到的登入 cookie 要讓伺服器端重新判斷，後台才不會沿用登入前的畫面。
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/studio");
     } catch (error) {
       setStatus({
