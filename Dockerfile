@@ -11,7 +11,6 @@ COPY . .
 # 正式網域的轉址規則（www 與 Railway 臨時網域轉到 SITE_URL）在 next build 時產生。
 # Railway 只把 Dockerfile 用 ARG 宣告的變數帶進建置階段，沒宣告的話轉址規則會是空的。
 ARG SITE_URL
-ARG RAILWAY_PUBLIC_DOMAIN
 RUN npm run build
 
 FROM node:24-alpine AS runner

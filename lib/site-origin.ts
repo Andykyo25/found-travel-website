@@ -26,6 +26,12 @@ export function alternateSiteHost(origin: string) {
   return hostname.startsWith("www.") ? hostname.slice(4) : `www.${hostname}`;
 }
 
+/**
+ * Railway 配發的臨時網域（例如 found-travel-website-production.up.railway.app）。
+ * 不靠 RAILWAY_PUBLIC_DOMAIN：接上自訂網域後它可能變成自訂網域，建置時也不一定有值。
+ */
+export const railwayHostPattern = "[^.]+\\.up\\.railway\\.app";
+
 /** next.config 的 has.host 是正規表示式（Next 會自動加上 ^ 與 $），點要跳脫。 */
 export function exactHostPattern(hostname: string) {
   return hostname.replaceAll(".", "\\.");

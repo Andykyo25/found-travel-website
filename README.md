@@ -180,11 +180,12 @@ LINE 使用固定 retry key，Webhook 帶有 `Idempotency-Key`，接收端需依
 
 正式網域是 `https://tabiyoi.com`（Cloudflare 購買與代管 DNS，Proxy 開啟、SSL 模式 Full），
 Railway Variables 的 `SITE_URL` 設成 `https://tabiyoi.com`（HTTPS origin，不含路徑）。
-`www.tabiyoi.com` 與 Railway 臨時網域 `RAILWAY_PUBLIC_DOMAIN` 的公開頁面會 308 轉到正式網域，
+`www.tabiyoi.com` 與 Railway 臨時網域（`*.up.railway.app`）的公開頁面會 308 轉到正式網域，
 API 與後台路徑維持原有路由；臨時網域維持禁止搜尋引擎索引。
 
-轉址規則在 `next build` 時產生，所以 `Dockerfile` 的建置階段用 `ARG` 宣告了 `SITE_URL` 與
-`RAILWAY_PUBLIC_DOMAIN`（Railway 只把有宣告的變數帶進建置）；改 `SITE_URL` 後要重新部署才會生效。
+轉址規則在 `next build` 時產生，所以 `Dockerfile` 的建置階段用 `ARG SITE_URL` 宣告
+（Railway 只把有宣告的變數帶進建置）；改 `SITE_URL` 後要重新部署才會生效。
+臨時網域用固定樣式比對，不依賴 `RAILWAY_PUBLIC_DOMAIN`：接上自訂網域後它可能變成自訂網域。
 
 ## 本地預覽
 

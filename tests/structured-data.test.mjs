@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { defaultSiteContent, normalizeSiteContent } from "../lib/site-content.ts";
-import { alternateSiteHost, exactHostPattern } from "../lib/site-origin.ts";
+import { alternateSiteHost, exactHostPattern, railwayHostPattern } from "../lib/site-origin.ts";
 import {
   agencyId,
   breadcrumbJsonLd,
@@ -144,7 +144,13 @@ test("www and bare domains redirect to whichever one SITE_URL picks", async () =
   const dockerfile = await readFile(new URL("../Dockerfile", import.meta.url), "utf8");
   const builder = dockerfile.slice(dockerfile.indexOf("AS builder"), dockerfile.indexOf("RUN npm run build"));
   assert.match(builder, /^ARG SITE_URL$/m);
-  assert.match(builder, /^ARG RAILWAY_PUBLIC_DOMAIN$/m);
+  // Railway 臨時網域用固定的樣式比對，不靠 RAILWAY_PUBLIC_DOMAIN（接上自訂網域後可能變成自訂網域）。
+  const railway = new RegExp(`^${railwayHostPattern}$`);
+  assert.equal(railway.test("found-travel-website-production.up.railway.app"), true);
+  for (const host of ["tabiyoi.com", "www.tabiyoi.com", "a.up.railway.app.evil.com", "up.railway.app"]) {
+    assert.equal(railway.test(host), false, host);
+  }
+  assert.doesNotMatch(config, /RAILWAY_PUBLIC_DOMAIN/);
 });
 
 test("public pages publish structured data for the agency, trips and breadcrumbs", async () => {
