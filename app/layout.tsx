@@ -17,9 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase,
-    // 首頁標題放上搜尋會用的詞（目的地、跟團、客製）；品牌標語留給社群分享的 openGraph。
+    // 首頁標題放服務類型（跟團、客製、員工旅遊），不列國家，免得像只做某幾區；目的地交給各行程頁。
+    // 品牌標語留給社群分享的 openGraph。
     title: {
-      default: "找到了旅行社｜日本・韓國・歐洲跟團與客製旅遊",
+      default: "找到了旅行社｜出國跟團・客製旅遊・員工旅遊",
       template: "%s｜找到了旅行社",
     },
     description: siteDescription,

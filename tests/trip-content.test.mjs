@@ -69,7 +69,9 @@ test("saved trips keep slugs, itinerary, costs and FAQs, and old trips stay unch
   assert.deepEqual(first.itinerary.map((day) => [day.id, day.title]), [["d1", "台北→東京"], ["day-3", "箱根"]]);
   assert.equal(first.includes, "機票\n住宿");
   assert.deepEqual(first.faqs.map((faq) => faq.question), ["幾月去最好？"]);
-  for (const key of ["slug", "itinerary", "includes", "excludes", "notes", "faqs"]) {
+  // 沒填代稱的舊行程會自動產生代稱，其他新欄位不會憑空出現。
+  assert.equal(untouched.slug, "hokkaido-flower-fields-7d");
+  for (const key of ["slugManual", "previousSlugs", "itinerary", "includes", "excludes", "notes", "faqs"]) {
     assert.equal(key in untouched, false, `${key} should not be added to trips without it`);
   }
 });

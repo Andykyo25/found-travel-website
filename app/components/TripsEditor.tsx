@@ -11,6 +11,7 @@ import type {
 } from "@/lib/site-content";
 import { parseDepartureDate, formatDepartureDate, upcomingDepartures, formatPrice, cleanTripSlug, typingTripSlug, tripPath } from "@/lib/trip-values";
 import { TripContentEditor } from "./TripContentEditor";
+import { suggestTripSlug, uniqueTripSlug } from "@/lib/trip-slug";
 import { addDepartureBatch, type DepartureBatchRow } from "@/lib/departure-batch";
 import { firstUnfinishedTrip, tripDraftProblems } from "@/lib/trip-validation";
 import {
@@ -246,6 +247,22 @@ export function TripsEditor({
       ),
     }));
     markChanged();
+  };
+
+  // 沒手動改過代稱的行程，代稱跟著名稱、天數、地區自動更新（避開其他行程已用的代稱）。
+  const autoTripSlug = (index: number, trip: Pick<Trip, "title" | "region" | "days">) =>
+    uniqueTripSlug(
+      suggestTripSlug(trip),
+      draft.trips.filter((_, tripIndex) => tripIndex !== index).map((other) => cleanTripSlug(other.slug ?? "")),
+    );
+  const updateTripNaming = (index: number, key: "title" | "days" | "region", value: string) => {
+    const trip = draft.trips[index];
+    const change: Partial<Trip> =
+      key === "title" ? { title: value } : key === "days" ? { days: value } : { region: value };
+    patchTrip(
+      index,
+      trip.slugManual ? change : { ...change, slug: autoTripSlug(index, { ...trip, ...change }) },
+    );
   };
 
   const updateTripPlans = (
@@ -960,7 +977,7 @@ export function TripsEditor({
                         placeholder="例如：東京慢旅 5日"
                         value={trip.title}
                         onChange={(event) =>
-                          updateTrip(index, "title", event.target.value)
+                          updateTripNaming(index, "title", event.target.value)
                         }
                       />
                     </Field>
@@ -970,7 +987,7 @@ export function TripsEditor({
                         placeholder="例如：5日"
                         value={trip.days}
                         onChange={(event) =>
-                          updateTrip(index, "days", event.target.value)
+                          updateTripNaming(index, "days", event.target.value)
                         }
                       />
                     </Field>
@@ -996,7 +1013,7 @@ export function TripsEditor({
                         placeholder="例如：東京・箱根"
                         value={trip.region}
                         onChange={(event) =>
-                          updateTrip(index, "region", event.target.value)
+                          updateTripNaming(index, "region", event.target.value)
                         }
                       />
                     </Field>
@@ -1116,22 +1133,51 @@ export function TripsEditor({
                         }
                       />
                     </Field>
-                    <Field
-                      label="網址代稱（英文，選填）"
-                      hint={`行程頁網址：${tripPath({ id: trip.id, slug: cleanTripSlug(trip.slug ?? "") })}。只能用英文小寫、數字和 -，例如 hokkaido-icebreaker-6d。上線後請不要再改，改了之前分享出去的連結會失效。`}
-                      wide
-                    >
-                      <input
-                        inputMode="url"
-                        autoCapitalize="off"
-                        spellCheck={false}
-                        placeholder="例如：hokkaido-icebreaker-6d"
-                        value={trip.slug ?? ""}
-                        onChange={(event) =>
-                          patchTrip(index, { slug: typingTripSlug(event.target.value) })
-                        }
-                      />
-                    </Field>
+                    {(() => {
+                      const autoSlug = autoTripSlug(index, trip);
+                      const effectiveSlug = cleanTripSlug(trip.slug ?? "") || autoSlug;
+                      return (
+                        <div className="field field-wide slug-field" role="group" aria-label="網址代稱">
+                          <span>網址代稱（英文）</span>
+                          <small>
+                            行程頁網址：{tripPath({ id: trip.id, slug: effectiveSlug })}
+                            {trip.slugManual
+                              ? "。目前是手動設定，改行程名稱不會跟著變。"
+                              : "。依行程名稱自動產生，改名稱會跟著更新；直接修改這格就改成手動。"}
+                            改了之後，舊網址會自動轉到新網址。
+                          </small>
+                          <div className="slug-field-row">
+                            <input
+                              aria-label="網址代稱"
+                              inputMode="url"
+                              autoCapitalize="off"
+                              spellCheck={false}
+                              placeholder={autoSlug ? `自動：${autoSlug}` : "例如：hokkaido-icebreaker-6d"}
+                              value={trip.slug ?? ""}
+                              onChange={(event) => {
+                                const slug = typingTripSlug(event.target.value);
+                                // 清空就回到自動產生；有輸入就視為手動設定。
+                                patchTrip(index, slug ? { slug, slugManual: true } : { slug: "", slugManual: false });
+                              }}
+                            />
+                            {trip.slugManual ? (
+                              <button
+                                type="button"
+                                className="button button-secondary button-small"
+                                onClick={() => patchTrip(index, { slug: autoSlug, slugManual: false })}
+                              >
+                                改回自動產生
+                              </button>
+                            ) : null}
+                          </div>
+                          {!effectiveSlug ? (
+                            <small className="slug-field-warn">
+                              名稱裡沒有對照得到的地名或主題，網址會先用系統編號；可以直接在這格輸入英文代稱。
+                            </small>
+                          ) : null}
+                        </div>
+                      );
+                    })()}
                     <TripContentEditor
                       trip={trip}
                       onChange={(patch) => patchTrip(index, patch)}

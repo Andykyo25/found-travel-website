@@ -1,5 +1,6 @@
 import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
 import { cleanTripSlug, formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
+import { carryPreviousSlugs, suggestTripSlug, uniqueTripSlug } from "@/lib/trip-slug";
 import { applyAutoPrices } from "@/lib/trip-summary";
 import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
 import { cache } from "react";
@@ -58,8 +59,12 @@ export type TripFaq = { id: string; question: string; answer: string };
 
 export type Trip = {
   id: string;
-  /** 網址代稱（小寫英文、數字、-）；空白時網址用行程 ID。 */
+  /** 網址代稱（小寫英文、數字、-）。沒填時依行程名稱自動產生；仍對照不到才用行程 ID。 */
   slug?: string;
+  /** 業務手動改過代稱：之後改行程名稱不會再自動更新代稱。 */
+  slugManual?: boolean;
+  /** 以前用過的代稱，舊連結會轉到目前的網址。儲存時自動記錄。 */
+  previousSlugs?: string[];
   /** 每日行程。放在網頁上，旅客與搜尋引擎不必打開 PDF 就讀得到。 */
   itinerary?: TripDay[];
   /** 費用包含／不含、注意事項：每行一項。 */
@@ -463,11 +468,30 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       ];
     });
 
-    // 代稱重複時（後台會擋，這裡防舊資料）後面的行程加上 -2、-3。
-    const baseSlug = cleanTripSlug(safeOptionalString(source.slug, 120));
-    let slug = baseSlug;
-    for (let suffix = 2; slug && usedSlugs.has(slug); suffix += 1) slug = `${baseSlug}-${suffix}`;
+    // 代稱：有存就用存的；沒有就依名稱自動產生（下次儲存時寫入）。
+    // 重複時（後台會擋，這裡防舊資料與自動產生的撞名）後面的行程加上 -2、-3。
+    const storedSlug = cleanTripSlug(safeOptionalString(source.slug, 120));
+    const slug = uniqueTripSlug(
+      storedSlug ||
+        suggestTripSlug({
+          title: safeString(source.title, fallback.title, 100),
+          region: safeString(source.region, fallback.region, 60),
+          days: safeString(source.days, fallback.days, 20),
+        }),
+      usedSlugs,
+    );
     if (slug) usedSlugs.add(slug);
+    const slugManual = source.slugManual === true && Boolean(storedSlug);
+    const previousSlugs = Array.isArray(source.previousSlugs)
+      ? [
+          ...new Set(
+            source.previousSlugs
+              .filter((value): value is string => typeof value === "string")
+              .map(cleanTripSlug)
+              .filter((value) => value && value !== slug),
+          ),
+        ].slice(0, 10)
+      : [];
     const itinerary = normalizeItinerary(source.itinerary);
     const includes = safeOptionalString(source.includes, 3000);
     const excludes = safeOptionalString(source.excludes, 3000);
@@ -479,6 +503,8 @@ export function normalizeSiteContent(value: unknown): SiteContent {
         id,
         // 新欄位只在有內容時寫入，舊行程的資料形狀維持不變。
         ...(slug ? { slug } : {}),
+        ...(slugManual ? { slugManual } : {}),
+        ...(previousSlugs.length ? { previousSlugs } : {}),
         ...(itinerary.length ? { itinerary } : {}),
         ...(includes ? { includes } : {}),
         ...(excludes ? { excludes } : {}),
@@ -692,7 +718,11 @@ export async function saveSiteContent(
   if (process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1") {
     throw new Error("本機設計預覽不接受內容儲存");
   }
-  const content = normalizeSiteContent(value);
+  // 代稱改了（手動或跟著名稱自動更新）就把舊的記下來，舊連結才轉得過去。
+  const content = carryPreviousSlugs(
+    normalizeSiteContent(value),
+    previous && typeof previous === "object" ? normalizeSiteContent(previous) : null,
+  );
   const previousTime =
     previous &&
     typeof previous === "object" &&

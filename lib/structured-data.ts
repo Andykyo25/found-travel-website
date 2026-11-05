@@ -10,7 +10,7 @@ type JsonLdObject = Record<string, unknown>;
 const officeGeo = { latitude: 25.0816567, longitude: 121.5638093 };
 
 export const siteDescription =
-  "找到了旅行社是台北內湖的綜合旅行社，提供日本、韓國、歐洲精選跟團，以及親友自組客製與企業員工旅遊。線上查看出發團期、團費與完整行程，LINE 即時諮詢。";
+  "找到了旅行社是台北內湖的綜合旅行社，提供出國精選跟團、親友自組客製旅遊與企業員工旅遊。線上查看出發團期、團費與完整行程，LINE 即時諮詢。";
 
 /** 全站共用的公司實體 ID，其他頁面的行程、文章用它指回同一家旅行社。 */
 export function agencyId(origin: string) {

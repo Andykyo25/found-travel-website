@@ -65,12 +65,16 @@ export function tripPath(trip: { id: string; slug?: string }) {
   return `/trips/${encodeURIComponent(trip.slug || trip.id)}`;
 }
 
-/** 網址列上的代稱或舊連結裡的行程 ID，都能找到同一個行程；代稱優先。 */
-export function findTripByPathKey<T extends { id: string; slug?: string }>(
+/** 網址列上的代稱、行程 ID 或以前用過的代稱，都能找到同一個行程；目前的代稱優先。 */
+export function findTripByPathKey<T extends { id: string; slug?: string; previousSlugs?: string[] }>(
   trips: T[],
   key: string,
 ) {
-  return trips.find((trip) => trip.slug && trip.slug === key) ?? trips.find((trip) => trip.id === key);
+  return (
+    trips.find((trip) => trip.slug && trip.slug === key) ??
+    trips.find((trip) => trip.id === key) ??
+    trips.find((trip) => trip.previousSlugs?.includes(key))
+  );
 }
 
 /** 輸入中的代稱：轉小寫、空白換成 -、去掉其他字元（保留尾端的 -，才打得出 a-b）。 */
