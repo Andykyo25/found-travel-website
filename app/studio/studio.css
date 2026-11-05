@@ -206,6 +206,19 @@
 .trip-content-paste > summary { padding: 12px 0; cursor: pointer; color: var(--sage-deep); font-size: 13px; font-weight: 800; }
 .trip-content-status { margin: 8px 0 12px; color: var(--sage-deep); font-size: 13px; font-weight: 700; }
 .trip-content-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.trip-pdf-preview { margin-top: 16px; padding: 0 14px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.trip-pdf-preview h4 { margin: 14px 0 4px; }
+.trip-pdf-summary { margin: 6px 0 0; font-size: 13.5px; line-height: 1.6; }
+.trip-pdf-summary strong { color: var(--sage-deep); }
+.trip-pdf-days { margin-top: 10px; }
+.trip-pdf-days > summary { cursor: pointer; color: var(--sage-deep); font-size: 13px; font-weight: 800; }
+.trip-pdf-days ol { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.trip-pdf-days li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
+.trip-pdf-days li b { white-space: nowrap; }
+.trip-pdf-days li span { overflow-wrap: anywhere; }
+.trip-pdf-days li small { grid-column: 2; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.trip-pdf-costs p { margin: 8px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--muted); }
+.trip-pdf-costs b { margin-right: 8px; color: var(--ink); }
 .trip-day-editor-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .trip-day-editor { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .trip-day-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }

@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { tripPdfTextKey } from "../lib/storage-keys.ts";
-import { resolveTripItinerary } from "../lib/trip-itinerary.ts";
+import { tripPdfKeyFromDocumentUrl, tripPdfTextKey } from "../lib/storage-keys.ts";
+import { copyPdfContent, resolveTripItinerary } from "../lib/trip-itinerary.ts";
+import { tripPdfSource } from "../lib/trip-plans.ts";
 import { normalizePdfTripContent, parseTripPdfPages, pdfTripContentVersion } from "../lib/trip-pdf-extract.ts";
 
 // 一行文字（pdf.js 的 text item）：x、y 是左下角座標，y 越大越上面。
@@ -127,4 +128,46 @@ test("PDF text is stored next to its PDF and extracted on upload or on first vie
   assert.match(content, /after\(\(\) => storeTripPdfText\(pdfKey\)\)/);
   assert.match(tripPage, /resolveTripItinerary\(trip, await getTripPdfItinerary\(trip\)\)/);
   assert.match(tripPage, /tripJsonLd\(\{ \.\.\.trip, itinerary: itinerary\.days \}/);
+});
+
+test("the studio previews the PDF that the trip page uses and can copy it into editable fields", async () => {
+  const key = (n) => `trip-pdfs/176000000000${n}-123e4567-e89b-12d3-a456-426614174000.pdf`;
+  const plan = (id, documentType, documentUrl, extra = {}) => ({ id, airline: "", title: "", documentName: "", documentType, documentUrl, ...extra });
+  const url = (n) => `/api/trip-pdf?key=${encodeURIComponent(key(n))}`;
+
+  assert.equal(tripPdfSource({ plans: [] }, tripPdfKeyFromDocumentUrl), null);
+  assert.equal(tripPdfSource({ plans: [plan("a", "drive", "https://drive.google.com/x")] }, tripPdfKeyFromDocumentUrl), null);
+  assert.deepEqual(tripPdfSource({ plans: [plan("a", "pdf", url(1))] }, tripPdfKeyFromDocumentUrl), { pdfKey: key(1), planLabel: "" });
+  // 好幾個版本：用第一個附 PDF 的版本，並標出版本名稱；還沒上傳的版本不算。
+  assert.deepEqual(
+    tripPdfSource(
+      { plans: [plan("draft", "pdf", ""), plan("a", "drive", "https://drive.google.com/x"), plan("b", "pdf", url(2), { airline: "易斯達航空", title: "賞楓五日" })] },
+      tripPdfKeyFromDocumentUrl,
+    ),
+    { pdfKey: key(2), planLabel: "易斯達航空｜賞楓五日" },
+  );
+
+  let next = 0;
+  const copied = copyPdfContent(
+    { days: [{ day: 1, title: "台北→首爾", description: "說明", meals: "早：—", hotel: "仁川" }], includes: ["機票", "住宿"], excludes: [] },
+    () => `id-${++next}`,
+  );
+  assert.deepEqual(copied, {
+    itinerary: [{ id: "id-1", title: "台北→首爾", description: "說明", meals: "早：—", hotel: "仁川" }],
+    includes: "機票\n住宿",
+    excludes: "",
+  });
+
+  const [route, editor, content] = await Promise.all(
+    ["../app/api/studio/pdf-text/route.ts", "../app/components/TripContentEditor.tsx", "../lib/trip-pdf-content.ts"].map((file) =>
+      readFile(new URL(file, import.meta.url), "utf8"),
+    ),
+  );
+  assert.match(route, /getStudioUserFromRequest\(request\)/);
+  assert.match(route, /isTripPdfKey\(key\)/);
+  assert.match(editor, /onToggle=/);
+  assert.match(editor, /\/api\/studio\/pdf-text\?key=/);
+  assert.match(editor, /copyPdfContent\(pdfLookup\.content, newId\)/);
+  assert.match(editor, /onChange\(\{ itinerary: \[\], includes: "", excludes: "" \}\)/);
+  assert.match(content, /tripPdfSource\(trip, pdfKeyOf\)/);
 });

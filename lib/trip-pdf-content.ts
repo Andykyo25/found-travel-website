@@ -14,8 +14,9 @@ import {
   parseTripPdfPages,
   type PdfTextPage,
   type PdfTripContent,
+  type TripPdfTextStatus,
 } from "@/lib/trip-pdf-extract";
-import { publishedTripPlans, tripPlanLabel } from "@/lib/trip-plans";
+import { tripPdfSource } from "@/lib/trip-plans";
 
 // 行程 PDF 上傳後自動擷取一次，結果存在 Bucket（trip-pdf-text/）。
 // PDF 檔名不會重複也不會被覆寫，所以同一份 PDF 的結果永遠有效，伺服器記憶體也留一份。
@@ -107,40 +108,54 @@ async function readPreviewText(pdfKey: string) {
   }
 }
 
-async function readTripPdfText(pdfKey: string): Promise<PdfTripContent | null> {
+type Lookup = { content: PdfTripContent } | { missing: true } | { unavailable: true };
+
+async function lookupTripPdfText(pdfKey: string): Promise<Lookup> {
   const cached = remembered.get(pdfKey);
-  if (cached) return cached;
-  if (isDesignPreview()) return readPreviewText(pdfKey);
-  if (!isRailwayStorageConfigured()) return null;
+  if (cached) return { content: cached };
+  if (isDesignPreview()) {
+    const content = await readPreviewText(pdfKey);
+    return content ? { content } : { missing: true };
+  }
+  if (!isRailwayStorageConfigured()) return { unavailable: true };
 
   try {
     const stored = normalizePdfTripContent(await readTripPdfTextObject(pdfKey));
     if (stored) {
       remember(pdfKey, stored);
-      return stored;
+      return { content: stored };
     }
   } catch (error) {
     console.error("Unable to read trip PDF text", pdfKey, error);
-    return null;
+    return { unavailable: true };
   }
 
   // 還沒擷取過（或擷取規則改版）：回應送出後在背景補抓，下一位訪客就看得到。
-  const lastFailure = failedAt.get(pdfKey) ?? 0;
-  if (!extracting.has(pdfKey) && Date.now() - lastFailure > retryAfterMs) {
+  if (!extracting.has(pdfKey) && !recentlyFailed(pdfKey)) {
     after(() => storeTripPdfText(pdfKey));
   }
-  return null;
+  return { missing: true };
+}
+
+function recentlyFailed(pdfKey: string) {
+  return Date.now() - (failedAt.get(pdfKey) ?? 0) <= retryAfterMs;
 }
 
 /** 行程頁用：第一個附 PDF 的版本擷取出的內容。有多個版本時一併回傳版本名稱。 */
 export async function getTripPdfItinerary(trip: Trip) {
-  const plans = publishedTripPlans(trip);
-  for (const plan of plans) {
-    const pdfKey = plan.documentType === "pdf" ? pdfKeyOf(plan.documentUrl) : null;
-    if (!pdfKey) continue;
-    const content = await readTripPdfText(pdfKey);
-    if (!content) return null;
-    return { content, planLabel: plans.length > 1 ? tripPlanLabel(plan) || plan.documentName : "" };
+  const source = tripPdfSource(trip, pdfKeyOf);
+  if (!source) return null;
+  const found = await lookupTripPdfText(source.pdfKey);
+  return "content" in found ? { content: found.content, planLabel: source.planLabel } : null;
+}
+
+/** 後台用：某份 PDF 的整理結果與狀態。還沒整理過會在背景開始整理。 */
+export async function getTripPdfTextStatus(pdfKey: string): Promise<TripPdfTextStatus> {
+  const found = await lookupTripPdfText(pdfKey);
+  if ("content" in found) {
+    // 跟行程頁同一個門檻：只抓到一天多半是排版沒認出來，行程頁不會顯示。
+    return found.content.days.length >= 2 ? { status: "ready", content: found.content } : { status: "unreadable" };
   }
-  return null;
+  if ("unavailable" in found) return { status: "unavailable" };
+  return recentlyFailed(pdfKey) && !extracting.has(pdfKey) ? { status: "failed" } : { status: "processing" };
 }

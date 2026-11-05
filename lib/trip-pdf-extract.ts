@@ -16,6 +16,18 @@ export type PdfTripContent = {
 
 export const pdfTripContentVersion = 1;
 
+/** 後台查詢某份 PDF 的整理結果。 */
+export type TripPdfTextStatus =
+  | { status: "ready"; content: PdfTripContent }
+  /** 整理過，但讀不到每日行程（掃描檔或沒認出的排版）。 */
+  | { status: "unreadable" }
+  /** 還在背景整理。 */
+  | { status: "processing" }
+  /** 整理時出錯，稍後會自動重試。 */
+  | { status: "failed" }
+  /** 儲存空間暫時讀不到。 */
+  | { status: "unavailable" };
+
 const cjk = "\\u3400-\\u9fff";
 const spacedCjk = new RegExp(`(?:[${cjk}] ){2,}[${cjk}]`, "g");
 const spacedHotelChars = new RegExp(`(^|\\s)([${cjk}]) ([${cjk}])(?=\\s)`, "g");

@@ -2,8 +2,132 @@
 
 import { useState } from "react";
 import type { Trip, TripDay, TripFaq } from "@/lib/site-content";
-import { parseItineraryText } from "@/lib/trip-itinerary";
+import { copyPdfContent, parseItineraryText } from "@/lib/trip-itinerary";
+import type { TripPdfTextStatus } from "@/lib/trip-pdf-extract";
+import { tripPdfSource } from "@/lib/trip-plans";
+import { tripPdfKeyFromDocumentUrl } from "@/lib/storage-keys";
 import { Field } from "./StudioDraft";
+
+type PdfLookup = TripPdfTextStatus | { status: "loading" };
+
+// 上傳的行程 PDF 自動整理出的內容。業務在這裡確認抓得對不對，有錯再複製到下方修改。
+function TripPdfPreview({
+  hasPdf,
+  planLabel,
+  lookup,
+  manualDays,
+  onRecheck,
+  onCopy,
+  onClear,
+}: {
+  hasPdf: boolean;
+  planLabel: string;
+  lookup: PdfLookup | null;
+  manualDays: number;
+  onRecheck: () => void;
+  onCopy: () => void;
+  onClear: () => void;
+}) {
+  const recheck = (
+    <button type="button" className="button button-secondary button-small" onClick={onRecheck}>
+      重新檢查
+    </button>
+  );
+  let body;
+  if (!hasPdf) {
+    body = <p className="trip-content-intro">這個行程還沒有上傳 PDF。上傳後，系統會自動整理出每日行程放在行程頁。</p>;
+  } else if (!lookup || lookup.status === "loading") {
+    body = <p className="trip-content-intro">正在讀取 PDF 的整理結果…</p>;
+  } else if (lookup.status === "processing") {
+    body = (
+      <>
+        <p className="trip-content-intro">PDF 正在整理中，通常幾秒鐘就好，請稍後按「重新檢查」。</p>
+        <div className="trip-content-actions">{recheck}</div>
+      </>
+    );
+  } else if (lookup.status === "failed") {
+    body = <p className="trip-content-intro">這份 PDF 整理時出錯，系統 10 分鐘後會自動再試。需要的話可以先在下方手動填寫。</p>;
+  } else if (lookup.status === "unreadable") {
+    body = (
+      <p className="trip-content-intro">
+        這份 PDF 讀不到每日行程（可能是掃描檔，或排版系統還認不出來），行程頁只會放 PDF。需要的話請在下方手動填寫。
+      </p>
+    );
+  } else if (lookup.status === "unavailable") {
+    body = (
+      <>
+        <p className="trip-content-intro">暫時讀不到整理結果，請稍後再試。</p>
+        <div className="trip-content-actions">{recheck}</div>
+      </>
+    );
+  } else {
+    const { days, includes, excludes } = lookup.content;
+    const costs = [includes.length ? `費用包含 ${includes.length} 項` : "", excludes.length ? `不含 ${excludes.length} 項` : ""].filter(Boolean);
+    body = (
+      <>
+        <p className="trip-pdf-summary">
+          <strong>已整理出 {days.length} 天</strong>
+          {costs.length ? `・${costs.join("・")}` : ""}
+          {planLabel ? `（來源：「${planLabel}」的 PDF）` : ""}
+        </p>
+        <p className="trip-content-intro">
+          {manualDays
+            ? "目前行程頁用的是下方手動填寫的每日行程，不是這份。"
+            : "行程頁目前就是顯示這份內容，不用另外填。有錯的話按「複製到下方修改」。"}
+        </p>
+        <details className="trip-pdf-days">
+          <summary>查看每天的標題、餐食與住宿</summary>
+          <ol>
+            {days.map((day) => (
+              <li key={day.day}>
+                <b>第 {day.day} 天</b>
+                <span>{day.title || "（沒抓到標題）"}</span>
+                <small>
+                  餐食：{day.meals || "—"}
+                  <br />
+                  住宿：{day.hotel || "—"}
+                </small>
+              </li>
+            ))}
+          </ol>
+          {includes.length || excludes.length ? (
+            <div className="trip-pdf-costs">
+              {includes.length ? (
+                <p>
+                  <b>費用包含</b>
+                  {includes.join("／")}
+                </p>
+              ) : null}
+              {excludes.length ? (
+                <p>
+                  <b>費用不含</b>
+                  {excludes.join("／")}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </details>
+        <div className="trip-content-actions">
+          <button type="button" className="button button-secondary button-small" onClick={onCopy}>
+            複製到下方修改
+          </button>
+          {manualDays ? (
+            <button type="button" className="button button-secondary button-small" onClick={onClear}>
+              清空手動內容，改回自動整理
+            </button>
+          ) : null}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <section className="trip-pdf-preview" aria-live="polite">
+      <h4>從 PDF 自動整理</h4>
+      {body}
+    </section>
+  );
+}
 
 const newId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -30,6 +154,36 @@ export function TripContentEditor({
   const faqs = trip.faqs ?? [];
   const [paste, setPaste] = useState("");
   const [pasteMessage, setPasteMessage] = useState("");
+  const pdfSource = tripPdfSource(trip, tripPdfKeyFromDocumentUrl);
+  const [pdf, setPdf] = useState<{ key: string; lookup: PdfLookup } | null>(null);
+
+  // 打開這個區塊時才去查 PDF 的整理結果，進後台時不會一次查十幾個行程。
+  const loadPdf = async (key: string) => {
+    setPdf({ key, lookup: { status: "loading" } });
+    try {
+      const response = await fetch(`/api/studio/pdf-text?key=${encodeURIComponent(key)}`, { cache: "no-store" });
+      const result = (await response.json()) as TripPdfTextStatus;
+      setPdf({ key, lookup: response.ok && result && "status" in result ? result : { status: "unavailable" } });
+    } catch {
+      setPdf({ key, lookup: { status: "unavailable" } });
+    }
+  };
+  const pdfLookup = pdfSource && pdf?.key === pdfSource.pdfKey ? pdf.lookup : null;
+
+  const copyFromPdf = () => {
+    if (pdfLookup?.status !== "ready") return;
+    const hasManual = days.length > 0 || Boolean(trip.includes?.trim()) || Boolean(trip.excludes?.trim());
+    if (hasManual && !window.confirm("會用 PDF 整理的內容，取代下方已填的每日行程與費用說明。確定嗎？")) return;
+    onChange(copyPdfContent(pdfLookup.content, newId));
+    setPasteMessage(
+      `已複製 ${pdfLookup.content.days.length} 天到下方。改好後按「儲存並更新網站」；之後行程頁就用這裡的內容，換新 PDF 也不會自動更新。要回到自動整理，按「清空手動內容，改回自動整理」。`,
+    );
+  };
+  const clearManual = () => {
+    if (!window.confirm("清空下方的每日行程與費用說明，行程頁改回顯示 PDF 自動整理的內容？（注意事項與常見問題不受影響）")) return;
+    onChange({ itinerary: [], includes: "", excludes: "" });
+    setPasteMessage("已清空。按「儲存並更新網站」後，行程頁就會改回顯示 PDF 自動整理的內容。");
+  };
 
   const setDays = (itinerary: TripDay[]) => onChange({ itinerary });
   const updateDay = (index: number, key: keyof Omit<TripDay, "id">, value: string) =>
@@ -62,7 +216,12 @@ export function TripContentEditor({
   ].filter(Boolean);
 
   return (
-    <details className="field-wide trip-content-editor">
+    <details
+      className="field-wide trip-content-editor"
+      onToggle={(event) => {
+        if (event.currentTarget.open && pdfSource && pdf?.key !== pdfSource.pdfKey) void loadPdf(pdfSource.pdfKey);
+      }}
+    >
       <summary>
         <span>行程內容（每日行程、費用說明、常見問題）</span>
         <small>{filled.length ? `已填：${filled.join("・")}` : "選填・每日行程與費用說明會自動從上傳的 PDF 整理"}</small>
@@ -74,7 +233,22 @@ export function TripContentEditor({
           只有自動整理的內容有錯、想改寫，或要加常見問題時才需要填；這裡填了就以這裡為準。
         </p>
 
-        <h4>每日行程</h4>
+        <TripPdfPreview
+          hasPdf={Boolean(pdfSource)}
+          planLabel={pdfSource?.planLabel ?? ""}
+          lookup={pdfLookup}
+          manualDays={days.length}
+          onRecheck={() => pdfSource && void loadPdf(pdfSource.pdfKey)}
+          onCopy={copyFromPdf}
+          onClear={clearManual}
+        />
+        {pasteMessage ? (
+          <p className="trip-content-status" role="status">
+            {pasteMessage}
+          </p>
+        ) : null}
+
+        <h4>手動填寫每日行程</h4>
         <details className="trip-content-paste">
           <summary>從 PDF 複製整段行程，自動拆成每天</summary>
           <Field
@@ -95,11 +269,6 @@ export function TripContentEditor({
             </button>
           </div>
         </details>
-        {pasteMessage ? (
-          <p className="trip-content-status" role="status">
-            {pasteMessage}
-          </p>
-        ) : null}
 
         <ol className="trip-day-editor-list">
           {days.map((day, index) => (

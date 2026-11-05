@@ -20,6 +20,24 @@ export function publishedTripPlans(trip: Trip) {
   return trip.plans.filter((plan) => Boolean(plan.documentUrl));
 }
 
+/**
+ * 每日行程自動擷取用哪份 PDF：第一個附 PDF 的版本。有好幾個版本時一併回傳版本名稱，
+ * 行程頁與後台才說得清楚內容來自哪一版。keyOf 把 PDF 網址換成儲存位置（找不到回傳 null）。
+ */
+export function tripPdfSource(
+  trip: Pick<Trip, "plans">,
+  keyOf: (documentUrl: string) => string | null,
+) {
+  const plans = trip.plans.filter((plan) => Boolean(plan.documentUrl));
+  for (const plan of plans) {
+    const pdfKey = plan.documentType === "pdf" ? keyOf(plan.documentUrl) : null;
+    if (pdfKey) {
+      return { pdfKey, planLabel: plans.length > 1 ? tripPlanLabel(plan) || plan.documentName : "" };
+    }
+  }
+  return null;
+}
+
 export function planAppliesToDeparture(
   plan: TripPlan,
   departureId: string,

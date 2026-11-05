@@ -96,3 +96,21 @@ export function resolveTripItinerary(
     planLabel: usesPdf ? (pdf?.planLabel ?? "") : "",
   };
 }
+
+/** 後台「複製到下方修改」：把 PDF 整理的內容變成可以手動編輯的每日行程與費用說明。 */
+export function copyPdfContent(
+  content: Pick<PdfTripContent, "days" | "includes" | "excludes">,
+  makeId: () => string,
+): Pick<Trip, "itinerary" | "includes" | "excludes"> {
+  return {
+    itinerary: content.days.map((day) => ({
+      id: makeId(),
+      title: day.title,
+      description: day.description,
+      meals: day.meals,
+      hotel: day.hotel,
+    })),
+    includes: content.includes.join("\n"),
+    excludes: content.excludes.join("\n"),
+  };
+}
