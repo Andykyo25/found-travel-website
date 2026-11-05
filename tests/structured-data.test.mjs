@@ -154,7 +154,8 @@ test("public pages publish structured data for the agency, trips and breadcrumbs
     ].map((file) => readFile(new URL(file, import.meta.url), "utf8")),
   );
   assert.match(home, /travelAgencyJsonLd\(content, origin\)/);
-  assert.match(trip, /tripJsonLd\(trip, content, origin/);
+  // 每日行程可能來自 PDF 自動擷取，結構化資料用的是頁面上實際顯示的那一份。
+  assert.match(trip, /tripJsonLd\(\{ \.\.\.trip, itinerary: itinerary\.days \}, content, origin/);
   assert.match(trip, /aria-current="page">\{trip\.title\}/);
   for (const page of [trip, dates, month, article]) assert.match(page, /breadcrumbJsonLd\(/);
   assert.match(layout, /跟團/);

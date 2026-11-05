@@ -13,7 +13,9 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   isContactRequestKey,
   isContentHistoryKey,
+  isTripPdfKey,
   orphanedTripPdfDecision,
+  tripPdfTextKey,
 } from "@/lib/storage-keys";
 
 const contentKey = "content/site-content.json";
@@ -402,6 +404,54 @@ export async function createTripPdfUrl(key: string) {
   } catch {
     return null;
   }
+}
+
+function isMissingObject(error: unknown) {
+  const name = (error as { name?: string } | null)?.name;
+  return error instanceof NoSuchKey || name === "NoSuchKey" || name === "NotFound";
+}
+
+export async function readTripPdfObject(key: string): Promise<Uint8Array | null> {
+  if (!isTripPdfKey(key)) throw new Error("Invalid trip PDF key");
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  try {
+    const result = await storage.client.send(new GetObjectCommand({ Bucket: storage.config.bucket, Key: key }));
+    return (await result.Body?.transformToByteArray()) ?? null;
+  } catch (error) {
+    if (isMissingObject(error)) return null;
+    throw error;
+  }
+}
+
+// 從行程 PDF 自動擷取的內容。回傳未經驗證的原始物件，找不到時回傳 null。
+export async function readTripPdfTextObject(pdfKey: string): Promise<unknown | null> {
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  try {
+    const result = await storage.client.send(
+      new GetObjectCommand({ Bucket: storage.config.bucket, Key: tripPdfTextKey(pdfKey) }),
+    );
+    if (!result.Body) return null;
+    return JSON.parse(await result.Body.transformToString("utf-8")) as unknown;
+  } catch (error) {
+    if (isMissingObject(error)) return null;
+    throw error;
+  }
+}
+
+export async function writeTripPdfTextObject(pdfKey: string, value: unknown) {
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  await storage.client.send(
+    new PutObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: tripPdfTextKey(pdfKey),
+      Body: JSON.stringify(value),
+      ContentType: "application/json; charset=utf-8",
+      CacheControl: "no-store",
+    }),
+  );
 }
 
 export async function uploadHeroImage(bytes: Uint8Array) {

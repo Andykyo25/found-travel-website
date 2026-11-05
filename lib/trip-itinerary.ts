@@ -1,5 +1,8 @@
 // 每日行程與條列內容的共用工具；不 import 伺服器端模組，後台與前台都能用。
 
+import type { Trip, TripDay } from "./site-content";
+import type { PdfTripContent } from "./trip-pdf-extract";
+
 export type ParsedDay = { title: string; description: string; meals: string; hotel: string };
 
 // 「第1天」「第 一 日」「Day 1」「DAY01」「D1」開頭的行視為新的一天。
@@ -46,4 +49,50 @@ export function listLines(text: string | undefined) {
     .split(/\r?\n/)
     .map((line) => line.replace(/^[\s•・·●○◎▪■□◆◇※*\-–—]+/u, "").trim())
     .filter(Boolean);
+}
+
+export type ResolvedItinerary = {
+  days: TripDay[];
+  includes: string[];
+  excludes: string[];
+  /** 每日行程的來源：業務在後台手動填寫，或從行程 PDF 自動擷取。 */
+  source: "manual" | "pdf" | null;
+  /** 從 PDF 擷取、而且行程有好幾個版本時，標出用的是哪個版本。 */
+  planLabel: string;
+};
+
+/**
+ * 行程頁要顯示的每日行程與費用說明。後台手動填的優先；沒填的部分用 PDF 自動擷取的結果。
+ * PDF 只抓到一天多半是格式沒認出來，寧可不顯示。
+ */
+export function resolveTripItinerary(
+  trip: Pick<Trip, "itinerary" | "includes" | "excludes">,
+  pdf: { content: PdfTripContent; planLabel: string } | null,
+): ResolvedItinerary {
+  const manualDays = trip.itinerary ?? [];
+  const pdfDays = pdf && pdf.content.days.length >= 2 ? pdf.content.days : [];
+  const days: TripDay[] = manualDays.length
+    ? manualDays
+    : pdfDays.map((day) => ({
+        id: `pdf-day-${day.day}`,
+        title: day.title,
+        description: day.description,
+        meals: day.meals,
+        hotel: day.hotel,
+      }));
+  const manualIncludes = listLines(trip.includes);
+  const manualExcludes = listLines(trip.excludes);
+  const includes = manualIncludes.length ? manualIncludes : (pdf?.content.includes ?? []);
+  const excludes = manualExcludes.length ? manualExcludes : (pdf?.content.excludes ?? []);
+  const usesPdf =
+    (!manualDays.length && pdfDays.length > 0) ||
+    (!manualIncludes.length && includes.length > 0) ||
+    (!manualExcludes.length && excludes.length > 0);
+  return {
+    days,
+    includes,
+    excludes,
+    source: manualDays.length ? "manual" : pdfDays.length ? "pdf" : null,
+    planLabel: usesPdf ? (pdf?.planLabel ?? "") : "",
+  };
 }

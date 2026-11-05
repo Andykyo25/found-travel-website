@@ -65,13 +65,13 @@ export function TripContentEditor({
     <details className="field-wide trip-content-editor">
       <summary>
         <span>行程內容（每日行程、費用說明、常見問題）</span>
-        <small>{filled.length ? `已填：${filled.join("・")}` : "尚未填寫・會直接顯示在行程頁，搜尋引擎與 AI 也讀得到"}</small>
+        <small>{filled.length ? `已填：${filled.join("・")}` : "選填・每日行程與費用說明會自動從上傳的 PDF 整理"}</small>
       </summary>
 
       <div className="trip-content-body">
         <p className="trip-content-intro">
-          PDF 裡的內容搜尋引擎讀不到。把重點放在這裡，行程頁就會出現「每日行程」「費用說明」「常見問題」區塊；
-          沒填的區塊不會顯示。
+          不用填也可以：上傳行程 PDF 後，系統會自動整理出每日行程、餐食、住宿與費用包含／不含，放在行程頁上。
+          只有自動整理的內容有錯、想改寫，或要加常見問題時才需要填；這裡填了就以這裡為準。
         </p>
 
         <h4>每日行程</h4>

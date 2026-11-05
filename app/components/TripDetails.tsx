@@ -1,5 +1,5 @@
 import type { Trip } from "@/lib/site-content";
-import { listLines } from "@/lib/trip-itinerary";
+import { listLines, type ResolvedItinerary } from "@/lib/trip-itinerary";
 
 function SectionHead({ eyebrow, title, lede }: { eyebrow: string; title: string; lede?: string }) {
   return (
@@ -14,18 +14,22 @@ function SectionHead({ eyebrow, title, lede }: { eyebrow: string; title: string;
   );
 }
 
+function itineraryNote({ source, planLabel }: ResolvedItinerary) {
+  if (source !== "pdf") return "實際航班時間與景點順序，以出發前說明會資料為準。";
+  const plan = planLabel ? `「${planLabel}」版本` : "";
+  return `內容自動整理自${plan}行程 PDF，實際航班、景點順序與住宿以 PDF 及出發前說明會資料為準。`;
+}
+
 /** 每日行程與費用說明：放在方案與團期之前，旅客先看內容再選日期。 */
-export function TripItinerary({ trip }: { trip: Pick<Trip, "itinerary" | "includes" | "excludes"> }) {
-  const days = trip.itinerary ?? [];
-  const includes = listLines(trip.includes);
-  const excludes = listLines(trip.excludes);
+export function TripItinerary({ itinerary }: { itinerary: ResolvedItinerary }) {
+  const { days, includes, excludes, source } = itinerary;
   if (days.length === 0 && includes.length === 0 && excludes.length === 0) return null;
 
   return (
     <>
       {days.length > 0 ? (
         <section className="trip-plans-section trip-itinerary" id="itinerary">
-          <SectionHead eyebrow="ITINERARY" title={`每日行程・${days.length} 天`} lede="實際航班時間與景點順序，以出發前說明會資料為準。" />
+          <SectionHead eyebrow="ITINERARY" title={`每日行程・${days.length} 天`} lede={itineraryNote(itinerary)} />
           <ol className="trip-days">
             {days.map((day, index) => (
               <li key={day.id} className="trip-day">
@@ -34,7 +38,17 @@ export function TripItinerary({ trip }: { trip: Pick<Trip, "itinerary" | "includ
                 </span>
                 <div className="trip-day-body">
                   <h3>{day.title || `第 ${index + 1} 天`}</h3>
-                  {day.description ? <p>{day.description}</p> : null}
+                  {day.description && source === "pdf" ? (
+                    // PDF 的景點介紹很長，預設收起來；收起來的文字搜尋引擎一樣讀得到。
+                    <details className="trip-day-more">
+                      <summary>景點介紹</summary>
+                      {day.description.split("\n").map((paragraph, at) => (
+                        <p key={at}>{paragraph}</p>
+                      ))}
+                    </details>
+                  ) : day.description ? (
+                    <p>{day.description}</p>
+                  ) : null}
                   {day.meals || day.hotel ? (
                     <dl className="trip-day-facts">
                       {day.meals ? (

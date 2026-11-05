@@ -27,6 +27,12 @@ export function isTripPdfKey(value: unknown): value is string {
   return typeof value === "string" && tripPdfKeyPattern.test(value);
 }
 
+/** 行程 PDF 自動擷取的文字結果，跟 PDF 一對一（PDF 檔名本身不會重複，也不會被覆寫）。 */
+export function tripPdfTextKey(pdfKey: string) {
+  if (!isTripPdfKey(pdfKey)) throw new Error("Invalid trip PDF key");
+  return `trip-pdf-text/${pdfKey.slice("trip-pdfs/".length, -".pdf".length)}.json`;
+}
+
 export function tripPdfKeyFromDocumentUrl(value: string) {
   if (!value.startsWith("/api/trip-pdf?")) return null;
 

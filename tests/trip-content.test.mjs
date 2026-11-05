@@ -138,7 +138,7 @@ test("every public link to a trip goes through tripPath, and old /dates/<id> lin
   for (const source of files.slice(0, 5)) assert.doesNotMatch(source, /\/dates\/\$\{/);
   assert.match(files[5], /permanentRedirect\(tripPath\(trip\)\)/);
   assert.match(files[6], /permanentRedirect\(tripPath\(trip\)\)/);
-  assert.match(files[6], /<TripItinerary trip=\{trip\} \/>/);
+  assert.match(files[6], /<TripItinerary itinerary=\{itinerary\} \/>/);
   assert.match(files[6], /<TripNotes trip=\{trip\} \/>/);
   assert.match(files[7], /"\/trips\/:path\*"/);
 });

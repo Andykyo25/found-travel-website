@@ -21,6 +21,10 @@ export function telephoneHref(telephone: string) {
   return `tel:${telephone.replace(/(?:#|轉).*$/, "").replace(/[^\d+]/g, "")}`;
 }
 
+function truncate(text: string, max: number) {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
 function absoluteUrl(path: string, origin: string) {
   try {
     return new URL(path, `${origin}/`).toString();
@@ -180,7 +184,8 @@ export function tripJsonLd(
             "@type": "ListItem",
             position: index + 1,
             name: `第 ${index + 1} 天${day.title ? `：${day.title}` : ""}`,
-            description: day.description || undefined,
+            // PDF 擷取的景點介紹可能很長，結構化資料只放開頭。
+            description: day.description ? truncate(day.description.replace(/\s+/g, " "), 300) : undefined,
           })),
         }
       : trip.region

@@ -44,3 +44,5 @@ next-env.d.ts
 /work/
 /design-previews/
 .wrangler-login.*.log
+# 本機預覽用的行程 PDF 擷取結果（同業行程內容，不進 Git）
+/work/trip-pdf-text/

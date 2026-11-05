@@ -549,6 +549,12 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .trip-day-no b { display: block; margin-top: 4px; color: var(--f-ink); font: 400 clamp(2rem, 1.4rem + 1.6vw, 3rem)/1 var(--f-display); letter-spacing: 0; }
 .trip-day-body h3 { margin: 0; font: 500 clamp(1.15rem, 1rem + 0.5vw, 1.45rem)/1.5 var(--f-serif); }
 .trip-day-body p { max-width: 46em; margin: 10px 0 0; color: var(--f-ink-2); font-size: 16px; line-height: 1.95; white-space: pre-line; }
+.trip-day-more { max-width: 46em; margin: 12px 0 0; }
+.trip-day-more summary { display: inline-flex; align-items: center; gap: 8px; color: var(--f-moss); cursor: pointer; font: 500 13px/1.6 var(--f-sans); letter-spacing: 0.08em; list-style: none; }
+.trip-day-more summary::-webkit-details-marker { display: none; }
+.trip-day-more summary::after { content: "+"; font: 300 18px/1 var(--f-sans); transition: transform 0.3s var(--f-ease); }
+.trip-day-more[open] summary::after { transform: rotate(45deg); }
+.trip-day-more p { font-size: 15px; line-height: 1.9; }
 .trip-day-facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 16px 0 0; font-size: 14px; }
 .trip-day-facts div { display: flex; gap: 10px; }
 .trip-day-facts dt { color: var(--f-moss); font-weight: 700; letter-spacing: 0.08em; }

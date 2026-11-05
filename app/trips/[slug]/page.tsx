@@ -3,6 +3,8 @@ import { findTripByPathKey, formatPrice, taipeiTodayTime, tripPath, upcomingDepa
 import { getSiteOrigin } from "@/lib/site-url";
 import { breadcrumbJsonLd, faqJsonLd, tripJsonLd } from "@/lib/structured-data";
 import { TripItinerary, TripNotes } from "@/app/components/TripDetails";
+import { resolveTripItinerary } from "@/lib/trip-itinerary";
+import { getTripPdfItinerary } from "@/lib/trip-pdf-content";
 import { JsonLd } from "@/app/components/JsonLd";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -50,6 +52,8 @@ export default async function TripPage({ params }: PageProps) {
   if (trip.slug && slug !== trip.slug) permanentRedirect(tripPath(trip));
   const plans = publishedTripPlans(trip);
   const departures = upcomingDepartures(trip.departures);
+  // 後台沒手動填每日行程時，用行程 PDF 自動擷取的內容。
+  const itinerary = resolveTripItinerary(trip, await getTripPdfItinerary(trip));
 
   return (
     <>
@@ -58,7 +62,7 @@ export default async function TripPage({ params }: PageProps) {
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} />
       <JsonLd
         data={[
-          tripJsonLd(trip, content, origin, taipeiTodayTime()),
+          tripJsonLd({ ...trip, itinerary: itinerary.days }, content, origin, taipeiTodayTime()),
           ...(trip.faqs?.length ? [faqJsonLd(trip.faqs, `${origin}${tripPath(trip)}`)] : []),
           breadcrumbJsonLd(
             [
@@ -107,7 +111,7 @@ export default async function TripPage({ params }: PageProps) {
               >
                 諮詢這趟旅行
               </Link>
-              {trip.itinerary?.length ? (
+              {itinerary.days.length ? (
                 <a className="fh-link" href="#itinerary">
                   看每日行程 <span aria-hidden="true">↓</span>
                 </a>
@@ -119,7 +123,7 @@ export default async function TripPage({ params }: PageProps) {
           </div>
         </div>
 
-        <TripItinerary trip={trip} />
+        <TripItinerary itinerary={itinerary} />
 
         {plans.length > 0 ? (
           <section className="trip-plans-section" id="plans">

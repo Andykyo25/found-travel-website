@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { storeTripPdfText } from "@/lib/trip-pdf-content";
 import {
   getStudioUserFromRequest,
   isSameOriginRequest,
@@ -59,11 +60,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const uploadedKey = await uploadTripPdf(
-      new Uint8Array(await file.arrayBuffer()),
-      file.name,
-      user.email,
-    );
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const uploadedKey = await uploadTripPdf(bytes, file.name, user.email);
+    // 回應送出後在背景擷取每日行程，業務不用等，也不用多填欄位。
+    after(() => storeTripPdfText(uploadedKey, bytes));
 
     return NextResponse.json({
       url: `/api/trip-pdf?key=${encodeURIComponent(uploadedKey)}`,
