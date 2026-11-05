@@ -178,11 +178,13 @@ LINE 使用固定 retry key，Webhook 帶有 `Idempotency-Key`，接收端需依
 
 ## 網址與搜尋引擎
 
-目前使用 `https://found-travel-website-production.up.railway.app`，`SITE_URL` 保持空白。
-Railway 臨時網域維持禁止搜尋引擎索引。日後取得正式網域並完成 Railway DNS／TLS 設定後，
-將 `SITE_URL` 設成 HTTPS origin（例如 `https://travel.example.com`，不含路徑）。
-並確認 `RAILWAY_PUBLIC_DOMAIN` 為原 Railway 主機名稱；公開頁面會轉向正式網域，
-API 與後台路徑維持原有路由。
+正式網域是 `https://tabiyoi.com`（Cloudflare 購買與代管 DNS，Proxy 開啟、SSL 模式 Full），
+Railway Variables 的 `SITE_URL` 設成 `https://tabiyoi.com`（HTTPS origin，不含路徑）。
+`www.tabiyoi.com` 與 Railway 臨時網域 `RAILWAY_PUBLIC_DOMAIN` 的公開頁面會 308 轉到正式網域，
+API 與後台路徑維持原有路由；臨時網域維持禁止搜尋引擎索引。
+
+轉址規則在 `next build` 時產生，所以 `Dockerfile` 的建置階段用 `ARG` 宣告了 `SITE_URL` 與
+`RAILWAY_PUBLIC_DOMAIN`（Railway 只把有宣告的變數帶進建置）；改 `SITE_URL` 後要重新部署才會生效。
 
 ## 本地預覽
 

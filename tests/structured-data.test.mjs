@@ -140,6 +140,11 @@ test("www and bare domains redirect to whichever one SITE_URL picks", async () =
   const config = await readFile(new URL("../next.config.ts", import.meta.url), "utf8");
   assert.match(config, /alternateSiteHost\(origin\)/);
   assert.match(config, /"\/find-trip"/);
+  // 轉址規則在 next build 時產生；Railway 只把 Dockerfile 用 ARG 宣告的變數帶進建置。
+  const dockerfile = await readFile(new URL("../Dockerfile", import.meta.url), "utf8");
+  const builder = dockerfile.slice(dockerfile.indexOf("AS builder"), dockerfile.indexOf("RUN npm run build"));
+  assert.match(builder, /^ARG SITE_URL$/m);
+  assert.match(builder, /^ARG RAILWAY_PUBLIC_DOMAIN$/m);
 });
 
 test("public pages publish structured data for the agency, trips and breadcrumbs", async () => {
