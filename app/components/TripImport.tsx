@@ -60,7 +60,8 @@ export function TripImport({ existingTripIds }: { existingTripIds: string[] }) {
   const [phase, setPhase] = useState<Phase>("pick");
   const [message, setMessage] = useState("");
   const [match, setMatch] = useState<ImportMatch<File> | null>(null);
-  const [progress, setProgress] = useState({ files: 0, totalFiles: 0, trips: 0 });
+  // 總數在按下「開始匯入」時就固定下來；存好的行程會從「待匯入」移走，不能拿它當分母。
+  const [progress, setProgress] = useState({ files: 0, totalFiles: 0, trips: 0, totalTrips: 0 });
   const [result, setResult] = useState<{ added: number; alreadyThere: number } | null>(null);
   // 這次匯入已經存好的行程（中斷後重按「開始匯入」時略過）。
   const [importedIds, setImportedIds] = useState<string[]>([]);
@@ -113,7 +114,7 @@ export function TripImport({ existingTripIds }: { existingTripIds: string[] }) {
     let filesDone = 0;
     let added = 0;
     let alreadyThere = 0;
-    setProgress({ files: 0, totalFiles: pendingFiles.length, trips: 0 });
+    setProgress({ files: 0, totalFiles: pendingFiles.length, trips: 0, totalTrips: pending.length });
 
     try {
       for (let start = 0; start < pending.length; start += tripsPerSave) {
@@ -216,7 +217,7 @@ export function TripImport({ existingTripIds }: { existingTripIds: string[] }) {
         <div className="trip-import-progress">
           <progress max={progress.totalFiles || 1} value={progress.files} />
           <span>
-            PDF {progress.files} / {progress.totalFiles} ・ 行程 {progress.trips} / {pending.length}
+            PDF {progress.files} / {progress.totalFiles} ・ 行程 {progress.trips} / {progress.totalTrips}
           </span>
         </div>
       ) : null}

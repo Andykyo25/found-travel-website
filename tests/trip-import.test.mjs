@@ -105,6 +105,9 @@ test("import page and API: studio-only, appends on the server and saves in batch
   assert.match(component, /fetch\("\/api\/studio\/pdf"/);
   assert.match(component, /fetch\("\/api\/studio\/import"/);
   assert.match(component, /tripsPerSave = 25/);
+  // 進度的行程總數在開始時固定，不會隨著已存好的行程變少。
+  assert.match(component, /行程 \{progress\.trips\} \/ \{progress\.totalTrips\}/);
+  assert.match(component, /totalTrips: pending\.length/);
   assert.match(header, /active === "import"/);
   assert.match(editor, /href="\/studio\/import"/);
   assert.match(pkg, /tests\/trip-import\.test\.mjs/);
