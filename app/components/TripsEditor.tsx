@@ -780,6 +780,9 @@ export function TripsEditor({
             </p>
           </div>
           <div className="studio-heading-actions">
+            <a className="button button-secondary button-small" href="/studio/import">
+              批次匯入
+            </a>
             <button className="button button-small" type="button" onClick={addTrip}>
               ＋ 新增行程
             </button>

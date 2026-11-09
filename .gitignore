@@ -46,3 +46,6 @@ next-env.d.ts
 .wrangler-login.*.log
 # 本機預覽用的行程 PDF 擷取結果（同業行程內容，不進 Git）
 /work/trip-pdf-text/
+
+# 業務放在專案資料夾裡的旅展行程 PDF（用後台「批次匯入」上傳，不進 git）
+/旅展行程/

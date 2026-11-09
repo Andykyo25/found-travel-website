@@ -24,13 +24,15 @@ export function StudioHeader({
   active,
 }: {
   email: string;
-  // account：修改密碼頁，不在分頁列上。
-  active: StudioTabId | "account";
+  // account：修改密碼頁；import：批次匯入頁（從行程管理進入）。兩者都不在分頁列上。
+  active: StudioTabId | "account" | "import";
 }) {
   const activeTab =
     active === "account"
       ? { id: "account", title: "修改密碼" }
-      : (tabs.find((tab) => tab.id === active) ?? tabs[0]);
+      : active === "import"
+        ? { id: "import", title: "批次匯入行程" }
+        : (tabs.find((tab) => tab.id === active) ?? tabs[0]);
 
   return (
     <>
