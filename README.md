@@ -187,6 +187,35 @@ API 與後台路徑維持原有路由；臨時網域維持禁止搜尋引擎索�
 （Railway 只把有宣告的變數帶進建置）；改 `SITE_URL` 後要重新部署才會生效。
 臨時網域用固定樣式比對，不依賴 `RAILWAY_PUBLIC_DOMAIN`：接上自訂網域後它可能變成自訂網域。
 
+## 頁面快取
+
+前台頁面有兩層快取，後台（`/studio`）、API 與聯絡表單都不在內。
+
+**伺服器記憶體（已生效，不用設定）**：發布內容留在記憶體，超過 30 秒就在背景重讀 Bucket，
+訪客不用等。業務在後台存檔後，同一台伺服器立刻換成新內容。
+
+**Cloudflare 邊緣節點（要在 Cloudflare 後台開啟）**：伺服器在美國西岸，讓 Cloudflare 把公開頁面
+留 60 秒，台灣訪客就不必每頁都回源。程式已經替公開頁面送出 `Cloudflare-CDN-Cache-Control`
+（設定在 `lib/edge-cache.ts`），但 Cloudflare 預設不暫存 HTML，要加一條規則才會生效：
+
+1. Cloudflare 後台 → `tabiyoi.com` → Caching → Cache Rules → Create rule。
+2. 條件選 Edit expression，貼上：
+
+   ```
+   (http.host eq "tabiyoi.com" and (http.request.uri.path eq "/" or starts_with(http.request.uri.path, "/trips/") or starts_with(http.request.uri.path, "/dates") or starts_with(http.request.uri.path, "/news") or http.request.uri.path in {"/find-trip" "/about"}))
+   ```
+
+3. Cache eligibility 選 **Eligible for cache**；Edge TTL 與 Browser TTL **都不要設定**（留給程式送的標頭決定）。
+4. 存檔後連續開兩次同一頁，第二次回應標頭出現 `cf-cache-status: HIT` 就是生效了。
+
+開啟後要知道的事：
+
+- 業務在後台存檔後，前台最慢約 2 分鐘才看到新內容（60 秒過期後，Cloudflare 會先給一次舊頁面再更新）。
+  急著確認時，在 Cloudflare 的 Caching → Configuration 按 Purge Everything。
+- 想調整時間改 `lib/edge-cache.ts` 的 `edgeCacheSeconds`；想關掉就停用那條 Cache Rule，不必改程式。
+- 可另外加一條規則把 `starts_with(http.request.uri.path, "/_next/image")` 設成 Eligible for cache，
+  縮圖就不必每次回源重新產生。
+
 ## 本地預覽
 
 需要 Node.js 24 以上版本，與 Docker 和 CI 一致。

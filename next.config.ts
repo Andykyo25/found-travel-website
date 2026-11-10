@@ -5,6 +5,7 @@ import {
   exactHostPattern,
   railwayHostPattern,
 } from "./lib/site-origin.ts";
+import { edgeCacheHeaders } from "./lib/edge-cache.ts";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -14,6 +15,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "plus.unsplash.com" },
     ],
+  },
+  // 公開頁面給 Cloudflare 的暫存時間（說明見 lib/edge-cache.ts）。
+  async headers() {
+    return edgeCacheHeaders();
   },
   async redirects() {
     // 沒有正式網域（SITE_URL）之前不轉址；設定後下面兩種規則自動生效。

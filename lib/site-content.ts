@@ -640,73 +640,134 @@ type StoredSiteContent = Partial<SiteContent> & {
   _updatedBy?: unknown;
 };
 
+// 實際向 Bucket 讀取並整理發布內容。
+async function loadSiteContentWithMeta(): Promise<{
+  content: SiteContent;
+  meta: SiteContentMeta;
+}> {
+  const emptyMeta: SiteContentMeta = {
+    updatedAt: null,
+    updatedBy: null,
+    etag: null,
+  };
+  // A local, explicit design review uses only a snapshot of public content.
+  // Production always reads the configured Bucket, even if this flag is set.
+  if (process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1") {
+    const { readFile } = await import("node:fs/promises");
+    const snapshot = JSON.parse(await readFile(`${process.cwd()}/work/design-preview.json`, "utf8"));
+    if (!snapshot || !Array.isArray(snapshot.trips)) throw new Error("Invalid design preview snapshot");
+    return { content: normalizeSiteContent(snapshot), meta: emptyMeta };
+  }
+  const stored = await readSiteContentObject<StoredSiteContent>();
+  if (!stored) return { content: defaultSiteContent, meta: emptyMeta };
+  const saved = stored.value;
+  if (!saved || typeof saved !== "object" || !Array.isArray(saved.trips))
+    throw new Error("Invalid stored content");
+  const content = normalizeSiteContent(saved);
+  lastSuccessfulContent = content;
+  return {
+    content,
+    meta: {
+      etag: stored.etag,
+      updatedAt:
+        typeof saved._updatedAt === "string" ? saved._updatedAt : null,
+      updatedBy:
+        typeof saved._updatedBy === "string" ? saved._updatedBy : null,
+    },
+  };
+}
+
 // cache()：同一個請求裡 generateMetadata 與頁面本身都會取內容，
-// 沒有這層包裝就會對 Bucket 讀兩次。
-export const getSiteContentWithMeta = cache(
-  async function getSiteContentWithMeta(): Promise<{
-    content: SiteContent;
-    meta: SiteContentMeta;
-  }> {
-    const emptyMeta: SiteContentMeta = {
-      updatedAt: null,
-      updatedBy: null,
-      etag: null,
-    };
-    // A local, explicit design review uses only a snapshot of public content.
-    // Production always reads the configured Bucket, even if this flag is set.
-    if (process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1") {
-      const { readFile } = await import("node:fs/promises");
-      const snapshot = JSON.parse(await readFile(`${process.cwd()}/work/design-preview.json`, "utf8"));
-      if (!snapshot || !Array.isArray(snapshot.trips)) throw new Error("Invalid design preview snapshot");
-      return { content: normalizeSiteContent(snapshot), meta: emptyMeta };
-    }
-    const stored = await readSiteContentObject<StoredSiteContent>();
-    if (!stored) return { content: defaultSiteContent, meta: emptyMeta };
-    const saved = stored.value;
-    if (!saved || typeof saved !== "object" || !Array.isArray(saved.trips))
-      throw new Error("Invalid stored content");
-    const content = normalizeSiteContent(saved);
-    lastSuccessfulContent = content;
-    return {
-      content,
-      meta: {
-        etag: stored.etag,
-        updatedAt:
-          typeof saved._updatedAt === "string" ? saved._updatedAt : null,
-        updatedBy:
-          typeof saved._updatedBy === "string" ? saved._updatedBy : null,
-      },
-    };
-  },
-);
+// 沒有這層包裝就會對 Bucket 讀兩次。後台編輯用這個，一律直接讀 Bucket。
+export const getSiteContentWithMeta = cache(loadSiteContentWithMeta);
 
 let lastSuccessfulContent: SiteContent | null = null;
 
-// 前台每個請求都去讀 Bucket 會拖慢回應，發布內容在記憶體留 30 秒。
-// 後台儲存走同一台伺服器，存完立刻換成新內容（saveSiteContent），業務不用等；
-// 日後若開多台伺服器，其他台最多晚 30 秒更新。後台編輯一律直接讀 Bucket。
+// 前台每個請求都去讀 Bucket 會拖慢回應，發布內容留在記憶體。
+// 超過 30 秒就在背景重讀，當下這位訪客先拿手上的內容，不用等 Bucket（讀一次約半秒）；
+// 訪客不多的時段幾乎每個人都隔超過 30 秒才來，等於每個人都要等。
+// 後台儲存走同一台伺服器，存完立刻換成新內容（saveSiteContent），業務不用等。
+// 日後若開多台伺服器，其他台會在下一位訪客來過之後更新；
+// 手上的內容超過 10 分鐘就不再直接沿用，等讀完 Bucket 才回應。
 const publicContentTtlMs = 30_000;
+const publicContentMaxAgeMs = 10 * 60_000;
 let publicContent: { content: SiteContent; at: number } | null = null;
+let publicContentRefresh: Promise<SiteContent> | null = null;
+let publicContentRefreshFailed = false;
+// 每次換內容就加一：背景重讀若是在儲存之前開始的，讀到的是舊內容，不能蓋掉剛存好的新內容。
+let publicContentVersion = 0;
+
+function setPublicContent(content: SiteContent) {
+  publicContent = { content, at: Date.now() };
+  publicContentVersion += 1;
+  publicContentRefreshFailed = false;
+}
+
+function refreshPublicContent(): Promise<SiteContent> {
+  const version = publicContentVersion;
+  publicContentRefresh ??= loadSiteContentWithMeta()
+    .then(({ content }) => {
+      if (version !== publicContentVersion && publicContent) return publicContent.content;
+      setPublicContent(content);
+      return content;
+    })
+    .catch((error) => {
+      publicContentRefreshFailed = true;
+      throw error;
+    })
+    .finally(() => {
+      publicContentRefresh = null;
+    });
+  return publicContentRefresh;
+}
+
+// strict：最近一次重讀失敗時，不沿用手上的內容，改成等這次讀完（失敗就讓呼叫端知道）。
+async function publishedContent(strict: boolean): Promise<SiteContent> {
+  const age = publicContent ? Date.now() - publicContent.at : Number.POSITIVE_INFINITY;
+  if (
+    publicContent &&
+    age < publicContentMaxAgeMs &&
+    !(strict && publicContentRefreshFailed) &&
+    process.env.NODE_ENV !== "development"
+  ) {
+    if (age >= publicContentTtlMs)
+      void refreshPublicContent().catch((error) =>
+        console.error("Unable to refresh published content", error),
+      );
+    return publicContent.content;
+  }
+  return refreshPublicContent();
+}
 
 // 前台讀取用：自動計算起始價格的行程，在這裡依「今天」的團期算出最新價格。
 // 後台編輯用 getSiteContentWithMeta()，拿到的是原樣儲存的內容。
 export async function getSiteContent(): Promise<SiteContent> {
-  const now = Date.now();
-  if (
-    publicContent &&
-    now - publicContent.at < publicContentTtlMs &&
-    process.env.NODE_ENV !== "development"
-  )
-    return applyAutoPrices(publicContent.content, taipeiTodayTime());
   try {
-    const { content } = await getSiteContentWithMeta();
-    publicContent = { content, at: now };
-    return applyAutoPrices(content, taipeiTodayTime());
+    return applyAutoPrices(await publishedContent(false), taipeiTodayTime());
   } catch (error) {
     console.error("Unable to read published content", error);
     if (lastSuccessfulContent) return applyAutoPrices(lastSuccessfulContent, taipeiTodayTime());
     throw error;
   }
+}
+
+// 「幫我找旅行」用：行程來源讀不到時要明講並停用配對，不拿舊行程當成最新的。
+// 讀取正常時和其他前台頁面共用同一份記憶體內容；最近一次重讀失敗就回傳 null。
+export async function getSiteContentIfAvailable(): Promise<SiteContent | null> {
+  try {
+    return applyAutoPrices(await publishedContent(true), taipeiTodayTime());
+  } catch (error) {
+    console.error("Unable to read published content", error);
+    return null;
+  }
+}
+
+/** 測試用：清掉記憶體裡的發布內容，讓下一次讀取重新向 Bucket 要。 */
+export function clearPublicContentCache() {
+  publicContent = null;
+  publicContentRefresh = null;
+  publicContentRefreshFailed = false;
+  publicContentVersion += 1;
 }
 
 export async function saveSiteContent(
@@ -745,7 +806,7 @@ export async function saveSiteContent(
     etag,
     previous,
   );
-  publicContent = { content, at: Date.now() };
+  setPublicContent(content);
   lastSuccessfulContent = content;
   return { content, updatedAt };
 }

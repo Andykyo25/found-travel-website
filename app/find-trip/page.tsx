@@ -1,6 +1,5 @@
-import { getSiteContentWithMeta, defaultSiteContent } from "@/lib/site-content";
+import { getSiteContentIfAvailable, defaultSiteContent } from "@/lib/site-content";
 import { taipeiTodayTime } from "@/lib/trip-values";
-import { applyAutoPrices } from "@/lib/trip-summary";
 import { TravelFinder } from "@/app/components/TravelFinder";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
@@ -10,9 +9,10 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "幫我找適合的旅行", description: "先整理日期、預算與旅行需求，比較行程，再交給顧問確認。", alternates: { canonical: "/find-trip" } };
 
 export default async function FindTripPage() {
-  const { content, available } = await getSiteContentWithMeta()
-    .then(({ content }) => ({ content: applyAutoPrices(content, taipeiTodayTime()), available: true }))
-    .catch(() => ({ content: { ...defaultSiteContent, trips: [] }, available: false }));
+  // 和其他前台頁面共用記憶體裡的發布內容，不必每次進來都等 Bucket；讀不到時明講並停用配對。
+  const published = await getSiteContentIfAvailable();
+  const available = published !== null;
+  const content = published ?? { ...defaultSiteContent, trips: [] };
   return <>
   <main className="finder-shell public-page">
     <a className="skip-link" href="#finder-content">跳至旅行需求整理</a>
