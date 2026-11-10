@@ -201,7 +201,7 @@ test("a destination can be a broad group or the exact region", () => {
   assert.equal(search({ destination: "韓國" }, tokyo).candidates.length, 0);
 });
 test("free-text regions fall into the expected groups", () => {
-  const expected = { "日本的山形縣": "日本", "東北・藏王": "日本", "名古屋・北陸": "日本", "釜山・首爾": "韓國", "北越・下龍灣": "越南", "中越": "越南", "汶萊・古晉": "東南亞・海島", "馬爾地夫": "東南亞・海島", "布拉格 Prague": "歐洲", "小東歐": "歐洲", "波羅的海・北歐": "歐洲", "地中海郵輪": "郵輪", "歐洲河輪": "郵輪", "基隆出發郵輪": "郵輪", "加拿大黃刀鎮": "美洲", "雪梨・墨爾本": "紐澳", "土耳其": "中東・非洲", "火星": "其他" };
+  const expected = { "日本的山形縣": "日本", "東北・藏王": "日本", "名古屋・北陸": "日本", "四國": "日本", "北歐四國": "歐洲","釜山・首爾": "韓國", "北越・下龍灣": "越南", "中越": "越南", "汶萊・古晉": "東南亞・海島", "馬爾地夫": "東南亞・海島", "布拉格 Prague": "歐洲", "小東歐": "歐洲", "波羅的海・北歐": "歐洲", "地中海郵輪": "郵輪", "歐洲河輪": "郵輪", "基隆出發郵輪": "郵輪", "加拿大黃刀鎮": "美洲", "雪梨・墨爾本": "紐澳", "土耳其": "中東・非洲", "火星": "其他" };
   for (const [region, group] of Object.entries(expected)) assert.equal(destinationGroup(region), group, region);
 });
 test("destination options list only what can be found, with trip counts", () => {
