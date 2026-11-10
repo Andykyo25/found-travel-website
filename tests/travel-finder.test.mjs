@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { emptyNeeds, findTravel, validateNeeds, needsSummary } from "../lib/travel-finder.ts";
+import { emptyNeeds, findTravel, validateNeeds, needsSummary, destinationOptions, relaxOptions, exactTwdPrice } from "../lib/travel-finder.ts";
+import { destinationGroup } from "../lib/destination-groups.ts";
 import { normalizeSiteContent } from "../lib/site-content.ts";
 import { parseContactRequestInput, saveContactRequest } from "../lib/contact-requests.ts";
 import { S3Client } from "@aws-sdk/client-s3";
@@ -25,7 +26,9 @@ const cases = [
   ["budget filters individual departures", { budget: "30000" }, t => t, 1, ["a"]],
   ["room pricing excluded from person budget", { budget: "50000" }, t => { t.plans[0].priceBasis = "room"; return t; }, 0],
   ["whole group pricing excluded", { budget: "50000" }, t => { t.plans[0].priceBasis = "group"; return t; }, 0],
-  ["unknown price basis excluded", { budget: "50000" }, t => { delete t.plans[0].priceBasis; return t; }, 0],
+  ["bare amounts on untagged plans are read as per person", { budget: "30000" }, t => { delete t.plans[0].priceBasis; return t; }, 1, ["a"]],
+  ["bare amounts over the ceiling are excluded, not left pending", { budget: "20000" }, t => { delete t.plans[0].priceBasis; return t; }, 0],
+  ["holiday notes after an amount keep the price exact", { budget: "30000" }, t => { t.departures.find(d => d.id === "a").price = "30,000(連假)"; return t; }, 1, ["a"]],
   ["starting prices cannot prove ceiling", { budget: "50000" }, t => { t.departures.forEach(d => d.price = "30,000 起"); return t; }, 0],
   ["range prices cannot prove ceiling", { budget: "50000" }, t => { t.departures.forEach(d => d.price = "30,000～60,000"); return t; }, 0],
   ["invalid date rejected", {}, t => { t.departures = [{ id: "x", date: "2026-02-30", price: "10000" }]; return t; }, 0],
@@ -97,11 +100,13 @@ test("existing explicit price and departure wording work without extra tags", ()
 test("untagged plans remain discoverable separately without pretending to match", () => {
   const trip = structuredClone(base);
   delete trip.plans[0].serviceType; delete trip.plans[0].priceBasis; delete trip.plans[0].departureAirport;
+  trip.departures.forEach(d => d.price = "30,000～60,000");
   const result = search({ airport: "桃園", budget: "50000" }, trip);
   assert.equal(result.candidates.length, 0); assert.equal(result.pendingCandidates.length, 1);
   const c = result.pendingCandidates[0];
   assert.equal(c.needsConfirmation, true);
   assert.match(c.pending.join(" "), /價格.*待確認/);
+  assert.deepEqual(c.unconfirmed, ["能否從桃園出發待確認", "每人價格能否符合預算待確認"]);
   assert.doesNotMatch(c.reasons.join(" "), /在每人預算內|出發機場：桃園/);
   assert.doesNotMatch(needsSummary({ ...emptyNeeds, budget: "50000" }, [{ candidate: c, departureId: "a" }]), /待確認|；/);
 });
@@ -140,4 +145,86 @@ test("nine legacy published versions are visible when all preferences are unrest
   assert.equal(result.pendingCandidates.length, 0);
   assert.ok(result.candidates.every(c => !c.reasons.includes("跟團旅行")));
   assert.doesNotMatch(needsSummary(emptyNeeds, [{ candidate: result.candidates[0], departureId: "a" }]), /待確認|；/);
+});
+// ---- 還沒公布團期的行程、目的地分組、放寬條件 ----
+const undated = () => { const trip = structuredClone(base); trip.departures = []; trip.price = "價格洽詢"; return trip; };
+test("trips without published dates are offered separately for enquiry", () => {
+  const result = search({}, undated());
+  assert.equal(result.candidates.length + result.pendingCandidates.length, 0);
+  assert.equal(result.openCandidates.length, 1);
+  const c = result.openCandidates[0];
+  assert.deepEqual(c.departures, []); assert.equal(c.needsConfirmation, false);
+  assert.match(c.pending.join(" "), /團期尚未公布/);
+  assert.match(needsSummary(emptyNeeds, [{ candidate: c, departureId: "" }]), /出發日：團期尚未公布/);
+});
+test("a requested date range never matches a trip without dates", () => {
+  for (const needs of [{ start: "2026-10-01" }, { end: "2027-01-01" }]) assert.equal(search(needs, undated()).openCandidates.length, 0);
+});
+test("past-only departures count as no published dates", () => {
+  const trip = structuredClone(base); trip.departures = [trip.departures[0]];
+  assert.equal(search({}, trip).openCandidates.length, 1);
+});
+test("a version with no upcoming dates is not offered while the trip has dated versions", () => {
+  const trip = structuredClone(base);
+  trip.plans.push({ ...trip.plans[0], id: "p2", departureMode: "selected", departureIds: ["old"] });
+  const result = search({}, trip);
+  assert.deepEqual(result.candidates.map(c => c.plan.id), ["p"]); assert.equal(result.openCandidates.length, 0);
+});
+test("undated trips show one card per trip and prefer a version that needs no confirmation", () => {
+  const trip = undated();
+  trip.plans = [{ ...trip.plans[0], id: "k", departureAirport: "" }, { ...trip.plans[0], id: "t" }, { ...trip.plans[0], id: "h", departureAirport: "高雄" }];
+  const all = search({}, trip).openCandidates;
+  assert.equal(all.length, 1); assert.equal(all[0].moreVersions, 2);
+  const taoyuan = search({ airport: "桃園" }, trip).openCandidates;
+  assert.equal(taoyuan.length, 1); assert.equal(taoyuan[0].plan.id, "t"); assert.equal(taoyuan[0].moreVersions, 1);
+  assert.equal(taoyuan[0].needsConfirmation, false);
+});
+test("budget on undated trips: over is excluded, unreadable is flagged, within is confirmed", () => {
+  const priced = price => { const trip = undated(); trip.price = price; return search({ budget: "30000" }, trip).openCandidates; };
+  assert.equal(priced("45,000").length, 0);
+  assert.equal(priced("45900起").length, 0);
+  assert.deepEqual(priced("價格洽詢")[0].unconfirmed, ["每人價格能否符合預算待確認"]);
+  assert.deepEqual(priced("25900起")[0].unconfirmed, ["每人價格能否符合預算待確認"]);
+  assert.deepEqual(priced("25,900")[0].unconfirmed, []);
+  assert.match(priced("25,900")[0].reasons.join(" "), /在每人預算內/);
+});
+test("confirmed undated trips sort ahead of those needing confirmation", () => {
+  const a = undated(); a.id = "a"; const b = undated(); b.id = "b"; b.price = "20,000";
+  const result = findTravel([a, b], { ...emptyNeeds, budget: "30000" }, today);
+  assert.deepEqual(result.openCandidates.map(c => c.trip.id), ["b", "a"]);
+});
+test("a destination can be a broad group or the exact region", () => {
+  const tokyo = structuredClone(base); tokyo.region = "東京・富士山";
+  assert.equal(search({ destination: "日本" }, tokyo).candidates.length, 1);
+  assert.equal(search({ destination: "東京・富士山" }, tokyo).candidates.length, 1);
+  assert.equal(search({ destination: "東京" }, tokyo).candidates.length, 0);
+  assert.equal(search({ destination: "韓國" }, tokyo).candidates.length, 0);
+});
+test("free-text regions fall into the expected groups", () => {
+  const expected = { "日本的山形縣": "日本", "東北・藏王": "日本", "名古屋・北陸": "日本", "釜山・首爾": "韓國", "北越・下龍灣": "越南", "中越": "越南", "汶萊・古晉": "東南亞・海島", "馬爾地夫": "東南亞・海島", "布拉格 Prague": "歐洲", "小東歐": "歐洲", "波羅的海・北歐": "歐洲", "地中海郵輪": "郵輪", "歐洲河輪": "郵輪", "基隆出發郵輪": "郵輪", "加拿大黃刀鎮": "美洲", "雪梨・墨爾本": "紐澳", "土耳其": "中東・非洲", "火星": "其他" };
+  for (const [region, group] of Object.entries(expected)) assert.equal(destinationGroup(region), group, region);
+});
+test("destination options list only what can be found, with trip counts", () => {
+  const trip = (id, region, patch = {}) => ({ ...structuredClone(base), id, region, ...patch });
+  const trips = [trip("a", "東京"), trip("b", "東京", { departures: [] }), trip("c", "北海道"), trip("d", "首爾"), trip("e", "峴港", { plans: [{ ...base.plans[0], documentUrl: "" }] })];
+  assert.deepEqual(destinationOptions(trips, "group", today), [
+    { group: "日本", count: 3, regions: [{ name: "東京", count: 2 }, { name: "北海道", count: 1 }] },
+    { group: "韓國", count: 1, regions: [{ name: "首爾", count: 1 }] },
+  ]);
+  assert.deepEqual(destinationOptions(trips, "custom", today), []);
+});
+test("relaxing suggests only the conditions that would actually find trips", () => {
+  const trips = [structuredClone(base)];
+  const options = relaxOptions(trips, { ...emptyNeeds, destination: "日本", start: "2028-01-01", budget: "50000" }, today);
+  assert.deepEqual(options.map(o => [o.label, o.count]), [["不限出發日", 1]]);
+  assert.deepEqual(options[0].patch, { start: "", end: "" });
+  // 兩個條件都擋住時，單獨放寬任何一項都不夠，才提供一次清掉。
+  const both = relaxOptions(trips, { ...emptyNeeds, destination: "韓國", start: "2028-01-01" }, today);
+  assert.deepEqual(both.map(o => [o.label, o.count]), [["清除全部條件", 1]]);
+  assert.deepEqual(relaxOptions(trips, { ...emptyNeeds, service: "custom" }, today).map(o => o.patch), [{ service: "undecided" }]);
+  assert.deepEqual(relaxOptions([], { ...emptyNeeds, destination: "日本" }, today), []);
+});
+test("exact price parsing keeps starting and range prices out", () => {
+  assert.equal(exactTwdPrice("38,900(過年)"), 38900); assert.equal(exactTwdPrice("NT$31,900／人"), 31900);
+  for (const price of ["35900起", "30,000～60,000", "30,000(起)", "價格洽詢", ""]) assert.equal(exactTwdPrice(price), null, price);
 });

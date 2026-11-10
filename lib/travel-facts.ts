@@ -1,4 +1,5 @@
 import type { TripPlan } from "@/lib/site-content";
+import { priceValue } from "@/lib/trip-values";
 
 // Read existing, explicit wording. Never infer an origin from a city mentioned
 // in an itinerary, nor turn an amenity/marketing claim into a verified tag.
@@ -21,7 +22,11 @@ export function priceBasis(plan: TripPlan, price: string): NonNullable<TripPlan[
   if (explicit.length > 1) return "unknown";
   const stored = plan.priceBasis && plan.priceBasis !== "unknown" ? plan.priceBasis : null;
   if (stored && explicit.length && stored !== explicit[0]) return "unknown";
-  return stored || (explicit[0] as TripPlan["priceBasis"]) || "unknown";
+  if (stored || explicit.length) return stored || (explicit[0] as NonNullable<TripPlan["priceBasis"]>);
+  // 跟團行程只寫金額（35,900、35900起）時就是每人價，全站列表也都這樣顯示；
+  // 區間價、「價格洽詢」這類讀不出金額的文字，以及客製／單項服務，仍然不猜。
+  const service = serviceType(plan);
+  return priceValue(price) !== null && (service === "group" || service === "unknown") ? "person" : "unknown";
 }
 
 export function serviceType(plan: TripPlan): NonNullable<TripPlan["serviceType"]> {

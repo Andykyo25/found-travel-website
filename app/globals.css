@@ -3812,6 +3812,14 @@ img {
 .finder-chips { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
 .finder-chips button { border: 1px solid #cddac6; border-radius: 18px; padding: 16px 22px; color: #344c35; background: #fff; font: inherit; cursor: pointer; min-height: 48px; }
 .finder-chips button[aria-pressed=true] { background: #e7f0d7; border-color: #54723c; box-shadow: 0 3px 0 #c4d6b1; }
+.finder-chips button small { margin-left: 8px; font-size: 12px; color: #5f6f52; }
+.finder-subchips { gap: 8px; margin-top: -8px; padding: 16px; background: #f6f9ef; border-radius: 18px; }
+.finder-subchips button { padding: 10px 16px; min-height: 44px; font-size: 14px; }
+.finder-relax { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.finder-relax .button small { margin-left: 8px; font-weight: 400; }
+.finder-more { display: flex; margin: 20px auto 0; }
+.finder-open { margin-top: 40px; padding-top: 28px; border-top: 1px dashed #d2dac8; }
+.finder-open h3 { margin: 0 0 6px; font-size: 20px; }
 .finder-budget { max-width: 360px; margin: 26px 0; }
 .finder-note { color: #606951; font-size: 13px; line-height: 1.7; }
 .finder-question-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 28px; padding-top: 22px; border-top: 1px dashed #d2dac8; }
