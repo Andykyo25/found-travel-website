@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStudioUserFromRequest, isSameOriginRequest } from "@/lib/studio-auth";
 import { saveTourFeedLink, getTourFeedState } from "@/lib/tour-feed-store";
-import { isTourFeedConfigured, syncTourFeed } from "@/lib/tour-feed-sync";
+import { isTourFeedConfigured, syncTourFeed, TourFeedError } from "@/lib/tour-feed-sync";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ syncedAt: snapshot.syncedAt });
     } catch (error) {
       console.error("Tour feed sync failed", error);
-      return NextResponse.json({ error: "同步失敗，官網維持上一次同步的團期。請稍後再試。" }, { status: 502 });
+      const reason = error instanceof TourFeedError ? error.message : "原因不明";
+      return NextResponse.json({ error: `同步失敗（${reason}）。官網維持上一次同步的團期。` }, { status: 502 });
     }
   }
 

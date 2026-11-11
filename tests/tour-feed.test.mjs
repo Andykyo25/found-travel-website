@@ -150,3 +150,54 @@ test("splits synced departures between airline-specific plans", async () => {
   const shared = applyTourFeed({ trips: [{ ...base, plans: [plan("p1", "酷航"), plan("p2", "星宇航空")] }] }, snapshot, { t: "k" }, now.getTime(), now.getTime()).trips[0];
   assert.deepEqual(shared.plans.map((item) => item.departureMode), ["all", "all"]);
 });
+
+test("sync signs in, reads plain-text files and stores only public fields", async (t) => {
+  const { S3Client } = await import("@aws-sdk/client-s3");
+  const { syncTourFeed, TourFeedError } = await import("../lib/tour-feed-sync.ts");
+  const { defaultSiteContent } = await import("../lib/site-content.ts");
+  t.mock.property(process, "env", {
+    ...process.env,
+    BUCKET_NAME: "test", BUCKET_ENDPOINT: "https://example.invalid", BUCKET_ACCESS_KEY_ID: "test", BUCKET_SECRET_ACCESS_KEY: "test",
+    TOUR_FEED_EMAIL: "site@example.com", TOUR_FEED_PASSWORD: "pw", TOUR_FEED_API_KEY: "key", TOUR_FEED_API_URL: "https://feed.example/",
+  });
+  t.mock.method(console, "error", () => {});
+  const written = new Map();
+  t.mock.method(S3Client.prototype, "send", async (command) => {
+    if (command.constructor.name === "PutObjectCommand") return void written.set(command.input.Key, command.input.Body);
+    if (String(command.input.Key).startsWith("tour-feed/")) throw Object.assign(new Error("missing"), { name: "NoSuchKey" });
+    const trips = [{ ...defaultSiteContent.trips[0], id: "deal", title: "首爾超殺特惠五日", region: "首爾", days: "5日", price: "價格洽詢", plans: [], departures: [] }];
+    return { ETag: '"v"', Body: { transformToString: async () => JSON.stringify({ ...defaultSiteContent, trips }) } };
+  });
+  const calls = [];
+  let password = "pw";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    calls.push([String(url), init.headers]);
+    if (String(url).startsWith("https://identitytoolkit.googleapis.com/")) {
+      return JSON.parse(init.body).password === password
+        ? Response.json({ idToken: "token-1" })
+        : Response.json({ error: { message: "INVALID_LOGIN_CREDENTIALS" } }, { status: 400 });
+    }
+    if (String(url) === "https://feed.example/api/sales-files") return Response.json([{ id: "f1", name: "１０＊首    爾：甲＋乙" }, { id: "f2", name: "１８＊ＭＳＣ：甲" }]);
+    if (String(url) === "https://feed.example/api/file-content/f1") return new Response(feed, { headers: { "content-type": "text/plain" } });
+    return new Response("not found", { status: 404 });
+  });
+
+  const snapshot = await syncTourFeed();
+  assert.deepEqual(calls.map(([url]) => url.replace(/\?.*$/, "")), [
+    "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword",
+    "https://feed.example/api/sales-files",
+    "https://feed.example/api/file-content/f1",
+  ]);
+  assert.equal(calls[1][1].Authorization, "Bearer token-1");
+  assert.equal(snapshot.products.length, 5);
+  assert.deepEqual(snapshot.matches.map((match) => [match.tripId, match.status]), [["deal", "auto"]]);
+  const stored = written.get("tour-feed/snapshot.json");
+  assert.equal(JSON.parse(stored).products.length, 5);
+  for (const secret of ["王小明", "甲5", "利潤", "token-1", "pw"]) assert.equal(stored.includes(secret), false, secret);
+
+  // 密碼錯：講得出原因，而且不覆蓋上一次的結果。
+  written.clear();
+  password = "changed";
+  await assert.rejects(syncTourFeed(), (error) => error instanceof TourFeedError && error.message === "登入：業務系統回應 400（INVALID_LOGIN_CREDENTIALS）");
+  assert.equal(written.size, 0);
+});
