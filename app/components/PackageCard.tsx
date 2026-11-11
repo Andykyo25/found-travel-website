@@ -37,20 +37,29 @@ function CalendarIcon() {
   );
 }
 
+// 卡片上的摘要只顯示三行（CSS 截斷），整段文字不必每張卡都送出去。
+function cardSummary(summary: string) {
+  const text = summary.replace(/\s+/g, " ").trim();
+  return text.length > 110 ? `${text.slice(0, 110)}…` : text;
+}
+
 export function PackageCard({
   trip,
   index = 0,
   priority = false,
+  id,
 }: {
   trip: Trip;
   index?: number;
   priority?: boolean;
+  /** 「看更多行程」換頁後要捲到的那張卡。 */
+  id?: string;
 }) {
   const departures = upcomingDepartures(trip.departures);
   const plans = publishedTripPlans(trip);
 
   return (
-    <article className="fh-card" data-rv style={{ "--rv-i": index % 3 } as CSSProperties} data-cursor="看行程">
+    <article className="fh-card" id={id} data-rv style={{ "--rv-i": index % 3 } as CSSProperties} data-cursor="看行程">
       <Link className="fh-card-media" href={tripPath(trip)} aria-label={`探索${trip.title}`} tabIndex={-1} aria-hidden="true">
         <span className="fh-card-img">
           <TravelImage src={trip.image} alt={`${trip.title}行程風景`} priority={priority} sizes="(max-width: 760px) 86vw, (max-width: 1100px) 46vw, 30vw" />
@@ -64,7 +73,7 @@ export function PackageCard({
       <h3>
         <Link href={tripPath(trip)}>{trip.title}</Link>
       </h3>
-      <p className="fh-card-summary">{trip.summary}</p>
+      <p className="fh-card-summary">{cardSummary(trip.summary)}</p>
 
       <ul className="fh-card-meta">
         <li>

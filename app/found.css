@@ -257,7 +257,7 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
 
 .fh-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(52px, 5vw, 92px) clamp(20px, 2.6vw, 44px); }
 .fh-grid > .fh-card:nth-child(3n + 2) { margin-top: clamp(36px, 5.5vw, 88px); }
-.fh-card { display: flex; flex-direction: column; min-width: 0; }
+.fh-card { display: flex; flex-direction: column; min-width: 0; scroll-margin-top: 110px; }
 .fh-card-media { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; background: var(--f-mist); }
 .fh-card-media::after { content: ""; position: absolute; inset: 55% 0 0; z-index: 2; pointer-events: none; background: linear-gradient(transparent, rgba(14, 32, 26, 0.66)); }
 .fh-card-img { position: absolute; inset: 0; display: block; overflow: hidden; }

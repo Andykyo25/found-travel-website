@@ -228,3 +228,31 @@ test("exact price parsing keeps starting and range prices out", () => {
   assert.equal(exactTwdPrice("38,900(過年)"), 38900); assert.equal(exactTwdPrice("NT$31,900／人"), 31900);
   for (const price of ["35900起", "30,000～60,000", "30,000(起)", "價格洽詢", ""]) assert.equal(exactTwdPrice(price), null, price);
 });
+
+// ---- 送到瀏覽器的精簡行程資料 ----
+test("the slim trips sent to the browser match exactly like the full ones", async () => {
+  const { finderTrips } = await import("../lib/travel-finder.ts");
+  const dated = structuredClone(base);
+  dated.summary = "很長的行程摘要".repeat(40); dated.badge = "日本"; dated.featured = true; dated.itinerary = [{ id: "d1", title: "第一天", description: "…", meals: "", hotel: "" }];
+  dated.image = "https://images.unsplash.com/photo-1?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8";
+  dated.plans.push({ ...dated.plans[0], id: "draft", documentUrl: "" }, { ...dated.plans[0], id: "kh", departureAirport: "高雄", documentName: "查看完整行程", documentUpdatedAt: "2026-09-02" });
+  const open = structuredClone(base); open.id = "open"; open.region = "首爾"; open.departures = [open.departures[0]];
+  const full = [dated, open];
+  const slim = finderTrips(full, today);
+  const outline = result => ["candidates", "pendingCandidates", "openCandidates"].map(list => result[list].map(c => [c.key, c.departures.map(d => d.id), c.reasons, c.unconfirmed, c.moreVersions]));
+  for (const needs of [{}, { airport: "高雄" }, { airport: "台中" }, { budget: "30000" }, { destination: "韓國" }, { start: "2026-10-01" }, { service: "undecided", budget: "5000" }]) {
+    const query = { ...emptyNeeds, ...needs };
+    assert.deepEqual(outline(findTravel(slim, query, today)), outline(findTravel(full, query, today)), JSON.stringify(needs));
+  }
+  assert.deepEqual(slim[0].plans.map(p => p.id), ["p", "kh"], "未公布的版本不送出");
+  assert.deepEqual(slim[0].departures.map(d => d.id), ["a", "b"], "已出發的團期不送出");
+  assert.equal(slim[0].image, "https://images.unsplash.com/photo-1?q=80&w=1740&auto=format&fit=crop");
+  const text = JSON.stringify(slim);
+  for (const dropped of ["很長的行程摘要", "第一天", "查看完整行程", "2026-09-02", "ixid"]) assert.ok(!text.includes(dropped), dropped);
+  assert.ok(text.length < JSON.stringify(full).length);
+});
+test("image URLs lose only the Unsplash tracking parameters", async () => {
+  const { compactImageUrl } = await import("../lib/trip-summary.ts");
+  assert.equal(compactImageUrl("https://plus.unsplash.com/premium_photo-1?w=800&ixid=abc&ixlib=rb-4.1.0&q=80"), "https://plus.unsplash.com/premium_photo-1?w=800&q=80");
+  for (const untouched of ["/trips/tokyo.jpg", "/api/hero-image?key=hero-images%2Fx.webp", "https://example.com/a.jpg?ixid=1", ""]) assert.equal(compactImageUrl(untouched), untouched);
+});

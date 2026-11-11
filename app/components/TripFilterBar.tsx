@@ -81,7 +81,7 @@ export function TripFilterBar({
       onSubmit={(event) => {
         event.preventDefault();
         router.push(
-          tripFilterHref({ ...filters, month, budget, region, keyword }, false),
+          tripFilterHref({ ...filters, month, budget, region, keyword }),
         );
       }}
     >

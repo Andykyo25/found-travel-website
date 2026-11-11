@@ -2,6 +2,7 @@ import type { Trip, TripPlan, TripDeparture } from "@/lib/site-content";
 import { publishedTripPlans, departuresForPlan, tripPlanLabel } from "@/lib/trip-plans";
 import { upcomingDepartures, parseDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 import { destinationGroup, destinationGroupNames } from "@/lib/destination-groups";
+import { compactImageUrl } from "@/lib/trip-summary";
 
 import { departureAirport, priceBasis, serviceType } from "@/lib/travel-facts";
 
@@ -45,6 +46,43 @@ function budgetFit(plan: TripPlan, price: string, budget: number): "within" | "o
   // out of budget; a lower starting price does not prove the final price.
   const starting = price.includes("起") ? exactTwdPrice(price.replace("起", "")) : null;
   return starting !== null && starting > budget ? "over" : "unsure";
+}
+
+/**
+ * 送到瀏覽器做配對的行程資料：只留配對與結果卡片用得到的欄位、已公布的版本與還沒出發的團期。
+ * 整份行程資料（每日行程、完整摘要、文件名稱…）有近三百個行程時約 480 KB，不必全部送出去。
+ */
+export function finderTrips(trips: Trip[], today = taipeiTodayTime()): Trip[] {
+  return trips.map(trip => ({
+    id: trip.id,
+    ...(trip.slug ? { slug: trip.slug } : {}),
+    featured: false,
+    badge: "",
+    region: trip.region,
+    days: trip.days,
+    title: trip.title,
+    summary: "",
+    price: trip.price,
+    image: compactImageUrl(trip.image || ""),
+    departures: upcomingDepartures(trip.departures, today),
+    plans: publishedTripPlans(trip).map(plan => ({
+      id: plan.id,
+      airline: plan.airline,
+      title: plan.title,
+      summary: plan.summary,
+      ...(plan.flight ? { flight: plan.flight } : {}),
+      ...(plan.accommodation ? { accommodation: plan.accommodation } : {}),
+      ...(plan.serviceType && plan.serviceType !== "unknown" ? { serviceType: plan.serviceType } : {}),
+      ...(plan.departureAirport ? { departureAirport: plan.departureAirport } : {}),
+      ...(plan.priceBasis && plan.priceBasis !== "unknown" ? { priceBasis: plan.priceBasis } : {}),
+      price: plan.price,
+      documentType: plan.documentType,
+      documentUrl: plan.documentUrl,
+      documentName: "",
+      departureMode: plan.departureMode,
+      departureIds: plan.departureIds,
+    })),
+  }));
 }
 
 /** 目的地可以是大方向（日本）或後台填的地區（東京）。 */

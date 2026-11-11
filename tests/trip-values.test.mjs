@@ -38,7 +38,7 @@ test("month and budget must match the same departure and region stays in the que
   );
   assert.equal(
     new URL(
-      tripFilterHref(filters, true),
+      tripFilterHref(filters, 30),
       "https://example.com",
     ).searchParams.get("region"),
     "日本",
@@ -123,9 +123,19 @@ test("keyword search uses published itinerary text, aliases, and combines with f
   assert.equal(filterTrips([trip], f).length, 1);
   assert.equal(filterTrips([trip], { ...f, budget: "b1" }).length, 0);
   assert.equal(filterTrips([trip], { ...f, category: "夏季" }).length, 0);
-  const url = new URL(tripFilterHref(f, true), "https://example.com");
+  const url = new URL(tripFilterHref(f, 30, "more-trips"), "https://example.com");
   assert.equal(url.searchParams.get("q"), "日本 東北");
-  assert.equal(url.searchParams.get("all"), "1");
+  assert.equal(url.searchParams.get("show"), "30");
+  assert.equal(url.hash, "#more-trips");
+  // 沒展開就不帶 show；舊的 ?all=1 連結等於按過一次「看更多」。
+  assert.equal(new URL(tripFilterHref(f), "https://example.com").searchParams.has("show"), false);
+  assert.equal(new URL(tripFilterHref(f), "https://example.com").hash, "#journeys");
+  const { shownTripCount } = await import("../lib/trip-filters.ts");
+  assert.equal(shownTripCount({}), 6);
+  assert.equal(shownTripCount({ all: "1" }), 30);
+  assert.equal(shownTripCount({ show: "54" }), 54);
+  for (const show of ["3", "abc", "-1", "7.5"]) assert.equal(shownTripCount({ show }), 6, show);
+  assert.equal(shownTripCount({ show: "999999" }), 2000);
   assert.equal(readTripFilters({ q: ["a", "b"] }).keyword, "a");
   assert.equal(readTripFilters({ q: "a".repeat(100) }).keyword.length, 60);
   assert.equal(matchesTripKeyword({ ...trip, title: "東京慢旅", region: "TOKYO・HAKONE" }, "日本"), true);

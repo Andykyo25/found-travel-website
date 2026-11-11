@@ -11,7 +11,10 @@ import {
   filterTrips,
   monthOptions,
   readTripFilters,
+  shownTripCount,
   tripFilterHref,
+  tripFirstCount,
+  tripMoreStep,
 } from "@/lib/trip-filters";
 import { SiteHeader } from "./components/SiteHeader";
 import { JourneyAtlas } from "./components/JourneyAtlas";
@@ -32,8 +35,6 @@ export const metadata = {
   alternates: { canonical: "/" },
 };
 
-const visibleTripLimit = 6;
-
 function Arrow({ direction = "right" }: { direction?: "right" | "up-right" | "down" }) {
   const path = { right: "M5 12h14m-6-6 6 6-6 6", "up-right": "M7 17 17 7M8 7h9v9", down: "M12 5v14m-6-6 6 6 6-6" }[direction];
   return (
@@ -51,7 +52,9 @@ export default async function Home({
   const params = await searchParams;
   const content = await getSiteContent();
   const filters = readTripFilters(params);
-  const showAll = params.all === "1";
+  const shown = shownTripCount(params);
+  // 按過「看更多」之後：手機版從橫向滑動改成直排，切換分類時也維持展開。
+  const expanded = shown > tripFirstCount;
 
   // 精選行程排在前面，其餘接著顯示，兩者共用同一個列表與篩選。
   const orderedTrips = [
@@ -59,10 +62,11 @@ export default async function Home({
     ...content.trips.filter((trip) => !trip.featured),
   ];
   const matchedTrips = filterTrips(orderedTrips, filters);
-  const visibleTrips = showAll
-    ? matchedTrips
-    : matchedTrips.slice(0, visibleTripLimit);
-  const hasMore = matchedTrips.length > visibleTrips.length;
+  const visibleTrips = matchedTrips.slice(0, shown);
+  const remaining = matchedTrips.length - visibleTrips.length;
+  // 這次新出現的第一個行程：「看更多」的連結會捲到這裡。
+  const firstNewIndex = expanded ? shown - tripMoreStep : -1;
+  const expandedCount = expanded ? tripFirstCount + tripMoreStep : 0;
 
   const months = monthOptions(content.trips);
   const categories = categoryOptions(content.trips);
@@ -189,7 +193,7 @@ export default async function Home({
             <nav className="fh-pills" aria-label="行程分類">
               <Link
                 className={`fh-pill${filters.category ? "" : " active"}`}
-                href={tripFilterHref({ ...filters, category: "" }, showAll)}
+                href={tripFilterHref({ ...filters, category: "" }, expandedCount)}
                 aria-current={filters.category ? undefined : "true"}
               >
                 全部
@@ -198,7 +202,7 @@ export default async function Home({
                 <Link
                   key={category}
                   className={`fh-pill${filters.category === category ? " active" : ""}`}
-                  href={tripFilterHref({ ...filters, category }, showAll)}
+                  href={tripFilterHref({ ...filters, category }, expandedCount)}
                   aria-current={filters.category === category ? "true" : undefined}
                 >
                   {category}
@@ -223,9 +227,9 @@ export default async function Home({
           </div>
 
           {visibleTrips.length > 0 ? (
-            <div className={`fh-grid${showAll ? " is-all" : ""}`}>
+            <div className={`fh-grid${expanded ? " is-all" : ""}`}>
               {visibleTrips.map((trip, index) => (
-                <PackageCard key={trip.id} trip={trip} index={index} />
+                <PackageCard key={trip.id} trip={trip} index={index} id={index === firstNewIndex ? "more-trips" : undefined} />
               ))}
             </div>
           ) : (
@@ -240,9 +244,9 @@ export default async function Home({
           )}
 
           <div className="fh-more">
-            {hasMore ? (
-              <Link className="fh-link" href={tripFilterHref(filters, true)}>
-                看更多行程 <Arrow />
+            {remaining > 0 ? (
+              <Link className="fh-link" href={tripFilterHref(filters, shown + tripMoreStep, "more-trips")}>
+                看更多行程（還有 {remaining} 個） <Arrow />
               </Link>
             ) : null}
             <Link className="fh-link" href="/dates">

@@ -1,7 +1,8 @@
 import Image from "next/image";
+import { compactImageUrl } from "@/lib/trip-summary";
 
 export function TravelImage({
-  src,
+  src: original,
   alt,
   className,
   priority = false,
@@ -17,6 +18,7 @@ export function TravelImage({
   onError?: () => void;
   onLoad?: () => void;
 }) {
+  const src = compactImageUrl(original);
   // Optimize local assets and the established photo provider. Other editor URLs
   // retain their original rendering without opening the server image proxy.
   const optimizable =

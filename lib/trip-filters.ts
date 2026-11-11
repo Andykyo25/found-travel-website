@@ -300,15 +300,33 @@ export function groupDeparturesByMonth(rows: DepartureRow[]) {
   return groups;
 }
 
-export function tripFilterHref(filters: TripFilters, showAll: boolean) {
+// 首頁行程列表一開始列 6 個，按「看更多行程」每次多 24 個。
+// 原本是一次列出全部：行程有近三百個時，那一頁有 2.6 MB、上萬個元素，手機開起來很吃力。
+export const tripFirstCount = 6;
+export const tripMoreStep = 24;
+const tripShownLimit = 2000;
+
+/** 網址上的 ?show= 是要列出幾個行程；舊的 ?all=1 連結視為按過一次「看更多」。 */
+export function shownTripCount(params: Record<string, string | string[] | undefined>) {
+  const first = (key: string) => (Array.isArray(params[key]) ? params[key][0] : params[key]);
+  const requested = Number(first("show"));
+  if (Number.isInteger(requested) && requested > tripFirstCount) return Math.min(requested, tripShownLimit);
+  return first("all") === "1" ? tripFirstCount + tripMoreStep : tripFirstCount;
+}
+
+/**
+ * shown：要列出幾個行程，不超過一開始的數量就不寫進網址。
+ * anchor：換頁後捲到哪裡；「看更多」會捲到新出現的第一個行程，不用從頭再滑一次。
+ */
+export function tripFilterHref(filters: TripFilters, shown = 0, anchor = "journeys") {
   const params = new URLSearchParams();
   if (filters.month) params.set("month", filters.month);
   if (filters.budget) params.set("budget", filters.budget);
   if (filters.category) params.set("category", filters.category);
   if (filters.region) params.set("region", filters.region);
   if (filters.keyword?.trim()) params.set("q", filters.keyword.trim().slice(0, 60));
-  if (showAll) params.set("all", "1");
+  if (shown > tripFirstCount) params.set("show", String(shown));
 
   const query = params.toString();
-  return `/${query ? `?${query}` : ""}#journeys`;
+  return `/${query ? `?${query}` : ""}#${anchor}`;
 }

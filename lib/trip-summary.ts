@@ -68,6 +68,22 @@ export function tripListSummary(trip: Trip, todayTime: number): TripListSummary 
   };
 }
 
+/**
+ * 從 Unsplash 複製的圖片網址帶著 ixlib、ixid 兩個追蹤參數，不影響圖片本身。
+ * 每張圖的網址會在 srcset 裡重複好幾次，拿掉後每張圖在頁面裡少掉近一半的字。
+ */
+export function compactImageUrl(src: string) {
+  if (!src.startsWith("https://images.unsplash.com/") && !src.startsWith("https://plus.unsplash.com/")) return src;
+  try {
+    const url = new URL(src);
+    url.searchParams.delete("ixlib");
+    url.searchParams.delete("ixid");
+    return url.toString();
+  } catch {
+    return src;
+  }
+}
+
 /** Unsplash 圖片網址加上縮圖參數；其他來源原樣回傳。後台縮圖不需要載入 1600px 的原圖。 */
 export function coverThumbnail(src: string) {
   const value = src.trim();
