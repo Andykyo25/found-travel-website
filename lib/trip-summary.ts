@@ -1,12 +1,12 @@
 // 後台行程列表與前台共用的行程摘要：起始價格、下一個團期、文件備妥狀態。
 // 只 import type，避免把伺服器端的儲存邏輯帶進 client component。
 import type { SiteContent, Trip } from "./site-content";
-import { formatDepartureDate, priceValue, upcomingDepartures } from "./trip-values";
+import { bookableDepartures, formatDepartureDate, priceValue, upcomingDepartures } from "./trip-values";
 
-/** 目前還沒出發的團期裡最低的價格；沒有可判讀的價格時回傳 null。 */
+/** 還沒出發、還能報名的團期裡最低的價格（額滿的團不算）；沒有可判讀的價格時回傳 null。 */
 export function lowestUpcomingPrice(trip: Pick<Trip, "departures">, todayTime: number) {
   let lowest: number | null = null;
-  for (const departure of upcomingDepartures(trip.departures, todayTime)) {
+  for (const departure of bookableDepartures(trip.departures, todayTime)) {
     const amount = priceValue(departure.price);
     if (amount !== null && amount > 0 && (lowest === null || amount < lowest)) lowest = amount;
   }

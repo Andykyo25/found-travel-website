@@ -141,3 +141,20 @@ test("keyword search uses published itinerary text, aliases, and combines with f
   assert.equal(matchesTripKeyword({ ...trip, title: "東京慢旅", region: "TOKYO・HAKONE" }, "日本"), true);
   assert.equal(matchesTripKeyword({ ...trip, title: "中國東北", region: "中國", summary: "", plans: [] }, "日本"), false);
 });
+
+test("starting price ignores departures that are already full", async () => {
+  const { bookableDepartures } = await import("../lib/trip-values.ts");
+  const { resolveTripPrice } = await import("../lib/trip-summary.ts");
+  const today = Date.UTC(2026, 10, 11);
+  const departures = [
+    { id: "past", date: "2026/11/01", price: "9,900", note: "" },
+    { id: "full", date: "2026/11/14", price: "33,900", note: "額滿" },
+    { id: "few", date: "2026/11/20", price: "35,900", note: "即將額滿" },
+    { id: "open", date: "2026/12/01", price: "37,900" },
+  ];
+  assert.deepEqual(bookableDepartures(departures, today).map((item) => item.id), ["few", "open"]);
+  assert.equal(resolveTripPrice({ departures, price: "價格洽詢", priceMode: "auto" }, today), "NT$35,900 起／人");
+  // 全部額滿時仍顯示最低價，不會變成沒有價格。
+  const allFull = departures.slice(0, 2);
+  assert.equal(resolveTripPrice({ departures: allFull, price: "價格洽詢", priceMode: "auto" }, today), "NT$33,900 起／人");
+});
