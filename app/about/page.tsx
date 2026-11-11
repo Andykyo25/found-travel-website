@@ -7,6 +7,9 @@ import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { TravelImage } from "@/app/components/TravelImage";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
+import { JsonLd } from "@/app/components/JsonLd";
+import { agencyId, travelAgencyJsonLd } from "@/lib/structured-data";
+import { getSiteOrigin } from "@/lib/site-url";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -33,9 +36,33 @@ function ReviewCredit({ review }: { review: (typeof travelerReviews)[number] }) 
 export default async function AboutPage() {
   const content = await getSiteContent();
   const [featured, ...reviews] = travelerReviews;
+  const origin = await getSiteOrigin();
+  const companyFacts: { label: string; value: string; href?: string }[] = [
+    { label: "公司名稱", value: content.companyName },
+    { label: "旅行業執照", value: content.businessLicense },
+    { label: "品質保障協會", value: content.qualityLicense },
+    { label: "統一編號", value: content.taxId },
+    { label: "地址", value: content.address, href: googleMapsPlaceUrl },
+    { label: "電話", value: content.telephone },
+    { label: "Email", value: content.email },
+    { label: "LINE 諮詢", value: "加入官方 LINE", href: content.lineUrl },
+  ].filter((fact) => fact.value);
 
   return <>
   <main className={styles.page} id="top">
+    <JsonLd
+      data={[
+        travelAgencyJsonLd(content, origin),
+        {
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          url: `${origin}/about`,
+          name: `關於${content.brandName}`,
+          inLanguage: "zh-Hant",
+          mainEntity: { "@id": agencyId(origin) },
+        },
+      ]}
+    />
     <a className={styles.skipLink} href="#our-story">跳至頁面內容</a>
     <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/about" />
 
@@ -58,6 +85,7 @@ export default async function AboutPage() {
       <a href="#our-story">01 <span>我們相信</span></a>
       <a href="#our-services">02 <span>旅行服務</span></a>
       <a href="#traveler-stories">03 <span>旅人好評</span></a>
+      <a href="#company">04 <span>公司資訊</span></a>
     </nav>
 
     <section className={`${styles.section} ${styles.story}`} id="our-story" aria-labelledby="story-title">
@@ -105,6 +133,28 @@ export default async function AboutPage() {
         <h3>{review.title}</h3><p>{review.summary}</p><span className={styles.summaryLabel}>旅客回饋摘要</span><ReviewCredit review={review} />
       </article>)}</div>
       <div className={styles.reviewNote}><p>以上為精選五星評論的編輯摘要，非逐字引言，亦非全部評論。<br />來源：Google Maps「找到了旅行社股份有限公司」西湖據點。</p><a className={styles.underlinedLink} href={googleMapsPlaceUrl} target="_blank" rel="noopener noreferrer">前往 Google Maps <span aria-hidden="true">↗</span></a></div>
+    </section>
+
+    {/* 公司基本資料：旅客查證用，也讓搜尋引擎與 AI 助理能確定「這是哪一家旅行社」。 */}
+    <section className={`${styles.section} ${styles.company}`} id="company" aria-labelledby="company-title">
+      <div>
+        <p className={styles.eyebrow}>COMPANY</p>
+        <h2 id="company-title">公司資訊</h2>
+      </div>
+      <div>
+        <p className={styles.companyLead}>
+          {content.brandName}（{content.companyName}）是位於台北內湖的合法立案綜合旅行社，提供出國團體旅遊、親友自組與客製行程，以及企業員工旅遊。
+          官網公布各行程的出發日期、團費與完整行程，報名與諮詢由顧問透過 LINE 或聯絡表單回覆。
+        </p>
+        <dl className={styles.companyFacts}>
+          {companyFacts.map((fact) => (
+            <div key={fact.label}>
+              <dt>{fact.label}</dt>
+              <dd>{fact.href ? <a href={fact.href} target="_blank" rel="noopener noreferrer">{fact.value}</a> : fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
 
     <section className={styles.contact} aria-labelledby="contact-title">

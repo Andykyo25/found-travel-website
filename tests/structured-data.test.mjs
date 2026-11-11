@@ -171,3 +171,45 @@ test("public pages publish structured data for the agency, trips and breadcrumbs
   for (const page of [trip, dates, month, article]) assert.match(page, /breadcrumbJsonLd\(/);
   assert.match(layout, /跟團/);
 });
+
+test("trip facts give a quotable summary and answers drawn only from trip data", async () => {
+  const { tripFacts } = await import("../lib/trip-facts.ts");
+  const today = Date.UTC(2026, 10, 11);
+  const company = { brandName: "找到了旅行社", companyName: "找到了旅行社股份有限公司", businessLicense: "交觀綜字222700號" };
+  const dated = {
+    title: "北海道青池點燈雙溫泉", region: "北海道", days: "6日", price: "NT$35,900 起／人", plans: [{ airline: "酷航空" }],
+    departures: [
+      { id: "a", date: "2026/11/01(酷航)", price: "9,900" },
+      { id: "b", date: "2026/11/14(酷航)", price: "33,900", note: "額滿" },
+      { id: "c", date: "2026/11/30(亞航・高雄出發)", price: "35,900", note: "已成團" },
+      { id: "d", date: "2026/12/06(亞航)", price: "37,900", note: "即將額滿" },
+    ],
+  };
+  const facts = tripFacts(dated, company, today);
+  assert.equal(
+    facts.summary,
+    "「北海道青池點燈雙溫泉」是找到了旅行社出團的北海道 6日團體行程。截至 2026/11/11，共公布 3 個出發日（2026/11/14 至 2026/12/06），其中 2 個仍可報名，團費每人 NT$35,900 起，最近可報名的出發日是 2026/11/30。搭乘酷航、亞航。",
+  );
+  assert.deepEqual(Object.fromEntries(facts.items.map((item) => [item.label, item.value])), {
+    行程: "北海道・6日",
+    團費: "每人 NT$35,900 起（最高 NT$37,900）",
+    出發日期: "2026/11/14 至 2026/12/06，共 3 團",
+    可報名: "2 團，最近一團 2026/11/30",
+    航空: "酷航、亞航",
+    出團旅行社: "找到了旅行社股份有限公司｜交觀綜字222700號",
+  });
+  assert.deepEqual(facts.faqs.map((faq) => faq.question), [
+    "北海道青池點燈雙溫泉多少錢？",
+    "北海道青池點燈雙溫泉什麼時候出發？",
+    "北海道青池點燈雙溫泉還有名額嗎？",
+    "北海道青池點燈雙溫泉搭哪家航空？",
+    "怎麼報名北海道青池點燈雙溫泉？",
+  ]);
+  assert.equal(facts.faqs[2].answer, "截至 2026/11/11，3 個團期中有 2 個可報名（其中 1 個即將額滿），1 個已確定成團。名額變動快，實際團位以顧問回覆為準。");
+
+  // 沒有團期的行程：不能說出不存在的日期或名額。
+  const undated = tripFacts({ title: "豪華檳城5日", region: "檳城", days: "5日", price: "價格洽詢", plans: [{ airline: "航空方案" }], departures: [] }, company, today);
+  assert.equal(undated.summary, "「豪華檳城5日」是找到了旅行社出團的檳城 5日團體行程。出發日期與實際團費由顧問依想出發的月份與人數回覆。");
+  assert.deepEqual(undated.faqs.map((faq) => faq.question), ["豪華檳城5日多少錢？", "豪華檳城5日什麼時候出發？", "怎麼報名豪華檳城5日？"]);
+  assert.equal(undated.items.some((item) => item.label === "可報名" || item.label === "航空"), false);
+});

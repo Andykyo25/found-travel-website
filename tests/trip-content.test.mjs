@@ -139,6 +139,7 @@ test("every public link to a trip goes through tripPath, and old /dates/<id> lin
   assert.match(files[5], /permanentRedirect\(tripPath\(trip\)\)/);
   assert.match(files[6], /permanentRedirect\(tripPath\(trip\)\)/);
   assert.match(files[6], /<TripItinerary itinerary=\{itinerary\} \/>/);
-  assert.match(files[6], /<TripNotes trip=\{trip\} \/>/);
+  // 常見問題是「自動問答 + 業務寫的問答」合起來，所以傳進去的不是原本的 trip。
+  assert.match(files[6], /<TripNotes trip=\{\{ notes: trip\.notes, faqs \}\} \/>/);
   assert.match(files[7], /"\/trips\/:path\*"/);
 });

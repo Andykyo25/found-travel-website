@@ -19,7 +19,7 @@
 .heroPhoto img { position: absolute; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
 .heroPhoto::after { content: ""; position: absolute; inset: 60% 0 0; background: linear-gradient(transparent, #102c255c); }
 .heroPhoto figcaption { position: absolute; left: 7%; right: 7%; bottom: 35px; z-index: 1; color: #fffdf8; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 12.5px; letter-spacing: .13em; }
-.sectionNav { display: flex; justify-content: center; gap: 80px; border-bottom: 1px solid var(--about-line); padding: 26px 24px; }
+.sectionNav { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 80px; border-bottom: 1px solid var(--about-line); padding: 26px 24px; }
 .sectionNav a { display: flex; gap: 16px; font-family: var(--f-display); font-size: 17px; color: #8c927e; padding: 8px 0; }
 .sectionNav span { font-family: var(--f-sans); font-size: 14px; color: #435646; }
 .section { width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: auto; padding: clamp(80px, 9vw, 140px) 0; }
@@ -96,7 +96,7 @@
   .heroPhoto { min-height: 380px; }
   .heroPhoto img { object-position: 50% 55%; }
   .heroPhoto figcaption { bottom: 25px; font-size: 10px; }
-  .sectionNav { gap: 24px; padding: 18px 20px; }
+  .sectionNav { gap: 8px 24px; padding: 18px 20px; }
   .sectionNav a { gap: 7px; }
   .sectionNav span { font-size: 12px; }
   .section { width: calc(100% - 48px); padding: 64px 0; }
@@ -129,3 +129,13 @@
   .contactActions a { width: min(100%, 310px); }
 }
 @media (prefers-reduced-motion: reduce) { .page a { transition: none; } }
+/* 公司資訊 */
+.company { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: clamp(28px, 6vw, 90px); border-top: 1px solid var(--about-line); }
+.company h2 { margin-top: 14px; }
+.companyLead { color: var(--about-muted); line-height: 2.1; font-size: 16.5px; }
+.companyFacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px 30px; margin: 30px 0 0; }
+.companyFacts div { min-width: 0; padding-top: 14px; border-top: 1px solid var(--about-line); }
+.companyFacts dt { font-size: 13px; letter-spacing: .08em; color: var(--about-muted); }
+.companyFacts dd { margin: 4px 0 0; font-size: 15.5px; line-height: 1.8; overflow-wrap: anywhere; }
+.companyFacts a { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 760px) { .company { grid-template-columns: 1fr; } }

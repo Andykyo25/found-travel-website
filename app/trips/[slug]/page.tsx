@@ -19,6 +19,7 @@ import { publishedTripPlans } from "@/lib/trip-plans";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
+import { tripFacts } from "@/lib/trip-facts";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,10 @@ export default async function TripPage({ params }: PageProps) {
   const related = relatedTrips(content.trips, trip);
   // 後台沒手動填每日行程時，用行程 PDF 自動擷取的內容。
   const itinerary = resolveTripItinerary(trip, await getTripPdfItinerary(trip));
+  // 一句就能引用的事實與問答（給旅客，也給 AI 搜尋）；業務自己寫的問答排在自動問答後面。
+  const today = taipeiTodayTime();
+  const facts = tripFacts(trip, content, today);
+  const faqs = [...facts.faqs, ...(trip.faqs ?? [])];
 
   return (
     <>
@@ -74,8 +79,8 @@ export default async function TripPage({ params }: PageProps) {
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} />
       <JsonLd
         data={[
-          tripJsonLd({ ...trip, itinerary: itinerary.days }, content, origin, taipeiTodayTime()),
-          ...(trip.faqs?.length ? [faqJsonLd(trip.faqs, `${origin}${tripPath(trip)}`)] : []),
+          tripJsonLd({ ...trip, itinerary: itinerary.days }, content, origin, today),
+          faqJsonLd(faqs, `${origin}${tripPath(trip)}`),
           breadcrumbJsonLd([...crumbs, { name: trip.title, path: tripPath(trip) }], origin),
         ]}
       />
@@ -127,6 +132,19 @@ export default async function TripPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        <section className="trip-facts" aria-labelledby="trip-facts-title">
+          <h2 id="trip-facts-title">行程速覽</h2>
+          <p>{facts.summary}</p>
+          <dl>
+            {facts.items.map((item) => (
+              <div key={item.label}>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
         <TripItinerary itinerary={itinerary} />
 
@@ -191,7 +209,7 @@ export default async function TripPage({ params }: PageProps) {
           </p>
         </section>
 
-        <TripNotes trip={trip} />
+        <TripNotes trip={{ notes: trip.notes, faqs }} />
       </section>
 
       {related.length > 0 ? (
