@@ -547,3 +547,36 @@ export async function writeStudioPasswordObject(key: string, value: unknown) {
     }),
   );
 }
+
+// 業務系統團期的同步結果與人工指定的對應。和發布內容分開存，同步不會動到業務編輯的行程。
+const tourFeedKeys = { snapshot: "tour-feed/snapshot.json", links: "tour-feed/links.json" } as const;
+
+export async function readTourFeedObject(name: keyof typeof tourFeedKeys): Promise<unknown | null> {
+  const storage = getClient();
+  if (!storage) return null;
+  try {
+    const result = await storage.client.send(
+      new GetObjectCommand({ Bucket: storage.config.bucket, Key: tourFeedKeys[name] }),
+    );
+    if (!result.Body) return null;
+    return JSON.parse(await result.Body.transformToString("utf-8")) as unknown;
+  } catch (error) {
+    const errorName = (error as { name?: string } | null)?.name;
+    if (error instanceof NoSuchKey || errorName === "NoSuchKey" || errorName === "NotFound") return null;
+    throw error;
+  }
+}
+
+export async function writeTourFeedObject(name: keyof typeof tourFeedKeys, value: unknown) {
+  const storage = getClient();
+  if (!storage) throw new Error("Storage unavailable");
+  await storage.client.send(
+    new PutObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: tourFeedKeys[name],
+      Body: JSON.stringify(value),
+      ContentType: "application/json; charset=utf-8",
+      CacheControl: "no-store",
+    }),
+  );
+}

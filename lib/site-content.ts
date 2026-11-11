@@ -2,6 +2,8 @@ import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
 import { cleanTripSlug, formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 import { carryPreviousSlugs, suggestTripSlug, uniqueTripSlug } from "@/lib/trip-slug";
 import { applyAutoPrices, stampTripUpdates } from "@/lib/trip-summary";
+import { applyTourFeed } from "@/lib/tour-feed-overlay";
+import { getTourFeedState } from "@/lib/tour-feed-store";
 import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
 import { cache } from "react";
 import {
@@ -744,12 +746,19 @@ async function publishedContent(strict: boolean): Promise<SiteContent> {
 
 // 前台讀取用：自動計算起始價格的行程，在這裡依「今天」的團期算出最新價格。
 // 後台編輯用 getSiteContentWithMeta()，拿到的是原樣儲存的內容。
+// 業務系統同步來的團期在這裡套上去（有對應的行程才會換），再算起始價格。
+async function forVisitors(content: SiteContent): Promise<SiteContent> {
+  const today = taipeiTodayTime();
+  const feed = await getTourFeedState();
+  return applyAutoPrices(applyTourFeed(content, feed.snapshot, feed.links, today), today);
+}
+
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    return applyAutoPrices(await publishedContent(false), taipeiTodayTime());
+    return await forVisitors(await publishedContent(false));
   } catch (error) {
     console.error("Unable to read published content", error);
-    if (lastSuccessfulContent) return applyAutoPrices(lastSuccessfulContent, taipeiTodayTime());
+    if (lastSuccessfulContent) return forVisitors(lastSuccessfulContent);
     throw error;
   }
 }
@@ -758,7 +767,7 @@ export async function getSiteContent(): Promise<SiteContent> {
 // 讀取正常時和其他前台頁面共用同一份記憶體內容；最近一次重讀失敗就回傳 null。
 export async function getSiteContentIfAvailable(): Promise<SiteContent | null> {
   try {
-    return applyAutoPrices(await publishedContent(true), taipeiTodayTime());
+    return await forVisitors(await publishedContent(true));
   } catch (error) {
     console.error("Unable to read published content", error);
     return null;

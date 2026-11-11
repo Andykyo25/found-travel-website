@@ -20,6 +20,8 @@ function fakeBucket(t) {
   const bucket = { reads: 0, brand: "第一版", down: false, gate: null };
   t.mock.method(S3Client.prototype, "send", async (command) => {
     if (command.constructor.name !== "GetObjectCommand") return { ETag: '"saved"' };
+    // 團期同步的結果另外存放，這裡只數發布內容的讀取；假 Bucket 裡沒有同步結果。
+    if (String(command.input?.Key).startsWith("tour-feed/")) throw Object.assign(new Error("missing"), { name: "NoSuchKey" });
     bucket.reads += 1;
     const brand = bucket.brand;
     if (bucket.gate) await bucket.gate;
