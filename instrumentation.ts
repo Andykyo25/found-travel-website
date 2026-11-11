@@ -13,7 +13,7 @@ export async function register() {
     }, 60_000);
     state.contactRetryTimer.unref();
 
-    // 業務系統的團期每小時同步一次；啟動後一分鐘先跑第一次。沒設定連線資訊就不排程。
+    // 業務系統的團期每 3 小時同步一次；啟動後一分鐘先跑第一次。沒設定連線資訊就不排程。
     const { isTourFeedConfigured, syncTourFeed } = await import("./lib/tour-feed-sync");
     if (isTourFeedConfigured()) {
       const feedState = globalThis as typeof globalThis & {
@@ -22,7 +22,7 @@ export async function register() {
       const sync = () => void syncTourFeed().catch((error) => console.error("Tour feed sync failed", error));
       if (!feedState.tourFeedTimer) {
         setTimeout(sync, 60_000).unref();
-        feedState.tourFeedTimer = setInterval(sync, 60 * 60_000);
+        feedState.tourFeedTimer = setInterval(sync, 3 * 60 * 60_000);
         feedState.tourFeedTimer.unref();
       }
     }
