@@ -61,6 +61,17 @@ export function feedAirlineName(code: string) {
   return airlineNames[code] ?? "";
 }
 
+// 官網方案常寫全名（「全亞洲航空」「泰國亞洲航空」），和上面的簡稱對不上時用這裡補。
+const airlineFullNames: Record<string, string[]> = {
+  AK: ["亞洲航空"], D7: ["全亞洲航空"], FD: ["泰國亞洲航空", "泰亞航"], CI: ["中華航空"], BR: ["長榮航空"], JX: ["星宇航空"],
+  IT: ["台灣虎航"], TR: ["酷航"], ZE: ["易斯達航空"], VZ: ["泰越捷"], VJ: ["越捷航空"], CA: ["中國國際航空"], MU: ["東方航空"],
+};
+
+/** 這個航空代碼在官網方案裡可能出現的寫法。 */
+export function feedAirlineAliases(code: string) {
+  return [airlineNames[code], ...(airlineFullNames[code] ?? [])].filter(Boolean);
+}
+
 export function baseFeedRegion(region: string) {
   return region.replace(/^(中澳|高澳|中|高|南|澳)[／/]/, "").replace(/[＝=].*$/, "");
 }
@@ -127,7 +138,9 @@ export function buildFeedProducts(files: { name: string; groups: TourFeedGroup[]
         }
         const key = `${fileName}｜${region}｜${name}｜${days}`;
         const product = products.get(key) ?? { key, file: fileName, region, name, marker, days, departures: [] };
-        product.departures.push(departure);
+        // 出發地有時寫在地區標題（「高／大阪」），有時寫在團號前；兩邊都看。
+        const from = /^高/.test(group.region) && /[／/]/.test(group.region) ? "高" : /^中/.test(group.region) && /[／/]/.test(group.region) ? "中" : departure.from;
+        product.departures.push(from === departure.from ? departure : { ...departure, from });
         products.set(key, product);
       }
     }

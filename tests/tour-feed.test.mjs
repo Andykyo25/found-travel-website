@@ -103,3 +103,50 @@ test("sends a product claimed by two website trips to manual review", () => {
   const matches = matchTrips([trip("a", "首爾滑雪五日"), trip("b", "首爾滑雪溫泉五日")], products);
   assert.deepEqual(matches.map((match) => match.status), ["review", "review"]);
 });
+
+test("overlays synced departures onto linked trips without exposing seat counts", async () => {
+  const { applyTourFeed, resolveFeedLinks, snapshotProduct } = await import("../lib/tour-feed-overlay.ts");
+  const products = buildFeedProducts([{ name: "１０＊首爾", groups }], now.getTime());
+  const plan = (id, airline) => ({ id, airline, title: "", summary: "", price: "", documentType: "pdf", documentUrl: "", documentName: "", departureMode: "selected", departureIds: ["old"] });
+  const trip = (id, title, patch = {}) => ({ id, title, region: "首爾", days: "5日", price: "價格洽詢", featured: false, badge: "韓國", summary: "", image: "", plans: [plan("p1", "易斯達航空")], departures: [{ id: "old", date: "2026/12/01", price: "9,900" }], ...patch });
+  const trips = [trip("deal", "首爾超殺特惠五日"), trip("ski", "首爾滑雪五日"), trip("luxury", "首爾尊爵五日"), trip("manual", "韓國冬季限定五日")];
+  const snapshot = { syncedAt: now.toISOString(), products: products.map(snapshotProduct), matches: matchTrips(trips, products) };
+  const links = { ski: "none", manual: "１０＊首爾｜首爾｜冰釣｜5", ghost: "不存在的商品" };
+
+  assert.deepEqual([...resolveFeedLinks(snapshot, links)], [["deal", "１０＊首爾｜首爾｜特惠｜5"], ["manual", "１０＊首爾｜首爾｜冰釣｜5"]]);
+
+  const content = applyTourFeed({ trips }, snapshot, links, now.getTime(), now.getTime());
+  const [deal, ski, luxury, manual] = content.trips;
+  assert.deepEqual(deal.departures, [
+    { id: "feed-SEL6ZE1126A5", date: "2026/11/26(易斯達)", price: "10,900", note: "" },
+    { id: "feed-SEL6ZE1205A5", date: "2026/12/05(易斯達)", price: "12,900", note: "即將額滿" },
+    { id: "feed-SEL6ZE1208A5", date: "2026/12/08(易斯達)", price: "16,900", note: "額滿" },
+  ]);
+  assert.equal(deal.priceMode, "auto");
+  assert.deepEqual([deal.plans[0].departureMode, deal.plans[0].departureIds], ["all", []]);
+  // 人工排除、沒有對應的行程維持業務原本填的團期。
+  assert.equal(ski, trips[1]);
+  assert.equal(luxury, trips[2]);
+  assert.deepEqual(manual.departures.map((departure) => [departure.date, departure.note]), [["2027/01/11(易斯達)", "額滿"]]);
+
+  // 同步停擺超過三天：不再把舊狀態當現況。
+  assert.equal(applyTourFeed({ trips }, snapshot, links, now.getTime(), now.getTime() + 73 * 3600_000).trips[0], trips[0]);
+  assert.equal(applyTourFeed({ trips }, null, links, now.getTime()).trips[0], trips[0]);
+});
+
+test("splits synced departures between airline-specific plans", async () => {
+  const { applyTourFeed } = await import("../lib/tour-feed-overlay.ts");
+  const departure = (code, airline, from = "") => ({ code, date: "2027/02/01", price: 35900, status: "open", airline, from });
+  const snapshot = {
+    syncedAt: now.toISOString(),
+    products: [{ key: "k", file: "f", region: "北海道", name: "點燈", days: 6, departures: [departure("A", "FD", "高"), departure("B", "TR")] }],
+    matches: [],
+  };
+  const plan = (id, airline) => ({ id, airline, title: "", summary: "", price: "", documentType: "pdf", documentUrl: "", documentName: "", departureMode: "all", departureIds: [] });
+  const base = { id: "t", title: "北海道點燈", region: "北海道", days: "6日", price: "", departures: [] };
+  const split = applyTourFeed({ trips: [{ ...base, plans: [plan("p1", "泰國亞洲航空（高雄出發）"), plan("p2", "酷航空")] }] }, snapshot, { t: "k" }, now.getTime(), now.getTime()).trips[0];
+  assert.deepEqual(split.departures.map((item) => item.date), ["2027/02/01(亞航・高雄出發)", "2027/02/01(酷航)"]);
+  assert.deepEqual(split.plans.map((item) => [item.departureMode, item.departureIds]), [["selected", ["feed-A"]], ["selected", ["feed-B"]]]);
+  const shared = applyTourFeed({ trips: [{ ...base, plans: [plan("p1", "酷航"), plan("p2", "星宇航空")] }] }, snapshot, { t: "k" }, now.getTime(), now.getTime()).trips[0];
+  assert.deepEqual(shared.plans.map((item) => item.departureMode), ["all", "all"]);
+});
