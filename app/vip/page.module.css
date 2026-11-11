@@ -1,0 +1,112 @@
+/* VIP 集點頁：沿用「關於我們」的版心、字級與配色。 */
+.page { padding-top: 100px; background: #faf8f3; color: #293e36; --vip-muted: #68736b; --vip-line: #dcded4; --vip-gold: #8a6a3c; }
+.page h1, .page h2, .page h3, .page p, .page dl, .page dd, .page ol, .page ul { margin: 0; }
+.page h1, .page h2, .page h3 { font-family: var(--f-serif); font-weight: 500; }
+.page ol, .page ul { padding: 0; list-style: none; }
+.page a { transition: color 160ms ease, background 160ms ease; }
+.skipLink { position: absolute; top: -80px; left: 16px; padding: 15px; background: #fff; z-index: 100; }
+.skipLink:focus { top: 12px; }
+.eyebrow { font-family: var(--f-sans); font-size: 12px; letter-spacing: .2em; font-weight: 500; line-height: 1.7; color: #7c694d; }
+
+.hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 96px); align-items: center; width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: 0 auto; padding: clamp(56px, 7vw, 110px) 0 clamp(64px, 7vw, 110px); }
+.heroLabel { padding-top: 26px; font-size: 14px; letter-spacing: .2em; }
+.hero h1 { margin-top: 18px; font-size: clamp(40px, 4.6vw, 78px); line-height: 1.3; letter-spacing: -.02em; }
+.hero h1 em { font-style: normal; color: var(--vip-gold); }
+.heroDescription { margin-top: 26px !important; max-width: 34em; color: var(--vip-muted); line-height: 2; font-size: 17px; }
+.heroActions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 32px; margin-top: 34px; }
+.primaryLink { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; min-height: 56px; padding: 16px 28px; background: #2f473d; color: #faf8f0; font-size: 15px; letter-spacing: .06em; }
+.primaryLink:hover { background: #3d5a4d; }
+.underlinedLink { display: inline-flex; align-items: center; gap: 28px; padding: 12px 0; border-bottom: 1px solid #aab2a2; font-size: 15px; line-height: 1.6; }
+.underlinedLink:hover { color: #98683f; }
+
+.heroFacts { display: grid; gap: 0; padding: clamp(26px, 3vw, 44px); background: #eeefe7; border: 1px solid var(--vip-line); }
+.heroFacts div { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding: 20px 0; border-bottom: 1px solid #cfd4c6; }
+.heroFacts div:first-child { padding-top: 0; }
+.heroFacts dt { font-size: 14px; letter-spacing: .1em; color: var(--vip-muted); }
+.heroFacts dd { font-family: var(--f-display); font-size: clamp(30px, 3vw, 46px); line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.heroFacts dd span { margin: 0 4px; font-size: .6em; color: var(--vip-muted); }
+.heroFacts dd small { margin-left: 8px; font-family: var(--f-sans); font-size: 14px; color: var(--vip-muted); }
+.heroFacts > p { padding-top: 22px; font-family: var(--f-serif); font-size: 17px; line-height: 1.8; color: var(--vip-gold); }
+
+.section { width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: auto; padding: clamp(72px, 8vw, 128px) 0; }
+.section h2 { font-size: clamp(32px, 3.6vw, 58px); line-height: 1.35; letter-spacing: -.015em; margin-top: 18px; }
+.sectionHead { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin-bottom: 48px; }
+.sectionHead > p { font-size: 16px; line-height: 2; color: var(--vip-muted); }
+
+.how { border-top: 1px solid var(--vip-line); }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 45px; }
+.steps li { border-top: 1px solid #bbc4b3; padding-top: 26px; }
+.stepNumber { display: block; font-family: var(--f-display); font-size: 34px; color: #8c927e; line-height: 1; margin-bottom: 18px; }
+.steps h3 { font-size: 26px; margin: 10px 0 15px; }
+.steps li > p:not(.eyebrow) { font-size: 15.5px; color: var(--vip-muted); line-height: 2; }
+
+.tiersSection { background: #eeefe7; }
+.scale { position: relative; height: 64px; margin: 0 0 34px; }
+.scaleLine { position: absolute; left: 0; right: 0; top: 9px; height: 1px; background: #aab2a2; }
+.scaleMark { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 12px; font-family: var(--f-display); font-size: 17px; color: #435646; white-space: nowrap; }
+.scaleMark:last-child { transform: translateX(-100%); justify-items: end; }
+.scaleMark b { width: 19px; height: 19px; border-radius: 50%; border: 1px solid #6c7d5e; background: #faf8f3; }
+.scaleMark:last-child b { background: #2f473d; border-color: #2f473d; }
+
+.tierGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.tier { display: flex; flex-direction: column; padding: 30px 26px 28px; background: #faf8f3; border: 1px solid var(--vip-line); }
+.tier h3 { font-size: 30px; margin-top: 8px; }
+.tierPoints { margin-top: 14px !important; padding-bottom: 20px; border-bottom: 1px solid var(--vip-line); font-family: var(--f-display); font-size: 40px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tierPoints small { margin-left: 8px; font-family: var(--f-sans); font-size: 14px; color: var(--vip-muted); }
+.tier dl { display: grid; gap: 14px; margin-top: 20px; }
+.tier dt { font-size: 12.5px; letter-spacing: .1em; color: var(--vip-muted); }
+.tier dd { margin-top: 3px; font-size: 16px; line-height: 1.6; }
+.tierText { margin-top: 20px !important; padding-top: 18px; border-top: 1px solid var(--vip-line); font-size: 14.5px; line-height: 1.9; color: var(--vip-muted); }
+.tierFeatured { background: #2f473d; border-color: #2f473d; color: #faf8f0; }
+.tierFeatured .eyebrow { color: #c5cbae; }
+.tierFeatured .tierPoints, .tierFeatured .tierText { border-color: #4d6558; }
+.tierFeatured dt, .tierFeatured .tierPoints small, .tierFeatured .tierText { color: #c9d1c4; }
+.page .notes { display: grid; gap: 8px; margin-top: 34px; }
+.notes li { position: relative; padding-left: 20px; font-size: 14px; line-height: 1.9; color: var(--vip-muted); }
+.notes li::before { content: "※"; position: absolute; left: 0; }
+
+.faq { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: clamp(28px, 6vw, 90px); }
+.faqList { border-top: 1px solid var(--vip-line); }
+.faqList details { border-bottom: 1px solid var(--vip-line); }
+.faqList summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 44px; padding: 22px 0; cursor: pointer; font-family: var(--f-serif); font-size: 18px; line-height: 1.6; list-style: none; }
+.faqList summary::-webkit-details-marker { display: none; }
+.faqList summary span { position: relative; flex: none; width: 14px; height: 14px; }
+.faqList summary span::before, .faqList summary span::after { content: ""; position: absolute; inset: 6.5px 0 auto; height: 1px; background: currentColor; transition: transform .2s ease; }
+.faqList summary span::after { transform: rotate(90deg); }
+.faqList details[open] summary span::after { transform: rotate(0); }
+.faqList details p { padding: 0 34px 24px 0; font-size: 15.5px; line-height: 2; color: var(--vip-muted); }
+
+.contact { text-align: center; background: #2f473d; color: #faf8f0; padding: 86px 24px 96px; }
+.contact .eyebrow { color: #c5cbae; }
+.contact h2 { font-size: clamp(34px, 4.4vw, 72px); line-height: 1.3; letter-spacing: -.02em; margin: 18px 0 20px; }
+.contact > p:not(.eyebrow) { font-size: 16.5px; line-height: 2; color: #d1d8cd; }
+.contactActions { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
+.contactActions a { display: inline-flex; align-items: center; justify-content: space-between; gap: 36px; padding: 19px 30px; border: 1px solid #bac5ae; font-size: 15px; letter-spacing: .06em; }
+.contactActions a:first-child { background: #f2f0e6; color: #304738; }
+.contactActions a:hover { background: #dce3d3; color: #293e36; }
+
+@media (max-width: 1100px) {
+  .tierGrid { grid-template-columns: repeat(2, 1fr); }
+  .steps { gap: 28px; }
+  .steps h3 { font-size: 22px; }
+}
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; padding: 42px 0 56px; }
+  .hero h1 { font-size: clamp(36px, 9vw, 54px); line-height: 1.4; }
+  .heroDescription { font-size: 15px; }
+  .primaryLink { width: 100%; }
+  .heroFacts dt { font-size: 13px; white-space: nowrap; }
+  .heroFacts dd { font-size: 26px; }
+  .heroFacts dd small { margin-left: 5px; font-size: 13px; }
+  .sectionHead { display: block; margin-bottom: 32px; }
+  .sectionHead > p { margin-top: 20px; font-size: 14px; }
+  .steps, .tierGrid, .faq { grid-template-columns: 1fr; }
+  .steps { gap: 24px; }
+  /* 四個刻度在窄螢幕會擠在一起，卡片上已經有點數，這裡就不畫。 */
+  .scale { display: none; }
+  .faqList summary { font-size: 16.5px; }
+  .faqList details p { padding-right: 0; }
+  .contact { padding: 65px 24px 75px; }
+  .contactActions a { width: min(100%, 310px); }
+}
+@media (prefers-reduced-motion: reduce) { .page a, .faqList summary span::before, .faqList summary span::after { transition: none; } }

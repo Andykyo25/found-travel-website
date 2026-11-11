@@ -7,6 +7,7 @@ const navigation: NavLink[] = [
   { href: "/dates", label: "出發團期" },
   { href: "/find-trip", label: "幫我找旅行" },
   { href: "/news", label: "最新消息" },
+  { href: "/vip", label: "VIP集點" },
   { href: "/about", label: "關於我們" },
 ];
 

@@ -211,3 +211,18 @@ test("trip facts give a quotable summary and answers drawn only from trip data",
   assert.deepEqual(undated.faqs.map((faq) => faq.question), ["豪華檳城5日多少錢？", "豪華檳城5日什麼時候出發？", "怎麼報名豪華檳城5日？"]);
   assert.equal(undated.items.some((item) => item.label === "可報名" || item.label === "航空"), false);
 });
+
+test("VIP tiers and answers stay consistent with the published scheme", async () => {
+  const { fastestTrips, vipFaqs, vipPointsPerTrip, vipTiers } = await import("../lib/vip.ts");
+  assert.deepEqual(vipPointsPerTrip, { min: 1000, max: 10000 });
+  assert.deepEqual(vipTiers.map((tier) => [tier.name, tier.points, tier.guests, tier.mustTravel]), [
+    ["個人卡", 25000, "VIP 本人 + 1 位親友", true],
+    ["親友卡", 50000, "VIP 本人 + 5 位親友", true],
+    ["無限卡", 100000, "VIP 本人 + 不限人數親友", true],
+    ["企業卡", 150000, "不限人數親友", false],
+  ]);
+  assert.deepEqual(vipTiers.map((tier) => fastestTrips(tier.points)), [3, 5, 10, 15]);
+  assert.match(vipFaqs[1].answer, /個人卡 25,000 點、親友卡 50,000 點、無限卡 100,000 點、企業卡 150,000 點/);
+  // 辦法沒公布的事（折扣金額、點數期限）不能出現在答案裡。
+  for (const faq of vipFaqs) assert.doesNotMatch(faq.answer, /\d+\s*(折|%|元)|過期|有效期/);
+});

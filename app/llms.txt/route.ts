@@ -59,6 +59,7 @@ export async function GET() {
     `- [全部出發團期](${origin}/dates)：依月份查看所有已公布的出發日與團費`,
     `- [旅遊目的地](${origin}/destinations)：依國家與地區瀏覽行程`,
     `- [幫我找旅行](${origin}/find-trip)：依日期、預算與目的地篩選行程`,
+    `- [VIP 集點](${origin}/vip)：參加指定行程累積點數，升等會員卡後享團費優惠`,
     `- [關於我們](${origin}/about)：服務理念與旅客回饋`,
     `- [聯絡與報名](${origin}/contact)：詢問表單`,
     `- [最新消息](${origin}/news)`,

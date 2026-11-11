@@ -22,6 +22,7 @@ export const edgeCachedPaths = [
   "/news/:path*",
   "/find-trip",
   "/about",
+  "/vip",
 ];
 
 export function edgeCacheHeaders() {
