@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
     // SITE_URL 本身若還是臨時網域就不轉，避免自己轉給自己。
     const railwayRedirects = new RegExp(`^${railwayHostPattern}$`).test(new URL(origin).hostname)
       ? []
-      : ["/", "/trips/:path*", "/dates/:path*", "/news/:path*", "/find-trip", "/contact", "/about"].map((source) => ({
+      : ["/", "/trips/:path*", "/destinations/:path*", "/dates/:path*", "/news/:path*", "/find-trip", "/contact", "/about"].map((source) => ({
           source,
           has: [{ type: "host" as const, value: railwayHostPattern }],
           destination: `${origin}${source}`,

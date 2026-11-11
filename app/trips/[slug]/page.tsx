@@ -7,7 +7,10 @@ import { resolveTripItinerary } from "@/lib/trip-itinerary";
 import { getTripPdfItinerary } from "@/lib/trip-pdf-content";
 import { JsonLd } from "@/app/components/JsonLd";
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
+import { destinationPath, destinationTitle, relatedTrips } from "@/lib/destinations";
+import { plainText, socialMetadata, truncateText } from "@/lib/page-metadata";
 import { DepartureTable } from "@/app/components/DepartureTable";
 import { TripPlanCard } from "@/app/components/TripPlanCard";
 import { getSiteContent } from "@/lib/site-content";
@@ -29,17 +32,19 @@ export async function generateMetadata({ params }: PageProps) {
   const trip = findTripByPathKey(content.trips, slug);
   if (!trip) return { title: "找不到這條行程" };
 
-  const description = `${trip.title}（${trip.region}・${trip.days}）的出發日期與團費。${trip.summary}`;
+  // 多數行程沒有填團期與團費（請旅客洽詢）：標題與描述不能說有「出發日期與團費」。
+  const dated = upcomingDepartures(trip.departures).length > 0;
+  const title = dated ? `${trip.title} 出發日期與團費` : `${trip.title} 行程內容與報價洽詢`;
+  const lead = dated
+    ? `${trip.title}（${trip.region}・${trip.days}）的出發日期與團費。`
+    : `${trip.title}（${trip.region}・${trip.days}）的每日行程與航班安排，團期與團費請洽顧問。`;
+  const description = truncateText(`${lead}${plainText(trip.summary)}`, 160);
 
   return {
-    title: `${trip.title} 出發日期與團費`,
-    description: description.slice(0, 160),
+    title,
+    description,
     alternates: { canonical: tripPath(trip) },
-    openGraph: {
-      title: `${trip.title} 出發日期與團費`,
-      description: description.slice(0, 160),
-      images: trip.image ? [trip.image] : undefined,
-    },
+    ...socialMetadata({ title, description, path: tripPath(trip), image: trip.image || undefined }),
   };
 }
 
@@ -52,6 +57,13 @@ export default async function TripPage({ params }: PageProps) {
   if (trip.slug && slug !== trip.slug) permanentRedirect(tripPath(trip));
   const plans = publishedTripPlans(trip);
   const departures = upcomingDepartures(trip.departures);
+  // 麵包屑走「首頁 / 日本旅遊行程 / 這個行程」：每個行程頁都連回自己的目的地頁。
+  const category = trip.badge?.trim();
+  const crumbs = [
+    { name: "首頁", path: "/" },
+    category ? { name: destinationTitle(category), path: destinationPath(category) } : { name: "全部團期", path: "/dates" },
+  ];
+  const related = relatedTrips(content.trips, trip);
   // 後台沒手動填每日行程時，用行程 PDF 自動擷取的內容。
   const itinerary = resolveTripItinerary(trip, await getTripPdfItinerary(trip));
 
@@ -64,17 +76,10 @@ export default async function TripPage({ params }: PageProps) {
         data={[
           tripJsonLd({ ...trip, itinerary: itinerary.days }, content, origin, taipeiTodayTime()),
           ...(trip.faqs?.length ? [faqJsonLd(trip.faqs, `${origin}${tripPath(trip)}`)] : []),
-          breadcrumbJsonLd(
-            [
-              { name: "精選行程", path: "/" },
-              { name: "全部團期", path: "/dates" },
-              { name: trip.title, path: tripPath(trip) },
-            ],
-            origin,
-          ),
+          breadcrumbJsonLd([...crumbs, { name: trip.title, path: tripPath(trip) }], origin),
         ]}
       />
-      <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/#journeys">精選行程</Link><span aria-hidden="true">/</span><Link href="/dates">全部團期</Link><span aria-hidden="true">/</span><span aria-current="page">{trip.title}</span></nav>
+      <nav className="page-breadcrumb" aria-label="麵包屑導覽">{crumbs.map((crumb) => <Fragment key={crumb.path}><Link href={crumb.path}>{crumb.name}</Link><span aria-hidden="true">/</span></Fragment>)}<span aria-current="page">{trip.title}</span></nav>
 
       <section className="dates-card" id="trip-content">
         <div className="trip-overview">
@@ -90,7 +95,7 @@ export default async function TripPage({ params }: PageProps) {
           <div className="trip-overview-copy">
             <p className="eyebrow">
               <span />
-              DEPARTURE DATES
+              {departures.length > 0 ? "DEPARTURE DATES" : "ITINERARY"}
             </p>
             <SplitText as="h1" text={trip.title} />
             <p className="dates-meta">
@@ -158,11 +163,13 @@ export default async function TripPage({ params }: PageProps) {
 
         <section className="trip-departures-section">
           <div className="trip-departures-heading">
-            <h2>出發日期與團費</h2>
+            <h2>{departures.length > 0 ? "出發日期與團費" : "團期與報價洽詢"}</h2>
             <p>
-              {plans.length > 0
-                ? "可點選方案標籤回到對應的完整行程資料。"
-                : "實際團位與價格請洽業務顧問確認。"}
+              {departures.length === 0
+                ? "這個行程的出發日期與團費，由顧問依你想出發的時間回覆。"
+                : plans.length > 0
+                  ? "可點選方案標籤回到對應的完整行程資料。"
+                  : "實際團位與價格請洽業務顧問確認。"}
             </p>
           </div>
           {departures.length > 0 ? (
@@ -173,7 +180,9 @@ export default async function TripPage({ params }: PageProps) {
             />
           ) : (
             <div className="dates-empty">
-              出發日期規劃中，歡迎透過 LINE 詢問最新團期。
+              告訴我們想出發的月份與人數，顧問會回覆可成行的團期與團費。{" "}
+              <Link href={`/contact?trip=${encodeURIComponent(trip.id)}`}>填寫詢問表單</Link>
+              ，或直接透過 LINE 聯絡。
             </div>
           )}
 
@@ -184,6 +193,25 @@ export default async function TripPage({ params }: PageProps) {
 
         <TripNotes trip={trip} />
       </section>
+
+      {related.length > 0 ? (
+        <section className="trip-related" aria-labelledby="related-title">
+          <h2 id="related-title">{trip.region ? `${trip.region}與鄰近地區的其他行程` : "其他行程"}</h2>
+          <ul>
+            {related.map((item) => (
+              <li key={item.id}>
+                <Link href={tripPath(item)}>{item.title}</Link>
+                <span>{[item.region, item.days, formatPrice(item.price, true)].filter(Boolean).join("・")}</span>
+              </li>
+            ))}
+          </ul>
+          {category ? (
+            <Link className="fh-link" href={destinationPath(category)}>
+              看全部{destinationTitle(category)} <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="dates-actions">
         <a

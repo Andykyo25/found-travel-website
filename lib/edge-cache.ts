@@ -17,6 +17,7 @@ export const edgeCacheSeconds = 60;
 export const edgeCachedPaths = [
   "/",
   "/trips/:path*",
+  "/destinations/:path*",
   "/dates/:path*",
   "/news/:path*",
   "/find-trip",

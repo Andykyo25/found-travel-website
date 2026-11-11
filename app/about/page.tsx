@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
+import { socialMetadata } from "@/lib/page-metadata";
 import { googleMapsPlaceUrl, travelerReviews } from "@/lib/traveler-reviews";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
@@ -13,11 +14,7 @@ export const metadata: Metadata = {
   title: "關於我們｜讓每一份期待，被好好照顧",
   description: "認識找到了旅行社的服務理念，閱讀旅客分享的 Yui 服務回饋。從家庭旅行、精選跟團到企業旅遊，一起找到適合你的旅行方式。",
   alternates: { canonical: "/about" },
-  openGraph: {
-    title: "關於我們｜找到了旅行社",
-    description: "風景值得期待，旅程值得被好好照顧。認識我們，也聽聽旅人的故事。",
-    url: "/about",
-  },
+  ...socialMetadata({ title: "關於我們", description: "風景值得期待，旅程值得被好好照顧。認識我們，也聽聽旅人的故事。", path: "/about" }),
 };
 
 const services = [

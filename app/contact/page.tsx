@@ -6,6 +6,7 @@ import {
 import { publishedTripPlans, tripPlanLabel } from "@/lib/trip-plans";
 import { ContactForm } from "@/app/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
+import { socialMetadata } from "@/lib/page-metadata";
 import { telephoneHref } from "@/lib/structured-data";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
@@ -14,11 +15,13 @@ import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
+const description = "留下聯絡方式與想去的地方，找到了旅行社的業務顧問會在您方便的時段主動與您聯繫。";
+
 export const metadata = {
   title: "聯絡表單",
-  description:
-    "留下聯絡方式與想去的地方，找到了旅行社的業務顧問會在您方便的時段主動與您聯繫。",
+  description,
   alternates: { canonical: "/contact" },
+  ...socialMetadata({ title: "聯絡表單", description, path: "/contact" }),
 };
 
 export default async function ContactPage({

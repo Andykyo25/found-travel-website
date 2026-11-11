@@ -7,14 +7,18 @@ import { SplitText } from "@/app/components/SplitText";
 import { TravelImage } from "@/app/components/TravelImage";
 import { newsDateLabel, publishedNews } from "@/lib/news";
 import { getSiteContent } from "@/lib/site-content";
+import { socialMetadata } from "@/lib/page-metadata";
 import styles from "./news.module.css";
 
 export const dynamic = "force-dynamic";
 
+const description = "出國前該知道的新規定、旅遊須知與找到了旅行社的最新動態，都整理在這裡。";
+
 export const metadata: Metadata = {
   title: "最新消息",
-  description: "出國前該知道的新規定、旅遊須知與找到了旅行社的最新動態，都整理在這裡。",
+  description,
   alternates: { canonical: "/news" },
+  ...socialMetadata({ title: "最新消息", description, path: "/news" }),
 };
 
 export default async function NewsPage() {

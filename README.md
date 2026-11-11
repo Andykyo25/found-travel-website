@@ -202,7 +202,7 @@ API 與後台路徑維持原有路由；臨時網域維持禁止搜尋引擎索�
 2. 條件選 Edit expression，貼上：
 
    ```
-   (http.host eq "tabiyoi.com" and (http.request.uri.path eq "/" or starts_with(http.request.uri.path, "/trips/") or starts_with(http.request.uri.path, "/dates") or starts_with(http.request.uri.path, "/news") or http.request.uri.path in {"/find-trip" "/about"}))
+   (http.host eq "tabiyoi.com" and (http.request.uri.path eq "/" or starts_with(http.request.uri.path, "/trips/") or starts_with(http.request.uri.path, "/destinations") or starts_with(http.request.uri.path, "/dates") or starts_with(http.request.uri.path, "/news") or http.request.uri.path in {"/find-trip" "/about"}))
    ```
 
 3. Cache eligibility 選 **Eligible for cache**；Edge TTL 與 Browser TTL **都不要設定**（留給程式送的標頭決定）。

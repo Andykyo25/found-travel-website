@@ -5,6 +5,7 @@ import {
   DepartureBoardCta,
 } from "@/app/components/DepartureBoard";
 import { getSiteContent } from "@/lib/site-content";
+import { socialMetadata } from "@/lib/page-metadata";
 import { getSiteOrigin } from "@/lib/site-url";
 import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { JsonLd } from "@/app/components/JsonLd";
@@ -36,10 +37,13 @@ export async function generateMetadata({ params }: PageProps) {
   if (!monthPattern.test(month)) return { title: "找不到團期" };
 
   const label = monthLabel(month);
+  const title = `${label}出發團期`;
+  const description = `找到了旅行社 ${label} 的所有出發日期與團費，一次看完可報名的團期。`;
   return {
-    title: `${label}出發團期`,
-    description: `找到了旅行社 ${label} 的所有出發日期與團費，一次看完可報名的團期。`,
+    title,
+    description,
     alternates: { canonical: `/dates/month/${month}` },
+    ...socialMetadata({ title, description, path: `/dates/month/${month}` }),
   };
 }
 

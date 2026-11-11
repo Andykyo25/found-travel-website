@@ -26,6 +26,7 @@ import { SplitText } from "./components/SplitText";
 import { TravelTools } from "./components/TravelTools";
 import { TripFilterBar } from "./components/TripFilterBar";
 import { LineFloatingButton } from "./components/LineFloatingButton";
+import { socialMetadata } from "@/lib/page-metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export const dynamic = "force-dynamic";
 // canonical 一律指回 /，避免那些組合被當成一堆重複頁面。
 export const metadata = {
   alternates: { canonical: "/" },
+  ...socialMetadata({ title: "找到了旅行社｜好旅行，被好好照顧", description: "把每一段期待，排成剛剛好的旅程。", path: "/" }),
 };
 
 function Arrow({ direction = "right" }: { direction?: "right" | "up-right" | "down" }) {
@@ -249,6 +251,9 @@ export default async function Home({
                 看更多行程（還有 {remaining} 個） <Arrow />
               </Link>
             ) : null}
+            <Link className="fh-link" href="/destinations">
+              依目的地瀏覽 <Arrow />
+            </Link>
             <Link className="fh-link" href="/dates">
               查看全部出發團期 <Arrow />
             </Link>

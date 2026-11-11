@@ -347,6 +347,22 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
 .fh-footer-links a { display: inline-flex; align-items: center; min-height: 40px; color: #e8ecdf; transition: color 0.3s; }
 .fh-footer-links a:hover { color: #ff9dc3; }
 .fh-wordmark { margin-top: clamp(28px, 4vw, 56px); font: 400 clamp(8rem, 30.5vw, 34rem)/0.72 var(--f-display); letter-spacing: -0.045em; text-align: center; color: rgba(255, 255, 255, 0.07); white-space: nowrap; user-select: none; pointer-events: none; transform: translateY(0.07em); }
+.fh-footer-destinations { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; margin-top: 36px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; }
+.fh-footer-destinations a { display: inline-flex; align-items: center; min-height: 40px; color: #e8ecdf; transition: color 0.3s; }
+.fh-footer-destinations a:hover { color: #ff9dc3; }
+.fh-footer-destinations strong { font-weight: 500; letter-spacing: 0.08em; color: #b9c6af; }
+/* 行程頁底下的相近行程、目的地頁的其他目的地 */
+.trip-related, .dest-others { margin-top: clamp(40px, 5vw, 72px); padding-top: 32px; border-top: 1px solid var(--f-line); }
+.trip-related h2, .dest-others h2 { margin: 0 0 18px; font: 500 clamp(1.3rem, 1.1rem + 0.8vw, 1.7rem)/1.5 var(--f-serif); }
+.trip-related ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; margin: 0 0 22px; padding: 0; list-style: none; }
+.trip-related li { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid var(--f-line); }
+.trip-related li a { font-size: 1.05rem; color: var(--f-ink); }
+.trip-related li a:hover { color: var(--f-pink-deep); }
+.trip-related li span { font-size: 13.5px; color: var(--f-ink-3); }
+.board-trip h2 { margin: 0 0 6px; font-size: 1.2rem; font-weight: 800; line-height: 1.45; }
+.board-group { scroll-margin-top: 110px; }
+.public-page .dates-empty a { border-bottom: 1px solid currentColor; }
+@media (max-width: 760px) { .trip-related ul { grid-template-columns: 1fr; } }
 .fh-colophon { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; padding-block: 18px; border-top: 1px solid rgba(255, 255, 255, 0.12); color: #b9c6af; font-size: 12.5px; letter-spacing: 0.08em; background: var(--f-forest); }
 .fh-colophon a { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; }
 .fh-colophon a:hover { color: #fff; }

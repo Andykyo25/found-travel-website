@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { SiteContent } from "@/lib/site-content";
 import { telephoneHref } from "@/lib/structured-data";
+import { tripDestinations } from "@/lib/destinations";
 import { SocialLinks } from "./SocialLinks";
 
 // 全站共用頁尾：首頁與內頁使用同一套公司資訊與字標，錨點在首頁走頁內捲動。
@@ -10,10 +11,12 @@ export function SiteFooter({
 }: {
   content: Pick<
     SiteContent,
-    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "telephone" | "email" | "lineUrl"
+    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "telephone" | "email" | "lineUrl" | "trips"
   >;
   home?: boolean;
 }) {
+  // 每一頁的頁尾都連到各個目的地頁，目的地頁再連到底下的行程。
+  const destinations = tripDestinations(content.trips);
   return (
     <footer className="fh-footer" role="contentinfo">
       <div className="fh-wrap fh-footer-grid">
@@ -51,6 +54,14 @@ export function SiteFooter({
           <a href="/studio">內容管理</a>
         </nav>
       </div>
+      {destinations.length > 0 ? (
+        <nav className="fh-wrap fh-footer-destinations" aria-label="旅遊目的地">
+          <Link href="/destinations"><strong>旅遊目的地</strong></Link>
+          {destinations.map((destination) => (
+            <Link key={destination.slug} href={destination.path}>{destination.name}</Link>
+          ))}
+        </nav>
+      ) : null}
       <div className="fh-wordmark" aria-hidden="true">FOUND</div>
       <div className="fh-wrap fh-colophon">
         <span>FOUND TRAVEL — 好旅行，被好好照顧。</span>

@@ -4,6 +4,7 @@ import {
   DepartureBoardCta,
 } from "@/app/components/DepartureBoard";
 import { getSiteContent } from "@/lib/site-content";
+import { socialMetadata } from "@/lib/page-metadata";
 import { getSiteOrigin } from "@/lib/site-url";
 import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { JsonLd } from "@/app/components/JsonLd";
@@ -19,11 +20,13 @@ import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
+const description = "找到了旅行社所有行程的出發日期與團費一次看，可依月份篩選，並直接查看完整行程內容。";
+
 export const metadata = {
   title: "出發團期總表",
-  description:
-    "找到了旅行社所有行程的出發日期與團費一次看，可依月份篩選，並直接查看完整行程內容。",
+  description,
   alternates: { canonical: "/dates" },
+  ...socialMetadata({ title: "出發團期總表", description, path: "/dates" }),
 };
 
 export default async function AllDeparturesPage() {

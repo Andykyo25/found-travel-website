@@ -1,7 +1,7 @@
 import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
 import { cleanTripSlug, formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 import { carryPreviousSlugs, suggestTripSlug, uniqueTripSlug } from "@/lib/trip-slug";
-import { applyAutoPrices } from "@/lib/trip-summary";
+import { applyAutoPrices, stampTripUpdates } from "@/lib/trip-summary";
 import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
 import { cache } from "react";
 import {
@@ -81,6 +81,8 @@ export type Trip = {
   price: string;
   // "auto"：起始價格取目前所有出發日中最低的團期價格；未設定代表手動填寫（舊資料維持原樣）。
   priceMode?: "auto";
+  /** 這個行程上次被修改的時間（ISO）。儲存時自動記錄，sitemap 用它告訴搜尋引擎哪些頁面真的更新了。 */
+  updatedAt?: string;
   image: string;
   plans: TripPlan[];
   departures: TripDeparture[];
@@ -518,6 +520,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
         summary: safeString(source.summary, fallback.summary, 500),
         price: safeString(source.price, fallback.price, 60),
         ...(source.priceMode === "auto" ? { priceMode: "auto" as const } : {}),
+        ...(typeof source.updatedAt === "string" && Number.isFinite(Date.parse(source.updatedAt)) ? { updatedAt: new Date(source.updatedAt).toISOString() } : {}),
         image: safeString(source.image, fallback.image, 800),
         plans,
         departures,
@@ -779,11 +782,7 @@ export async function saveSiteContent(
   if (process.env.NODE_ENV === "development" && process.env.FOUND_DESIGN_PREVIEW === "1") {
     throw new Error("本機設計預覽不接受內容儲存");
   }
-  // 代稱改了（手動或跟著名稱自動更新）就把舊的記下來，舊連結才轉得過去。
-  const content = carryPreviousSlugs(
-    normalizeSiteContent(value),
-    previous && typeof previous === "object" ? normalizeSiteContent(previous) : null,
-  );
+  const previousContent = previous && typeof previous === "object" ? normalizeSiteContent(previous) : null;
   const previousTime =
     previous &&
     typeof previous === "object" &&
@@ -797,6 +796,13 @@ export async function saveSiteContent(
       (Number.isFinite(previousTime) ? previousTime : 0) + 1,
     ),
   ).toISOString();
+  // 代稱改了（手動或跟著名稱自動更新）就把舊的記下來，舊連結才轉得過去；
+  // 內容有變的行程記下這次的時間，沒變的維持原本的時間。
+  const content = stampTripUpdates(
+    carryPreviousSlugs(normalizeSiteContent(value), previousContent),
+    previousContent,
+    updatedAt,
+  );
   await writeSiteContentObject(
     {
       ...content,

@@ -1,13 +1,15 @@
 import { getSiteContentIfAvailable, defaultSiteContent } from "@/lib/site-content";
 import { taipeiTodayTime } from "@/lib/trip-values";
 import { finderTrips } from "@/lib/travel-finder";
+import { socialMetadata } from "@/lib/page-metadata";
 import { TravelFinder } from "@/app/components/TravelFinder";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "幫我找適合的旅行", description: "先整理日期、預算與旅行需求，比較行程，再交給顧問確認。", alternates: { canonical: "/find-trip" } };
+const description = "先整理日期、預算與旅行需求，比較行程，再交給顧問確認。";
+export const metadata = { title: "幫我找適合的旅行", description, alternates: { canonical: "/find-trip" }, ...socialMetadata({ title: "幫我找適合的旅行", description, path: "/find-trip" }) };
 
 export default async function FindTripPage() {
   // 和其他前台頁面共用記憶體裡的發布內容，不必每次進來都等 Bucket；讀不到時明講並停用配對。

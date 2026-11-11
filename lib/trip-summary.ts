@@ -35,6 +35,26 @@ export function applyAutoPrices(content: SiteContent, todayTime: number): SiteCo
   };
 }
 
+/**
+ * 儲存時替行程記下修改時間：內容和上一版不同（或是新行程）就記這次的時間，沒變的沿用原本的。
+ * 以前 sitemap 把全站的儲存時間當成每一頁的更新時間，改一個行程，三百頁都顯示剛更新，搜尋引擎就不再相信它。
+ */
+export function stampTripUpdates(next: SiteContent, previous: SiteContent | null, now: string): SiteContent {
+  const fingerprint = (trip: Trip) => JSON.stringify({ ...trip, updatedAt: undefined });
+  const before = new Map((previous?.trips ?? []).map((trip) => [trip.id, trip]));
+  return {
+    ...next,
+    trips: next.trips.map((trip) => {
+      const old = before.get(trip.id);
+      if (!old || fingerprint(old) !== fingerprint(trip)) return { ...trip, updatedAt: now };
+      const unchanged = { ...trip };
+      if (old.updatedAt) unchanged.updatedAt = old.updatedAt;
+      else delete unchanged.updatedAt;
+      return unchanged;
+    }),
+  };
+}
+
 /** 手動填寫的起始價格與團期最低價不一致時，回傳團期最低價（讓後台提醒）；一致或無法比較時回傳 null。 */
 export function priceMismatch(trip: Pick<Trip, "departures" | "price" | "priceMode">, todayTime: number) {
   if (trip.priceMode === "auto") return null;
