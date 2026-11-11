@@ -43,8 +43,6 @@ const isFull = (note = "") => note.includes("額滿") && !note.includes("即將�
 export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: number): TripFacts {
   const upcoming = upcomingDepartures(trip.departures, todayTime);
   const open = upcoming.filter((departure) => !isFull(departure.note));
-  const few = open.filter((departure) => (departure.note ?? "").includes("即將額滿")).length;
-  const confirmed = upcoming.filter((departure) => (departure.note ?? "").includes("已成團")).length;
   const prices = bookableDepartures(trip.departures, todayTime)
     .map((departure) => priceValue(departure.price))
     .filter((amount): amount is number => amount !== null && amount > 0);
@@ -104,12 +102,6 @@ export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: numbe
           "完整日期見本頁「出發日期與團費」。"
       : "這個行程的出發日期由顧問依你想出發的月份回覆，可透過 LINE 或詢問表單洽詢。",
   );
-  if (upcoming.length > 0) {
-    add(
-      `${trip.title}還有名額嗎？`,
-      `截至 ${asOf}，${upcoming.length} 個團期中有 ${open.length} 個可報名${few > 0 ? `（其中 ${few} 個即將額滿）` : ""}${confirmed > 0 ? `，${confirmed} 個已確定成團` : ""}。名額變動快，實際團位以顧問回覆為準。`,
-    );
-  }
   if (airlines.length > 0) add(`${trip.title}搭哪家航空？`, `依出發日期搭乘${airlines.join("、")}，各團期的航空標示在出發日期旁。`);
   add(`怎麼報名${trip.title}？`, `在本頁選好出發日期後按「詢問此團期」，或直接用 LINE 聯絡顧問。行程由${licensed}出團。`);
 

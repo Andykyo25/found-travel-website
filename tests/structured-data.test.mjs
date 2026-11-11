@@ -201,11 +201,9 @@ test("trip facts give a quotable summary and answers drawn only from trip data",
   assert.deepEqual(facts.faqs.map((faq) => faq.question), [
     "北海道青池點燈雙溫泉多少錢？",
     "北海道青池點燈雙溫泉什麼時候出發？",
-    "北海道青池點燈雙溫泉還有名額嗎？",
     "北海道青池點燈雙溫泉搭哪家航空？",
     "怎麼報名北海道青池點燈雙溫泉？",
   ]);
-  assert.equal(facts.faqs[2].answer, "截至 2026/11/11，3 個團期中有 2 個可報名（其中 1 個即將額滿），1 個已確定成團。名額變動快，實際團位以顧問回覆為準。");
 
   // 沒有團期的行程：不能說出不存在的日期或名額。
   const undated = tripFacts({ title: "豪華檳城5日", region: "檳城", days: "5日", price: "價格洽詢", plans: [{ airline: "航空方案" }], departures: [] }, company, today);
