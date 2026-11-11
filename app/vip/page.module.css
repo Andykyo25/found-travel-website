@@ -8,7 +8,7 @@
 .skipLink:focus { top: 12px; }
 .eyebrow { font-family: var(--f-sans); font-size: 12px; letter-spacing: .2em; font-weight: 500; line-height: 1.7; color: #7c694d; }
 
-.hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 96px); align-items: center; width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: 0 auto; padding: clamp(56px, 7vw, 110px) 0 clamp(64px, 7vw, 110px); }
+.hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 96px); align-items: center; width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: 0 auto; padding: clamp(48px, 6vw, 90px) 0 clamp(44px, 5vw, 72px); }
 .heroLabel { padding-top: 26px; font-size: 14px; letter-spacing: .2em; }
 .hero h1 { margin-top: 18px; font-size: clamp(40px, 4.6vw, 78px); line-height: 1.3; letter-spacing: -.02em; }
 .hero h1 em { font-style: normal; color: var(--vip-gold); }
@@ -19,14 +19,17 @@
 .underlinedLink { display: inline-flex; align-items: center; gap: 28px; padding: 12px 0; border-bottom: 1px solid #aab2a2; font-size: 15px; line-height: 1.6; }
 .underlinedLink:hover { color: #98683f; }
 
-.heroFacts { display: grid; gap: 0; padding: clamp(26px, 3vw, 44px); background: #eeefe7; border: 1px solid var(--vip-line); }
-.heroFacts div { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding: 20px 0; border-bottom: 1px solid #cfd4c6; }
-.heroFacts div:first-child { padding-top: 0; }
-.heroFacts dt { font-size: 14px; letter-spacing: .1em; color: var(--vip-muted); }
-.heroFacts dd { font-family: var(--f-display); font-size: clamp(30px, 3vw, 46px); line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.heroPoster { margin: 0; justify-self: end; width: min(100%, 440px); border: 1px solid var(--vip-line); background: #f2efe4; box-shadow: 0 24px 60px -34px #1c2e2666; }
+.heroPoster img { display: block; width: 100%; height: auto; }
+
+/* 開頭下方的三個重點數字。 */
+.page .heroFacts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.3fr); align-items: center; gap: 0 clamp(20px, 3vw, 48px); width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: 0 auto clamp(64px, 7vw, 110px); padding: clamp(24px, 2.6vw, 38px) clamp(22px, 3vw, 44px); background: #eeefe7; border: 1px solid var(--vip-line); }
+.heroFacts div { display: grid; gap: 8px; }
+.heroFacts dt { font-size: 13.5px; letter-spacing: .1em; color: var(--vip-muted); }
+.heroFacts dd { font-family: var(--f-display); font-size: clamp(26px, 2.5vw, 40px); line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .heroFacts dd span { margin: 0 4px; font-size: .6em; color: var(--vip-muted); }
 .heroFacts dd small { margin-left: 8px; font-family: var(--f-sans); font-size: 14px; color: var(--vip-muted); }
-.heroFacts > p { padding-top: 22px; font-family: var(--f-serif); font-size: 17px; line-height: 1.8; color: var(--vip-gold); }
+.heroFacts > p { font-family: var(--f-serif); font-size: 17px; line-height: 1.8; color: var(--vip-gold); }
 
 .section { width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: auto; padding: clamp(72px, 8vw, 128px) 0; }
 .section h2 { font-size: clamp(32px, 3.6vw, 58px); line-height: 1.35; letter-spacing: -.015em; margin-top: 18px; }
@@ -87,6 +90,8 @@
 
 @media (max-width: 1100px) {
   .tierGrid { grid-template-columns: repeat(2, 1fr); }
+  .heroFacts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px clamp(16px, 3vw, 40px); }
+  .heroFacts > p { grid-column: 1 / -1; padding-top: 18px; border-top: 1px solid #cfd4c6; }
   .steps { gap: 28px; }
   .steps h3 { font-size: 22px; }
 }
@@ -95,9 +100,14 @@
   .hero h1 { font-size: clamp(36px, 9vw, 54px); line-height: 1.4; }
   .heroDescription { font-size: 15px; }
   .primaryLink { width: 100%; }
+  .heroPoster { justify-self: center; width: min(100%, 420px); }
+  .heroFacts { grid-template-columns: 1fr; gap: 0; }
+  .heroFacts div { grid-template-columns: 1fr auto; align-items: baseline; gap: 16px; padding: 16px 0; border-bottom: 1px solid #cfd4c6; }
+  .heroFacts div:first-child { padding-top: 0; }
   .heroFacts dt { font-size: 13px; white-space: nowrap; }
   .heroFacts dd { font-size: 26px; }
   .heroFacts dd small { margin-left: 5px; font-size: 13px; }
+  .heroFacts > p { border-top: 0; padding-top: 18px; font-size: 15.5px; }
   .sectionHead { display: block; margin-bottom: 32px; }
   .sectionHead > p { margin-top: 20px; font-size: 14px; }
   .steps, .tierGrid, .faq { grid-template-columns: 1fr; }

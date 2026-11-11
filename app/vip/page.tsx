@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
@@ -54,13 +55,24 @@ export default async function VipPage() {
           <a className={styles.underlinedLink} href="#vip-tiers">看四種會員卡 <span aria-hidden="true">↓</span></a>
         </div>
       </div>
-      <dl className={styles.heroFacts}>
+      <figure className={styles.heroPoster}>
+        <Image
+          src="/vip/poster.jpg"
+          alt="找到了 VIP 集點海報：參加指定行程累積點數，個人卡 25,000 點、親友卡 50,000 點、無限卡 100,000 點、企業卡 150,000 點"
+          width={1055}
+          height={1491}
+          priority
+          sizes="(max-width: 760px) 100vw, 440px"
+        />
+      </figure>
+    </section>
+
+    <dl className={styles.heroFacts}>
         <div><dt>每團每人可累積</dt><dd>{points(vipPointsPerTrip.min)}<span>～</span>{points(vipPointsPerTrip.max)}<small>點</small></dd></div>
         <div><dt>升等個人卡</dt><dd>{points(vipTiers[0].points)}<small>點</small></dd></div>
         <div><dt>會員卡別</dt><dd>{vipTiers.length}<small>種</small></dd></div>
         <p>一卡在手，全家都能用，並享終生團費折扣資格。</p>
-      </dl>
-    </section>
+    </dl>
 
     <section className={`${styles.section} ${styles.how}`} id="vip-how" aria-labelledby="how-title">
       <div className={styles.sectionHead}>
