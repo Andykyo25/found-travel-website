@@ -7,6 +7,9 @@ import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { TravelImage } from "@/app/components/TravelImage";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
+import { JsonLd } from "@/app/components/JsonLd";
+import { agencyId, travelAgencyJsonLd } from "@/lib/structured-data";
+import { getSiteOrigin } from "@/lib/site-url";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -33,9 +36,23 @@ function ReviewCredit({ review }: { review: (typeof travelerReviews)[number] }) 
 export default async function AboutPage() {
   const content = await getSiteContent();
   const [featured, ...reviews] = travelerReviews;
+  const origin = await getSiteOrigin();
 
   return <>
   <main className={styles.page} id="top">
+    <JsonLd
+      data={[
+        travelAgencyJsonLd(content, origin),
+        {
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          url: `${origin}/about`,
+          name: `關於${content.brandName}`,
+          inLanguage: "zh-Hant",
+          mainEntity: { "@id": agencyId(origin) },
+        },
+      ]}
+    />
     <a className={styles.skipLink} href="#our-story">跳至頁面內容</a>
     <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/about" />
 

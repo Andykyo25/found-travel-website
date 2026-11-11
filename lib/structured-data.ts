@@ -2,7 +2,7 @@
 // 只 import type 與純函式：頁尾等元件也會用到 telephoneHref。
 import type { SiteContent, Trip, TripFaq } from "@/lib/site-content";
 import { googleMapsPlaceUrl } from "@/lib/traveler-reviews";
-import { bookableDepartures, priceValue, tripPath } from "@/lib/trip-values";
+import { bookableDepartures, priceValue, tripPath, upcomingDepartures } from "@/lib/trip-values";
 
 type JsonLdObject = Record<string, unknown>;
 
@@ -147,6 +147,8 @@ export function tripJsonLd(
     .map((departure) => priceValue(departure.price))
     .filter((amount): amount is number => amount !== null && amount > 0);
   const startPrice = priceValue(trip.price);
+  const upcoming = upcomingDepartures(trip.departures, today);
+  const soldOut = upcoming.length > 0 && upcoming.every((departure) => /(^|[^將])額滿/.test(departure.note ?? ""));
 
   const offers = prices.length
     ? {
@@ -155,6 +157,8 @@ export function tripJsonLd(
         lowPrice: Math.min(...prices),
         highPrice: Math.max(...prices),
         offerCount: prices.length,
+        // 公布的團期全部額滿時要講明，不要讓搜尋結果以為還買得到。
+        availability: `https://schema.org/${soldOut ? "SoldOut" : "InStock"}`,
         url,
         seller: { "@id": agencyId(origin) },
       }

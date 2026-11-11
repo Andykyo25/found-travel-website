@@ -581,6 +581,14 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .trip-cost-grid li, .trip-notes li { position: relative; padding-left: 22px; color: var(--f-ink-2); font-size: 15.5px; line-height: 1.8; }
 .trip-cost-grid li::before, .trip-notes li::before { content: ""; position: absolute; left: 2px; top: 0.75em; width: 8px; height: 8px; border: 1.5px solid var(--f-moss); border-radius: 50%; }
 .trip-cost-grid .is-excluded li::before { border-radius: 0; width: 9px; height: 1.5px; border: 0; background: var(--f-clay); top: 0.9em; }
+/* 行程速覽：一句摘要＋事實表，放在行程總覽之後 */
+.trip-facts { margin-top: 44px; padding: 28px clamp(18px, 3vw, 34px); border: 1px solid var(--f-line); border-radius: 18px; background: rgba(255, 255, 255, 0.5); }
+.trip-facts h2 { margin: 0 0 12px; font: 500 20px/1.4 var(--f-serif); letter-spacing: 0.06em; }
+.trip-facts > p { margin: 0; color: var(--f-ink-2); font-size: 15.5px; line-height: 1.9; }
+.trip-facts dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 28px; margin: 22px 0 0; }
+.trip-facts dl div { min-width: 0; padding-top: 12px; border-top: 1px solid var(--f-line); }
+.trip-facts dt { color: var(--f-ink-3); font-size: 13px; letter-spacing: 0.08em; }
+.trip-facts dd { margin: 4px 0 0; color: var(--f-ink); font-size: 15.5px; line-height: 1.7; overflow-wrap: anywhere; }
 .trip-faq-list { border-top: 1px solid var(--f-line); }
 .trip-faq-list details { border-bottom: 1px solid var(--f-line); }
 .trip-faq-list summary { display: flex; justify-content: space-between; gap: 16px; padding: 20px 0; cursor: pointer; font: 500 16.5px/1.6 var(--f-serif); list-style: none; }
