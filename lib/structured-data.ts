@@ -2,7 +2,7 @@
 // 只 import type 與純函式：頁尾等元件也會用到 telephoneHref。
 import type { SiteContent, Trip, TripFaq } from "@/lib/site-content";
 import { googleMapsPlaceUrl } from "@/lib/traveler-reviews";
-import { priceValue, tripPath, upcomingDepartures } from "@/lib/trip-values";
+import { bookableDepartures, priceValue, tripPath } from "@/lib/trip-values";
 
 type JsonLdObject = Record<string, unknown>;
 
@@ -142,7 +142,8 @@ export function tripJsonLd(
 ): JsonLdObject {
   const url = `${origin}${tripPath(trip)}`;
   const days = trip.itinerary ?? [];
-  const prices = upcomingDepartures(trip.departures, today)
+  // 和頁面上的起價一致：額滿的團不算進價格範圍。
+  const prices = bookableDepartures(trip.departures, today)
     .map((departure) => priceValue(departure.price))
     .filter((amount): amount is number => amount !== null && amount > 0);
   const startPrice = priceValue(trip.price);

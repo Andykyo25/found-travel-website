@@ -6,7 +6,7 @@
 //
 // 分類沿用後台的「行程分類」欄位（trip.badge），不另外維護一份清單。只 import type 與純函式。
 import type { Trip } from "@/lib/site-content";
-import { priceValue, upcomingDepartures } from "@/lib/trip-values";
+import { bookableDepartures, priceValue, upcomingDepartures } from "@/lib/trip-values";
 
 // 網址用英文代稱；清單裡沒有的分類直接用分類名稱當網址（中文網址一樣能用）。
 const slugByCategory: Record<string, string> = {
@@ -74,7 +74,7 @@ export function tripDestinations(trips: Trip[], today?: number): TripDestination
       regions.set(region, [...(regions.get(region) ?? []), trip]);
     }
     const prices = list
-      .flatMap((trip) => upcomingDepartures(trip.departures, today).map((departure) => priceValue(departure.price)))
+      .flatMap((trip) => bookableDepartures(trip.departures, today).map((departure) => priceValue(departure.price)))
       .filter((amount): amount is number => amount !== null && amount > 0);
     return {
       name,

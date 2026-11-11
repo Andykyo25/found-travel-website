@@ -110,3 +110,13 @@ export function formatPrice(value: string, from = false) {
   const note = value.match(/[（(][^）)]*[）)]/)?.[0] ?? "";
   return `NT$${amount.toLocaleString("en-US")}${from || value.includes("起") ? " 起" : ""}／人${note ? ` ${note}` : ""}`;
 }
+
+/**
+ * 算起價用的團期：還沒出發、而且還能報名的。備註是「額滿」的團不算，
+ * 免得起價寫的是一個已經報不到的價格；全部都額滿時才退回用所有未出發的團。
+ */
+export function bookableDepartures<T extends { date: string; note?: string }>(departures: T[], today = taipeiTodayTime()) {
+  const upcoming = upcomingDepartures(departures, today);
+  const open = upcoming.filter((item) => !(item.note ?? "").includes("額滿") || (item.note ?? "").includes("即將額滿"));
+  return open.length > 0 ? open : upcoming;
+}
