@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { destinationPath, destinationTitle, relatedTrips } from "@/lib/destinations";
-import { plainText, socialMetadata, truncateText } from "@/lib/page-metadata";
+import { socialMetadata, truncateText } from "@/lib/page-metadata";
 import { DepartureTable } from "@/app/components/DepartureTable";
 import { TripPlanCard } from "@/app/components/TripPlanCard";
 import { getSiteContent } from "@/lib/site-content";
@@ -33,13 +33,12 @@ export async function generateMetadata({ params }: PageProps) {
   const trip = findTripByPathKey(content.trips, slug);
   if (!trip) return { title: "找不到這條行程" };
 
-  // 多數行程沒有填團期與團費（請旅客洽詢）：標題與描述不能說有「出發日期與團費」。
+  // 多數行程沒有填團期與團費（請旅客洽詢）：標題不能說有「出發日期與團費」。
   const dated = upcomingDepartures(trip.departures).length > 0;
   const title = dated ? `${trip.title} 出發日期與團費` : `${trip.title} 行程內容與報價洽詢`;
-  const lead = dated
-    ? `${trip.title}（${trip.region}・${trip.days}）的出發日期與團費。`
-    : `${trip.title}（${trip.region}・${trip.days}）的每日行程與航班安排，團期與團費請洽顧問。`;
-  const description = truncateText(`${lead}${plainText(trip.summary)}`, 160);
+  // 描述用「行程速覽」那一句：價格與日期跟頁面同步。業務寫的摘要常帶著當時的價格與表情符號，
+  // 放進搜尋結果會和頁面上的即時起價對不上。
+  const description = truncateText(tripFacts(trip, content, taipeiTodayTime()).summary, 160);
 
   return {
     title,

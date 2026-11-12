@@ -22,3 +22,27 @@ export function destinationGroup(region: string) {
   const text = region.replaceAll("臺", "台");
   return groups.find(([, places]) => places.test(text))?.[0] ?? otherDestinationGroup;
 }
+
+// 後台分類（目的地頁用的那一套）對到這裡的大方向。後台把歐洲分成五區、東南亞和海島分開，
+// 旅客在「幫我找旅行」第一步只需要選大方向，所以在這裡收攏。
+const categoryGroups: Record<string, string> = {
+  日本: "日本", 韓國: "韓國", 越南: "越南", 郵輪: "郵輪",
+  東南亞: "東南亞・海島", 海島: "東南亞・海島",
+  東歐: "歐洲", 西歐: "歐洲", 南歐: "歐洲", 北歐: "歐洲", 中歐: "歐洲", 歐洲: "歐洲",
+  美洲: "美洲", 紐澳: "紐澳", 中東非洲: "中東・非洲",
+};
+
+/**
+ * 行程屬於哪個大方向。以業務在後台選的分類為準，和目的地頁同一個來源；
+ * 分類沒填或是沒見過的新分類，才退回去從分類名稱、地區文字裡的地名判斷。
+ */
+export function tripDestinationGroup(trip: { badge?: string; region: string }) {
+  const category = (trip.badge ?? "").trim().replace(/[・\s]/g, "");
+  if (category) {
+    const known = categoryGroups[category];
+    if (known) return known;
+    const guessed = destinationGroup(category);
+    if (guessed !== otherDestinationGroup) return guessed;
+  }
+  return destinationGroup(trip.region);
+}

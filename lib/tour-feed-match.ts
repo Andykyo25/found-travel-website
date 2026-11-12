@@ -19,6 +19,8 @@ export type FeedProduct = {
   /** 還原不了的單字標記；有值時 name 不是完整名稱。 */
   marker: string;
   days: number;
+  /** 行程名稱裡必須出現其中一個字才算候選（郵輪用船名分辨：MSC 的沖繩四天不是麗星的沖繩四天）。 */
+  requires?: string[];
   departures: TourFeedDeparture[];
 };
 
@@ -106,6 +108,7 @@ export function buildFeedProducts(files: { name: string; groups: TourFeedGroup[]
   const products = new Map<string, FeedProduct>();
   for (const file of files) {
     const fileName = file.name.replace(/[\s　]/g, "").replace(/[:：].*$/, "");
+    const requires = /ＭＳＣ|MSC/i.test(fileName) ? ["MSC"] : /麗星/.test(fileName) ? ["麗星", "探索星"] : undefined;
     const markersByRegion = new Map<string, Set<string>>();
     for (const group of file.groups) {
       const set = markersByRegion.get(group.region) ?? new Set<string>();
@@ -137,7 +140,7 @@ export function buildFeedProducts(files: { name: string; groups: TourFeedGroup[]
           }
         }
         const key = `${fileName}｜${region}｜${name}｜${days}`;
-        const product = products.get(key) ?? { key, file: fileName, region, name, marker, days, departures: [] };
+        const product = products.get(key) ?? { key, file: fileName, region, name, marker, days, ...(requires ? { requires } : {}), departures: [] };
         // 出發地有時寫在地區標題（「高／大阪」），有時寫在團號前；兩邊都看。
         const from = /^高/.test(group.region) && /[／/]/.test(group.region) ? "高" : /^中/.test(group.region) && /[／/]/.test(group.region) ? "中" : departure.from;
         product.departures.push(from === departure.from ? departure : { ...departure, from });
@@ -184,11 +187,15 @@ type ProductScore = {
   exact: boolean;
 };
 
+const separators = /[\s　、，,／/・+＋&＆]/g;
+
 function scoreProduct(trip: SiteTripForMatch, product: FeedProduct): ProductScore | null {
   const tripDays = dayNumber(trip.days);
   if (tripDays !== product.days) return null;
 
-  const title = trip.title;
+  // 名稱比對不看分隔符號：「宮古島、沖繩」和動態檔的「宮古島／沖繩」是同一個。
+  const title = trip.title.replace(separators, "");
+  if (product.requires && !product.requires.some((word) => title.toUpperCase().includes(word.toUpperCase()))) return null;
   const text = `${title}${trip.region}${trip.plans.map((plan) => plan.airline + plan.title).join("")}`;
   const reasons: string[] = [];
   let score = 0;
@@ -202,7 +209,7 @@ function scoreProduct(trip: SiteTripForMatch, product: FeedProduct): ProductScor
   }
 
   // 泰國線的組名帶英文字尾（精彩N）：比對時只看中文。
-  const label = (product.marker ? product.name.split("·")[0] : product.name).replace(/[A-Za-z]+$/, "");
+  const label = (product.marker ? product.name.split("·")[0] : product.name).replace(/[A-Za-z]+$/, "").replace(separators, "");
   if (!label) return null;
   const generic = gradeWords.includes(label);
   const titleGrades = gradeWords.filter((word) => title.includes(word));
@@ -259,15 +266,25 @@ function scoreProduct(trip: SiteTripForMatch, product: FeedProduct): ProductScor
   }
 
   if (trip.departures.length > 0) {
-    const existing = new Set(trip.departures.map((departure) => `${departure.date.slice(0, 10)}|${priceNumber(departure.price)}`));
-    const hits = product.departures.filter((departure) => existing.has(`${departure.date}|${departure.price}`)).length;
-    const share = hits / trip.departures.length;
-    if (share > 0) {
+    const offered = new Set(product.departures.map((departure) => `${departure.date}|${departure.price}`));
+    const offeredDates = new Set(product.departures.map((departure) => departure.date));
+    const priced = trip.departures.filter((departure) => priceNumber(departure.price) > 0);
+    const exactHits = priced.filter((departure) => offered.has(`${departure.date.slice(0, 10)}|${priceNumber(departure.price)}`)).length;
+    if (priced.length > 0 && exactHits > 0) {
+      const share = exactHits / priced.length;
       score += 5 * share;
       reasons.push(`已有團期吻合 ${Math.round(share * 100)}%`);
       if (share >= 0.5) {
         named = true;
         proven = true;
+      }
+    } else if (priced.length === 0 && named) {
+      // 官網有些團期只填日期沒填價格（郵輪）。只有日期相同太容易巧合，
+      // 所以名稱先對上才加分，而且不能單靠它認定。
+      const share = trip.departures.filter((departure) => offeredDates.has(departure.date.slice(0, 10))).length / trip.departures.length;
+      if (share > 0) {
+        score += 5 * share;
+        reasons.push(`已有出發日吻合 ${Math.round(share * 100)}%`);
       }
     }
   }

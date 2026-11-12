@@ -185,3 +185,134 @@ export function parseTourFeed(text: string, today = new Date()): TourFeedGroup[]
   }
   return groups.filter((item) => item.departures.length > 0);
 }
+
+// ---------------------------------------------------------------------------
+// 國旅檔：欄位比國外線少（沒有備註與機位），價格直接是元（1599 就是 1,599 元）。
+// 「看日出：二天  定價  位  餘  人數:」底下每列是「團號  定價  位  餘  …」。
+// ---------------------------------------------------------------------------
+const domesticHeaderPattern = /^[\s"■˙◎]*(.{2,14}?)\s*定價\s+位\s+餘/;
+const domesticLinePattern = /^(.{0,10}?)([A-Z]{3}\d|={4})([A-Z0-9]{2})(\d{4})([A-Z])(\d)\s+(\d{3,6})\s+\d{1,3}\s+(--|\d{1,3})(?=\s|$)/;
+
+export function parseDomesticFeed(text: string, today = new Date()): TourFeedGroup[] {
+  const groups: TourFeedGroup[] = [];
+  let region = "";
+  let group: TourFeedGroup | null = null;
+  let lastPrefix = "";
+  for (const line of text.split(/\r?\n/)) {
+    const section = sectionPattern.exec(line);
+    if (section) {
+      // 國旅檔的區段標題是「團體出發」之類的分類，不是地名；地區一律記成台灣。
+      region = "台灣";
+      group = null;
+      lastPrefix = "";
+      continue;
+    }
+    const header = domesticHeaderPattern.exec(fullWidthToHalf(line));
+    if (header) {
+      const raw = header[1].replace(/[\s"■]/g, "");
+      const label = raw.split(":")[0];
+      if (!label) continue;
+      group = { region, label, labelDays: parseDayCount(raw), regionProducts: [], departures: [] };
+      groups.push(group);
+      continue;
+    }
+    if (!group) continue;
+    const match = domesticLinePattern.exec(line);
+    if (!match) continue;
+    const [, lead, head, airline, monthDay, letter, dayDigit, priceText, left] = match;
+    const prefix = head.startsWith("=") ? lastPrefix : head;
+    if (!prefix) continue;
+    if (!head.startsWith("=")) lastPrefix = head;
+    const month = Number(monthDay.slice(0, 2));
+    const day = Number(monthDay.slice(2));
+    if (month < 1 || month > 12 || day < 1 || day > 31) continue;
+    const remaining = left === "--" ? 0 : Number(left);
+    group.departures.push({
+      code: `${prefix}${airline}${monthDay}${letter}${dayDigit}`,
+      airport: prefix.slice(0, 3),
+      // 國旅是遊覽車團，團號這兩碼不是航空公司。
+      airline: "",
+      date: `${resolveYear(Number(prefix[3]), today)}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`,
+      days: resolveDays(Number(dayDigit), group.labelDays),
+      price: Number(priceText),
+      variant: "",
+      from: (/[中高]/.exec(fullWidthToHalf(lead))?.[0] ?? "") as TourFeedDeparture["from"],
+      status: remaining === 0 ? "full" : remaining <= fewSeatsThreshold ? "few" : "open",
+    });
+  }
+  return groups.filter((item) => item.departures.length > 0);
+}
+
+// ---------------------------------------------------------------------------
+// 郵輪檔：每個航次一個框，框頭寫「１１／２５ ＝宮古／沖繩／石垣島：自主遊５天」，
+// 框下面各艙等一列「KLU6MS1125A5  219-30  兩人房：…●完售」。
+// 一個航次只算一個出發日：售價取還沒完售的艙等裡最低的每人定價（219 = 21,900 元），
+// 所有艙等都完售才算額滿。「-30」是同業折讓，不讀。
+// ---------------------------------------------------------------------------
+const sailingHeaderPattern = /^\s*[│|]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*=\s*(.+?)\s*:\s*.*?(\d{1,2})\s*天/;
+const cabinLinePattern = /^\s*([A-Z]{3})(\d)([A-Z0-9]{2})(\d{4})([A-Z])(\d)\s+(\d{2,4})\s*-/;
+
+export function parseCruiseFeed(text: string, today = new Date()): TourFeedGroup[] {
+  const groups = new Map<string, TourFeedGroup>();
+  let region = "";
+  let sailing: { name: string; days: number; monthDay: string } | null = null;
+  let current: { departure: TourFeedDeparture; open: number[]; all: number[] } | null = null;
+
+  const close = () => {
+    if (!current) return;
+    const { departure, open, all } = current;
+    departure.price = Math.min(...(open.length > 0 ? open : all)) * 100;
+    departure.status = open.length > 0 ? "open" : "full";
+    current = null;
+  };
+
+  for (const line of text.split(/\r?\n/)) {
+    const section = /^■+\**([^▆*■]+?)\**▆+/.exec(line);
+    if (section) {
+      region = section[1].replace(/[*\s　]/g, "");
+      continue;
+    }
+    const header = sailingHeaderPattern.exec(fullWidthToHalf(line));
+    if (header) {
+      close();
+      const name = header[3].replace(/自主遊$/, "").replace(/\s/g, "");
+      sailing = name ? { name, days: Number(header[4]), monthDay: `${header[1].padStart(2, "0")}${header[2].padStart(2, "0")}` } : null;
+      continue;
+    }
+    if (!sailing) continue;
+    const cabin = cabinLinePattern.exec(line);
+    if (!cabin || cabin[4] !== sailing.monthDay) continue;
+    const [, port, yearDigit, ship, monthDay, , , priceText] = cabin;
+    if (!current) {
+      const key = `${region}|${sailing.name}|${sailing.days}`;
+      const group = groups.get(key) ?? { region, label: sailing.name, labelDays: sailing.days, regionProducts: [], departures: [] };
+      groups.set(key, group);
+      const departure: TourFeedDeparture = {
+        code: `${port}${yearDigit}${ship}${monthDay}X${sailing.days % 10}`,
+        airport: port,
+        airline: "",
+        date: `${resolveYear(Number(yearDigit), today)}/${monthDay.slice(0, 2)}/${monthDay.slice(2)}`,
+        days: sailing.days,
+        price: 0,
+        variant: "",
+        from: "",
+        status: "open",
+      };
+      group.departures.push(departure);
+      current = { departure, open: [], all: [] };
+    }
+    const price = Number(priceText);
+    current.all.push(price);
+    if (!line.includes("完售")) current.open.push(price);
+  }
+  close();
+  return [...groups.values()].filter((group) => group.departures.length > 0);
+}
+
+/** 依動態檔的名稱選解析方式：國旅、郵輪的排版和國外團體線不同。 */
+export function parseFeedFile(name: string, text: string, today = new Date()): TourFeedGroup[] {
+  const plain = fullWidthToHalf(name).replace(/\s/g, "");
+  if (/國旅/.test(plain)) return parseDomesticFeed(text, today);
+  if (/MSC|麗星|郵輪/.test(plain)) return parseCruiseFeed(text, today);
+  return parseTourFeed(text, today);
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseTourFeed } from "../lib/tour-feed-parse.ts";
+import { parseCruiseFeed, parseDomesticFeed, parseFeedFile, parseTourFeed } from "../lib/tour-feed-parse.ts";
 import { baseFeedRegion, buildFeedProducts, matchTrips, resolveMarker } from "../lib/tour-feed-match.ts";
 
 // 仿照業務系統動態檔的排版；姓名、利潤、票款都是虛構的。
@@ -151,6 +151,81 @@ test("splits synced departures between airline-specific plans", async () => {
   assert.deepEqual(shared.plans.map((item) => item.departureMode), ["all", "all"]);
 });
 
+// 仿照郵輪與國旅動態檔的排版；姓名都是虛構的。
+const cruiseFeed = `~L2
+■■*基  隆*▆▆▆▆▆▆▆▆▆▆
+ ┌──────────────┐
+ │ １２／０４ ＝宮古／沖繩／石垣島：自主遊５天    　    │
+ └──────────────┘
+內艙房          定:-同  艙房：
+  KLU6MS1204A5  219-30  兩人房：甲1xxxxxxxxxxxxxxxxxxxx●完售
+                 69- 4  四人房：甲2xxxxxxxxxxxxxxxxxxxx●完售
+陽台房
+  KLU6MS1204C5  299-30  兩人房：乙3----------------------●         需排候補,RQ=
+■■▆▆▆▆▆▆▆▆▆▆
+ │ １２／０８ ＝宮古／沖繩／石垣島：自主遊５天    　    │
+內艙房          定:-同  艙房：
+  KLU6MS1208A5  239-30  兩人房：丙4xxxxxxxxxxxxxxxxxxxx●完售
+ │  ０３ ／１４＝鹿兒島、濟州自主遊：自主遊６天    　   │
+內艙房          定:-同  艙房：
+  KLU7MS0314A6  349-30  兩人房：--------------------------●
+`;
+const domesticFeed = `F~L2
+■*團體出發*30▆▆▆▆▆▆▆▆▆▆
+  醉秋楓三天 ▎2999-300=(519) ▎2999-300=(535) ▎11/ 1~12/31
+ ■*嘉義:11/1~12/31*●*宿四人房
+   醉秋楓：三天  定價  位  餘  人數:                              隨  團  車=315
+   TPE6BB1119A3  2999  41  --  甲6乙5丙8                          王小明  統=315
+   TPE6BB1203A3  2999  42   2  甲6乙5                              ( ?? )  統=315
+   TPE6BB1220A3  2999  42  42                                      ------  ------
+ 中TXG6BB1203A3  2999  42  40  丁2                                 ------  ------
+`;
+
+test("parses cruise sailings into one departure per sailing", () => {
+  const sailings = parseCruiseFeed(cruiseFeed, now);
+  assert.deepEqual(sailings.map((group) => [group.region, group.label, group.labelDays]), [["基隆", "宮古/沖繩/石垣島", 5], ["基隆", "鹿兒島、濟州", 6]]);
+  // 內艙完售、陽台還能訂：這個航次沒有額滿，售價取還買得到的最低艙等；「-30」同業折讓不讀。
+  assert.deepEqual(sailings[0].departures.map((d) => [d.date, d.price, d.status]), [["2026/12/04", 29900, "open"], ["2026/12/08", 23900, "full"]]);
+  assert.deepEqual(sailings[1].departures.map((d) => [d.date, d.days, d.price, d.status]), [["2027/03/14", 6, 34900, "open"]]);
+  for (const secret of ["甲", "乙", "丙", "RQ"]) assert.equal(JSON.stringify(sailings).includes(secret), false, secret);
+  assert.deepEqual(parseFeedFile("１８＊ＭＳＣ：甲＋乙", cruiseFeed, now), sailings);
+});
+
+test("parses domestic tours with prices in plain dollars", () => {
+  const tours = parseDomesticFeed(domesticFeed, now);
+  assert.deepEqual(tours.map((group) => [group.region, group.label, group.labelDays]), [["台灣", "醉秋楓", 3]]);
+  assert.deepEqual(tours[0].departures.map((d) => [d.code, d.date, d.price, d.status, d.from]), [
+    ["TPE6BB1119A3", "2026/11/19", 2999, "full", ""],
+    ["TPE6BB1203A3", "2026/12/03", 2999, "few", ""],
+    ["TPE6BB1220A3", "2026/12/20", 2999, "open", ""],
+    ["TXG6BB1203A3", "2026/12/03", 2999, "open", "中"],
+  ]);
+  for (const secret of ["王小明", "甲", "519", "315"]) assert.equal(JSON.stringify(tours).includes(secret), false, secret);
+  assert.deepEqual(parseFeedFile("０１＊國    旅：甲", domesticFeed, now), tours);
+});
+
+test("matches cruise trips by ship and route, not by coincidental dates", () => {
+  const products = buildFeedProducts([
+    { name: "１８＊ＭＳＣ：甲", groups: parseCruiseFeed(cruiseFeed, now) },
+    { name: "１９＊麗星輪：甲", groups: parseCruiseFeed(cruiseFeed, now) },
+    { name: "０１＊國    旅：甲", groups: parseDomesticFeed(domesticFeed, now) },
+  ], now.getTime());
+  const trip = (id, title, days, dates) => ({ id, title, region: "基隆出發郵輪", days, price: "價格洽詢", plans: [], departures: dates.map((date) => ({ date, price: "" })) });
+  const matches = matchTrips([
+    trip("msc5", "MSC榮耀號 宮古島、沖繩、石垣島自主遊5天", "5日", ["2026/12/04", "2026/12/08"]),
+    trip("msc6", "MSC榮耀號 鹿兒島、濟州自主遊6天", "6日", ["2027/03/14"]),
+    // 同一天出發的別家船、沒寫船名的行程，都不能因為日期一樣就被套上。
+    trip("other", "皇家加勒比 宮古島、沖繩、石垣島5天", "5日", ["2026/12/04"]),
+    trip("land", "阿里山三日", "3日", ["2026/12/03"]),
+  ], products);
+  assert.deepEqual(matches.map((match) => [match.tripId, match.status, match.candidates[0]?.key ?? ""]), [
+    ["msc5", "auto", "１８＊ＭＳＣ｜基隆｜宮古/沖繩/石垣島｜5"],
+    ["msc6", "auto", "１８＊ＭＳＣ｜基隆｜鹿兒島、濟州｜6"],
+    ["other", "none", ""],
+    ["land", "none", ""],
+  ]);
+});
+
 test("sync signs in, reads plain-text files and stores only public fields", async (t) => {
   const { S3Client } = await import("@aws-sdk/client-s3");
   const { syncTourFeed, TourFeedError } = await import("../lib/tour-feed-sync.ts");
@@ -179,6 +254,7 @@ test("sync signs in, reads plain-text files and stores only public fields", asyn
     }
     if (String(url) === "https://feed.example/api/sales-files") return Response.json([{ id: "f1", name: "１０＊首    爾：甲＋乙" }, { id: "f2", name: "１８＊ＭＳＣ：甲" }]);
     if (String(url) === "https://feed.example/api/file-content/f1") return new Response(feed, { headers: { "content-type": "text/plain" } });
+    if (String(url) === "https://feed.example/api/file-content/f2") return new Response(cruiseFeed, { headers: { "content-type": "text/plain" } });
     return new Response("not found", { status: 404 });
   });
 
@@ -187,12 +263,13 @@ test("sync signs in, reads plain-text files and stores only public fields", asyn
     "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword",
     "https://feed.example/api/sales-files",
     "https://feed.example/api/file-content/f1",
+    "https://feed.example/api/file-content/f2",
   ]);
   assert.equal(calls[1][1].Authorization, "Bearer token-1");
-  assert.equal(snapshot.products.length, 5);
+  assert.equal(snapshot.products.length, 7);
   assert.deepEqual(snapshot.matches.map((match) => [match.tripId, match.status]), [["deal", "auto"]]);
   const stored = written.get("tour-feed/snapshot.json");
-  assert.equal(JSON.parse(stored).products.length, 5);
+  assert.equal(JSON.parse(stored).products.length, 7);
   for (const secret of ["王小明", "甲5", "利潤", "token-1", "pw"]) assert.equal(stored.includes(secret), false, secret);
 
   // 密碼錯：講得出原因，而且不覆蓋上一次的結果。
