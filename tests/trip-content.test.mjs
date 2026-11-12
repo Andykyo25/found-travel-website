@@ -143,3 +143,84 @@ test("every public link to a trip goes through tripPath, and old /dates/<id> lin
   assert.match(files[6], /<TripNotes trip=\{\{ notes: trip\.notes, faqs \}\} \/>/);
   assert.match(files[7], /"\/trips\/:path\*"/);
 });
+
+test("duplicated summaries are rewritten once and staff edits are left alone", async () => {
+  const { applySummaryRewrites, summaryFingerprint } = await import("../lib/summary-rewrites.ts");
+  const generic = "每日行程、餐食與住宿請見下方說明或行程 PDF，出發日期與團費歡迎洽詢。";
+  assert.equal(summaryFingerprint(generic), summaryFingerprint(`  ${generic.replace("，", "，\n")} `));
+  const trip = (slug, summary) => ({ ...baseTrip, id: slug, slug, summary });
+  const content = { trips: [
+    trip("jeju-flight-hotel-5d", generic),
+    // 業務已經自己改過：不動。
+    trip("okinawa-flight-hotel-4d", "沖繩四日自由行，我們幫你訂好機票與飯店。"),
+    // 不在改寫名單上的行程，就算摘要是那句通用說明也不動。
+    trip("some-other-trip", generic),
+  ] };
+  const { content: next, changed } = applySummaryRewrites(content);
+  assert.equal(changed, 1);
+  assert.match(next.trips[0].summary, /^濟州五日機加酒自由行/);
+  assert.equal(next.trips[1], content.trips[1]);
+  assert.equal(next.trips[2], content.trips[2]);
+  // 換過之後再跑一次：什麼也不做。
+  const again = applySummaryRewrites(next);
+  assert.equal(again.changed, 0);
+  assert.equal(again.content, next);
+});
+
+test("every rewritten summary is unique, free of prices and within the length the site keeps", async () => {
+  const source = await readFile(new URL("../lib/summary-rewrites.ts", import.meta.url), "utf8");
+  const rows = [...source.matchAll(/^  \["([^"]+)", "([0-9a-f]{12})", "([^"]+)"\],$/gm)].map((match) => ({ slug: match[1], summary: match[3] }));
+  assert.equal(rows.length, 55);
+  assert.equal(new Set(rows.map((row) => row.slug)).size, 55);
+  assert.equal(new Set(rows.map((row) => row.summary)).size, 55);
+  for (const { slug, summary } of rows) {
+    assert.ok(summary.length >= 50 && summary.length <= 110, `${slug}: ${summary.length}`);
+    assert.doesNotMatch(summary, /NT\$|\d{2},\d{3}|元起|[☀-➿]/u, slug);
+  }
+});
+
+test("the startup rewrite saves through the normal path, keeps history and does nothing the second time", async (t) => {
+  const { S3Client } = await import("@aws-sdk/client-s3");
+  const { runSummaryRewrites } = await import("../lib/summary-rewrite-run.ts");
+  const { clearPublicContentCache } = await import("../lib/site-content.ts");
+  t.mock.property(process, "env", { ...process.env, BUCKET_NAME: "test", BUCKET_ENDPOINT: "https://example.invalid", BUCKET_ACCESS_KEY_ID: "test", BUCKET_SECRET_ACCESS_KEY: "test" });
+  t.mock.method(console, "error", () => {});
+  clearPublicContentCache();
+  t.after(clearPublicContentCache);
+  const generic = "每日行程、餐食與住宿請見下方說明或行程 PDF，出發日期與團費歡迎洽詢。";
+  let stored = JSON.stringify({ ...defaultSiteContent, _updatedAt: "2026-11-01T00:00:00.000Z", _updatedBy: "staff@example.com", trips: [
+    { ...baseTrip, id: "a", slug: "jeju-flight-hotel-5d", title: "濟州機+酒五日", summary: generic },
+    { ...baseTrip, id: "b", slug: "kept", title: "別的行程", summary: "業務寫的摘要。" },
+  ] });
+  let exists = true;
+  const puts = [];
+  t.mock.method(S3Client.prototype, "send", async (command) => {
+    const key = String(command.input.Key);
+    if (command.constructor.name === "PutObjectCommand") {
+      puts.push({ key, ifMatch: command.input.IfMatch, body: String(command.input.Body) });
+      if (!key.startsWith("content-history/")) stored = String(command.input.Body);
+      return { ETag: '"next"' };
+    }
+    if (key.startsWith("tour-feed/") || !exists) throw Object.assign(new Error("missing"), { name: "NoSuchKey" });
+    return { ETag: '"v1"', Body: { transformToString: async () => stored } };
+  });
+
+  assert.equal(await runSummaryRewrites(), 1);
+  assert.equal(puts.length, 2);
+  // 先把改之前的內容留進歷史，再帶著 etag 寫入新的。
+  assert.match(puts[0].key, /^content-history\//);
+  assert.ok(puts[0].body.includes(generic));
+  assert.equal(puts[1].ifMatch, '"v1"');
+  const saved = JSON.parse(puts[1].body);
+  assert.match(saved.trips[0].summary, /^濟州五日機加酒自由行/);
+  assert.equal(saved.trips[1].summary, "業務寫的摘要。");
+  assert.equal(saved._updatedBy, "系統（行程摘要改寫）");
+
+  assert.equal(await runSummaryRewrites(), 0);
+  assert.equal(puts.length, 2);
+
+  // Bucket 裡還沒有發布內容：不能把預設範例存進去。
+  exists = false;
+  assert.equal(await runSummaryRewrites(), 0);
+  assert.equal(puts.length, 2);
+});
