@@ -90,10 +90,20 @@
 
 @media (max-width: 1100px) {
   .tierGrid { grid-template-columns: repeat(2, 1fr); }
-  .heroFacts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px clamp(16px, 3vw, 40px); }
+  .page .heroFacts { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .8fr); gap: 22px clamp(16px, 3vw, 40px); }
   .heroFacts > p { grid-column: 1 / -1; padding-top: 18px; border-top: 1px solid #cfd4c6; }
   .steps { gap: 28px; }
   .steps h3 { font-size: 22px; }
+}
+/* 三個數字並排需要寬度；900px 以下改成一列一項，數字才不會疊在一起。 */
+@media (max-width: 900px) {
+  .page .heroFacts { grid-template-columns: 1fr; gap: 0; }
+  .heroFacts div { grid-template-columns: 1fr auto; align-items: baseline; gap: 16px; padding: 16px 0; border-bottom: 1px solid #cfd4c6; }
+  .heroFacts div:first-child { padding-top: 0; }
+  .heroFacts dt { font-size: 13px; white-space: nowrap; }
+  .heroFacts dd { font-size: 26px; }
+  .heroFacts dd small { margin-left: 5px; font-size: 13px; }
+  .heroFacts > p { border-top: 0; padding-top: 18px; font-size: 15.5px; }
 }
 @media (max-width: 760px) {
   .hero { grid-template-columns: 1fr; padding: 42px 0 56px; }
@@ -101,13 +111,6 @@
   .heroDescription { font-size: 15px; }
   .primaryLink { width: 100%; }
   .heroPoster { justify-self: center; width: min(100%, 420px); }
-  .heroFacts { grid-template-columns: 1fr; gap: 0; }
-  .heroFacts div { grid-template-columns: 1fr auto; align-items: baseline; gap: 16px; padding: 16px 0; border-bottom: 1px solid #cfd4c6; }
-  .heroFacts div:first-child { padding-top: 0; }
-  .heroFacts dt { font-size: 13px; white-space: nowrap; }
-  .heroFacts dd { font-size: 26px; }
-  .heroFacts dd small { margin-left: 5px; font-size: 13px; }
-  .heroFacts > p { border-top: 0; padding-top: 18px; font-size: 15.5px; }
   .sectionHead { display: block; margin-bottom: 32px; }
   .sectionHead > p { margin-top: 20px; font-size: 14px; }
   .steps, .tierGrid, .faq { grid-template-columns: 1fr; }
