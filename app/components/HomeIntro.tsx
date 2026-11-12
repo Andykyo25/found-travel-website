@@ -21,7 +21,7 @@ export function HomeIntro() {
     // 序幕結束後，首屏動畫的延遲歸零（站內再回首頁時不再等待）。
     const timer = window.setTimeout(() => {
       document.documentElement.dataset.intro ||= "played";
-    }, 3600);
+    }, 2600);
     return () => window.clearTimeout(timer);
   }, [show]);
 

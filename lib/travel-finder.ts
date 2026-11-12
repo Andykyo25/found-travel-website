@@ -1,7 +1,7 @@
 import type { Trip, TripPlan, TripDeparture } from "@/lib/site-content";
 import { publishedTripPlans, departuresForPlan, tripPlanLabel } from "@/lib/trip-plans";
 import { upcomingDepartures, parseDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
-import { destinationGroup, destinationGroupNames } from "@/lib/destination-groups";
+import { destinationGroupNames, tripDestinationGroup } from "@/lib/destination-groups";
 import { compactImageUrl } from "@/lib/trip-summary";
 
 import { departureAirport, priceBasis, serviceType } from "@/lib/travel-facts";
@@ -57,7 +57,8 @@ export function finderTrips(trips: Trip[], today = taipeiTodayTime()): Trip[] {
     id: trip.id,
     ...(trip.slug ? { slug: trip.slug } : {}),
     featured: false,
-    badge: "",
+    // 分類要留著：目的地的大方向是照後台分類歸的。
+    badge: trip.badge,
     region: trip.region,
     days: trip.days,
     title: trip.title,
@@ -86,8 +87,8 @@ export function finderTrips(trips: Trip[], today = taipeiTodayTime()): Trip[] {
 }
 
 /** 目的地可以是大方向（日本）或後台填的地區（東京）。 */
-export function matchesDestination(region: string, wanted: string) {
-  return !wanted || region === wanted || destinationGroup(region) === wanted;
+export function matchesDestination(trip: Pick<Trip, "badge" | "region">, wanted: string) {
+  return !wanted || trip.region === wanted || tripDestinationGroup(trip) === wanted;
 }
 
 export function validateNeeds(needs: TravelNeeds) {
@@ -127,7 +128,7 @@ export function findTravel(trips: Trip[], needs: TravelNeeds, today = taipeiToda
         if (service !== "unknown" || needs.service !== "group") { excluded.service++; continue; }
         // Legacy catalogue plans remain browseable without a service tag.
       }
-      if (!matchesDestination(trip.region, needs.destination)) { excluded.destination++; continue; }
+      if (!matchesDestination(trip, needs.destination)) { excluded.destination++; continue; }
       if (needs.airport && airport !== needs.airport) {
         if (airport) { excluded.airport++; continue; }
         missing.push(`能否從${needs.airport}出發待確認`);
@@ -191,9 +192,10 @@ export function destinationOptions(trips: Trip[], service: TravelNeeds["service"
   for (const trip of matchedTrips(trips, { ...emptyNeeds, service }, today)) {
     const region = trip.region.trim();
     if (!region) continue;
-    const regions = groups.get(destinationGroup(region)) ?? new Map<string, number>();
+    const group = tripDestinationGroup(trip);
+    const regions = groups.get(group) ?? new Map<string, number>();
     regions.set(region, (regions.get(region) ?? 0) + 1);
-    groups.set(destinationGroup(region), regions);
+    groups.set(group, regions);
   }
   return [...groups]
     .sort(([a], [b]) => destinationGroupNames.indexOf(a) - destinationGroupNames.indexOf(b))

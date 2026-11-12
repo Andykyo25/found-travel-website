@@ -256,3 +256,24 @@ test("image URLs lose only the Unsplash tracking parameters", async () => {
   assert.equal(compactImageUrl("https://plus.unsplash.com/premium_photo-1?w=800&ixid=abc&ixlib=rb-4.1.0&q=80"), "https://plus.unsplash.com/premium_photo-1?w=800&q=80");
   for (const untouched of ["/trips/tokyo.jpg", "/api/hero-image?key=hero-images%2Fx.webp", "https://example.com/a.jpg?ixid=1", ""]) assert.equal(compactImageUrl(untouched), untouched);
 });
+
+test("finder destination groups follow the backend category before guessing from the region", async () => {
+  const { tripDestinationGroup } = await import("../lib/destination-groups.ts");
+  const { destinationOptions, finderTrips } = await import("../lib/travel-finder.ts");
+  // 後台分類決定大方向：歐洲五區收成「歐洲」，東南亞與海島收成一類。
+  assert.equal(tripDestinationGroup({ badge: "東歐", region: "布拉格 Prague" }), "歐洲");
+  assert.equal(tripDestinationGroup({ badge: "海島", region: "帛琉" }), "東南亞・海島");
+  assert.equal(tripDestinationGroup({ badge: "中東非洲", region: "土耳其" }), "中東・非洲");
+  // 地區文字看不出國家，分類有填就不會掉到「其他」。
+  assert.equal(tripDestinationGroup({ badge: "日本", region: "賞楓秘境" }), "日本");
+  // 地區寫了港口名的郵輪，照分類算郵輪，不算日本。
+  assert.equal(tripDestinationGroup({ badge: "郵輪", region: "沖繩・石垣島" }), "郵輪");
+  // 分類沒填、或是沒見過的新分類：退回用地名判斷。
+  assert.equal(tripDestinationGroup({ badge: "", region: "首爾" }), "韓國");
+  assert.equal(tripDestinationGroup({ badge: "季節限定", region: "北海道" }), "日本");
+  assert.equal(tripDestinationGroup({ badge: "季節限定", region: "火星" }), "其他");
+
+  const cruise = structuredClone(base); cruise.id = "cruise"; cruise.badge = "郵輪"; cruise.region = "沖繩・石垣島";
+  const options = destinationOptions(finderTrips([cruise], today), "group", today);
+  assert.deepEqual(options.map((option) => option.group), ["郵輪"]);
+});

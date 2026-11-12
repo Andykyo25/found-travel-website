@@ -1,6 +1,6 @@
 import "server-only";
 import { getSiteContentWithMeta } from "./site-content";
-import { parseTourFeed } from "./tour-feed-parse";
+import { parseFeedFile } from "./tour-feed-parse";
 import { buildFeedProducts, matchTrips } from "./tour-feed-match";
 import { snapshotProduct, type FeedSnapshot } from "./tour-feed-overlay";
 import { saveTourFeedSnapshot } from "./tour-feed-store";
@@ -27,8 +27,6 @@ export function isTourFeedConfigured() {
   return feedConfig() !== null;
 }
 
-// 郵輪與國旅的檔排版不同，目前不處理。
-const skippedFiles = /國\s*旅|ＭＳＣ|MSC|麗星/;
 const requestTimeoutMs = 30_000;
 
 /** 同步失敗的原因。訊息會顯示在後台給業務看，所以不放帳號、密碼或憑證。 */
@@ -84,11 +82,11 @@ async function runSync(): Promise<FeedSnapshot> {
   const now = new Date();
   const files: Parameters<typeof buildFeedProducts>[0] = [];
   for (const entry of list) {
-    if (typeof entry.id !== "string" || typeof entry.name !== "string" || skippedFiles.test(entry.name)) continue;
+    if (typeof entry.id !== "string" || typeof entry.name !== "string") continue;
     // 檔案內容是純文字，不是 JSON。
     const text = await (await request("讀取動態檔", `${config.apiUrl}/api/file-content/${encodeURIComponent(entry.id)}`, { headers })).text();
     // 原始文字含旅客姓名與利潤：解析完就丟，只留日期、售價、狀態。
-    files.push({ name: entry.name, groups: parseTourFeed(text, now) });
+    files.push({ name: entry.name, groups: parseFeedFile(entry.name, text, now) });
   }
 
   const products = buildFeedProducts(files, taipeiTodayTime(now));

@@ -720,3 +720,11 @@ html[data-intro="skip"] .fh-intro { display: none; }
 @media (max-width: 480px) { .fh-film-play { gap: 12px; } .fh-film-label i { display: none; } }
 /* 太窄時標頭放不下，改由選單內的連結提供 */
 @media (max-width: 355px) { .site-header .site-social { display: none; } }
+
+/* 序幕縮短 1 秒：幕簾原本在 1.85 秒收完，現在 0.85 秒；圖章與細線跟著加快，首屏動畫提早 0.8 秒開始。 */
+:root { --t0: 0.25s; }
+.fh-intro { animation: fh-curtain 0.55s var(--f-ease-io) 0.3s both; }
+.fh-intro-mark { animation: fh-pop 0.4s var(--f-ease) 0s both; }
+.fh-intro-name { animation: fh-fade 0.3s ease 0.08s both; }
+.fh-intro-line { animation: fh-fade 0.2s ease 0s both; }
+.fh-intro-line i { animation: fh-fill 0.3s var(--f-ease-io) 0s both; }
