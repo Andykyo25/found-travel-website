@@ -151,6 +151,34 @@ test("splits synced departures between airline-specific plans", async () => {
   assert.deepEqual(shared.plans.map((item) => item.departureMode), ["all", "all"]);
 });
 
+test("names mainland carriers on synced departures and gives each version its own airline", async () => {
+  const { applyTourFeed } = await import("../lib/tour-feed-overlay.ts");
+  const departure = (code, airline, from = "") => ({ code, date: "2027/03/01", price: 25900, status: "open", airline, from });
+  const snapshot = {
+    syncedAt: now.toISOString(),
+    products: [{ key: "k", file: "f", region: "張家界", name: "快閃", days: 8, departures: [departure("A", "NX", "高"), departure("B", "CZ"), departure("C", "HO"), departure("D", "NX")] }],
+    matches: [],
+  };
+  const plan = (id, airline, title) => ({ id, airline, title, summary: "", price: "", documentType: "pdf", documentUrl: "", documentName: "", departureMode: "all", departureIds: [] });
+  const trip = {
+    id: "t", title: "快閃張家界八日", region: "張家界", days: "8日", price: "", departures: [],
+    plans: [plan("p1", "澳門航空", "高雄出發"), plan("p2", "南方航空", "台北出發"), plan("p3", "吉祥航空", "台北出發"), plan("p4", "澳門航空", "台北出發・澳門轉機")],
+  };
+  const result = applyTourFeed({ trips: [trip] }, snapshot, { t: "k" }, now.getTime(), now.getTime()).trips[0];
+  assert.deepEqual(result.departures.map((item) => item.date), ["2027/03/01(澳門航空・高雄出發)", "2027/03/01(南航)", "2027/03/01(吉祥)", "2027/03/01(澳門航空)"]);
+  assert.deepEqual(result.plans.map((item) => [item.departureMode, item.departureIds]), [
+    ["selected", ["feed-A"]], ["selected", ["feed-B"]], ["selected", ["feed-C"]], ["selected", ["feed-D"]],
+  ]);
+});
+
+test("label-only airline names do not change how trips are scored", () => {
+  // 吉祥也飛經上海的歐洲線：只用來標示團期，不能讓既有的配對因為多了航空分數而改變。
+  const product = { key: "k", file: "f", region: "芬蘭", name: "極光", marker: "", days: 10, departures: [{ code: "HEL7HO0110A0", date: "2027/01/10", price: 99900, status: "open", airline: "HO", from: "" }] };
+  const trip = { id: "t", title: "芬蘭極光10日", region: "芬蘭", days: "10日", price: "", plans: [{ airline: "吉祥航空", title: "台北出發" }], departures: [] };
+  const [match] = matchTrips([trip], [product]);
+  assert.deepEqual(match.candidates[0].reasons, ["地區", "名稱"]);
+});
+
 // 仿照郵輪與國旅動態檔的排版；姓名都是虛構的。
 const cruiseFeed = `~L2
 ■■*基  隆*▆▆▆▆▆▆▆▆▆▆

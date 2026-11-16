@@ -59,19 +59,28 @@ const airlineNames: Record<string, string> = {
   CX: "國泰", MU: "東方", TK: "土耳其航空", EK: "阿聯酋", SQ: "新加坡航空", TG: "泰國航空", "7G": "星悅",
 };
 
+// 大陸線（與經上海轉機的歐洲、澳洲線）常用的航空：只用來標示團期、分配給相符的版本。
+// 不放進上面的 airlineNames，是因為那份也用在配對評分；吉祥等航空也飛歐洲、澳洲線，
+// 加進評分會讓已經確認過的配對重新洗牌。
+const labelOnlyAirlineNames: Record<string, string> = {
+  NX: "澳門航空", CZ: "南航", HO: "吉祥", HU: "海航", FM: "上航", SC: "山航", MF: "廈航", "3U": "川航", ZH: "深航",
+};
+
 export function feedAirlineName(code: string) {
-  return airlineNames[code] ?? "";
+  return airlineNames[code] ?? labelOnlyAirlineNames[code] ?? "";
 }
 
 // 官網方案常寫全名（「全亞洲航空」「泰國亞洲航空」），和上面的簡稱對不上時用這裡補。
 const airlineFullNames: Record<string, string[]> = {
   AK: ["亞洲航空"], D7: ["全亞洲航空"], FD: ["泰國亞洲航空", "泰亞航"], CI: ["中華航空"], BR: ["長榮航空"], JX: ["星宇航空"],
   IT: ["台灣虎航"], TR: ["酷航"], ZE: ["易斯達航空"], VZ: ["泰越捷"], VJ: ["越捷航空"], CA: ["中國國際航空"], MU: ["東方航空"],
+  CZ: ["南方航空"], HO: ["吉祥航空"], HU: ["海南航空"], FM: ["上海航空"], SC: ["山東航空"], MF: ["廈門航空"], "3U": ["四川航空"],
+  ZH: ["深圳航空"],
 };
 
 /** 這個航空代碼在官網方案裡可能出現的寫法。 */
 export function feedAirlineAliases(code: string) {
-  return [airlineNames[code], ...(airlineFullNames[code] ?? [])].filter(Boolean);
+  return [feedAirlineName(code), ...(airlineFullNames[code] ?? [])].filter(Boolean);
 }
 
 export function baseFeedRegion(region: string) {
