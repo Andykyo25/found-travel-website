@@ -1,4 +1,6 @@
 export const instagramUrl = "https://www.instagram.com/yusyun1218/";
+// 關係網站「東京日記」：西日暮里民宿與東京包車，獨立部署在子網域。
+export const tokyoNikkiUrl = "https://tokyonikki.tabiyoi.com/";
 
 // 兩個圖示都用 1.5 線寬、currentColor，隨標頭與頁尾的文字色變化。
 function LineIcon() {

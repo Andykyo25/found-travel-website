@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MobileNav, type NavLink } from "./MobileNav";
-import { SocialLinks } from "./SocialLinks";
+import { SocialLinks, tokyoNikkiUrl } from "./SocialLinks";
 
 const navigation: NavLink[] = [
   { href: "/#journeys", label: "精選行程" },
@@ -9,6 +9,7 @@ const navigation: NavLink[] = [
   { href: "/news", label: "最新消息" },
   { href: "/vip", label: "VIP集點" },
   { href: "/about", label: "關於我們" },
+  { href: tokyoNikkiUrl, label: "東京民宿包車", external: true },
 ];
 
 export function SiteHeader({ brandName, lineUrl, active = "", home = false, tone = "light" }: {
@@ -28,7 +29,9 @@ export function SiteHeader({ brandName, lineUrl, active = "", home = false, tone
       <span>{brandName}<small>FOUND TRAVEL</small></span>
     </Link>
     <nav className="site-navigation" aria-label="主要導覽">
-      {navigation.map(link => <Link key={link.href} href={home && link.href === "/#journeys" ? "#journeys" : link.href}
+      {navigation.map(link => link.external
+        ? <a key={link.href} href={link.href} target="_blank" rel="noopener">{link.label} <span aria-hidden="true">↗</span></a>
+        : <Link key={link.href} href={home && link.href === "/#journeys" ? "#journeys" : link.href}
         aria-current={active === link.href ? "page" : undefined}>{link.label}</Link>)}
     </nav>
     <div className="site-header-actions">
