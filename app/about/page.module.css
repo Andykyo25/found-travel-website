@@ -1,4 +1,4 @@
-.page { padding-top: 100px; background: #faf8f3; color: #293e36; --about-muted: #68736b; --about-line: #dcded4; }
+.page { overflow-x: clip; padding-top: 100px; background: #faf8f3; color: #293e36; --about-muted: #68736b; --about-line: #dcded4; }
 .page h1, .page h2, .page h3, .page p, .page figure { margin: 0; }
 .page h1, .page h2, .page h3 { font-family: var(--f-serif); font-weight: 500; }
 .page a { transition: color 160ms ease, background 160ms ease; }
@@ -7,41 +7,63 @@
 .underlinedLink:hover, .reviewCredit a:hover { color: #98683f; }
 /* 開頭區塊和頁首、下方內容對齊同一個版心：寬螢幕上文字不會貼到最左、照片右邊也留邊。 */
 .hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 690px; width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: clamp(24px, 3vw, 48px) auto 0; }
-.heroCopy { padding: 65px 9% 44px 0; display: flex; flex-direction: column; align-items: flex-start; }
+.heroCopy { padding: 56px 9% 56px 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
 .eyebrow { font-family: var(--f-sans); font-size: 12px; letter-spacing: .2em; font-weight: 500; line-height: 1.7; color: #7c694d; }
 .heroLabel { padding-top: 30px; font-size: 14px; letter-spacing: .2em; }
-.hero h1 { margin-top: 18px; font-size: clamp(42px, 4.6vw, 80px); line-height: 1.3; letter-spacing: -.02em; }
+.hero h1 { margin-top: 26px; font-size: clamp(42px, 4.6vw, 80px); line-height: 1.3; letter-spacing: -.02em; }
 .hero h1 em { font-style: normal; color: #768367; }
-.heroDescription { margin-top: 27px !important; color: var(--about-muted); line-height: 2; font-size: 17px; }
+.heroDescription { margin-top: 36px !important; color: var(--about-muted); line-height: 2; font-size: 17px; }
 .underlinedLink { display: inline-flex; align-items: center; justify-content: space-between; gap: 28px; padding: 12px 0; border-bottom: 1px solid #aab2a2; font-size: 15px; line-height: 1.6; }
-.heroCopy > .underlinedLink { margin-top: 24px; }
+.heroCopy > .underlinedLink { margin-top: 48px; }
 .heroSignature { margin-top: auto; padding-top: 36px; font-family: var(--f-display); font-style: italic; color: #8c9387; font-size: 15px; }
-.heroPhoto { position: relative; min-height: 690px; overflow: hidden; }
-.heroPhoto img { position: absolute; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
-.heroPhoto::after { content: ""; position: absolute; inset: 60% 0 0; background: linear-gradient(transparent, #102c255c); }
-.heroPhoto figcaption { position: absolute; left: 7%; right: 7%; bottom: 35px; z-index: 1; color: #fffdf8; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 12.5px; letter-spacing: .13em; }
 .sectionNav { display: flex; justify-content: flex-start; gap: clamp(32px, 6vw, 96px); width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: clamp(36px, 4.5vw, 64px) auto 0; border-top: 1px solid var(--about-line); border-bottom: 1px solid var(--about-line); padding: 22px 0; }
 .sectionNav a { display: flex; gap: 16px; font-family: var(--f-display); font-size: 17px; color: #8c927e; padding: 8px 0; }
 .sectionNav span { font-family: var(--f-sans); font-size: 14px; color: #435646; }
 .section { width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: auto; padding: clamp(80px, 9vw, 140px) 0; }
 .section h2 { font-size: clamp(32px, 3.6vw, 58px); line-height: 1.35; letter-spacing: -.015em; margin-top: 18px; }
-.story { display: grid; grid-template-columns: .9fr 1.35fr; gap: 80px; }
+/* Hero facts: Yui 的三個數字，讓人一眼記住是「誰」在幫你安排。 */
+.heroFacts { list-style: none; padding: 0; margin: 44px 0 0; display: flex; flex-wrap: wrap; gap: 20px 52px; }
+.heroFacts li { display: flex; flex-direction: column; gap: 10px; padding-left: 20px; border-left: 1px solid #c3cab8; }
+.heroFacts strong { font: 400 34px/1.1 var(--f-display); color: #3d5546; }
+.heroFacts sup { font-size: .5em; margin-left: 2px; vertical-align: super; }
+.heroFacts small { font-family: var(--f-sans); font-size: 13px; margin: 0 2px; }
+.heroFacts span { font-size: 13px; letter-spacing: .08em; color: var(--about-muted); }
+/* Tabiyoi 名稱：大字的「旅よい」作為版面重點。 */
+.story { display: grid; grid-template-columns: .8fr 1.4fr; gap: 80px; align-items: start; }
+.kana { display: flex; gap: 22px; margin-top: 26px !important; font-family: var(--f-serif); color: #607553; line-height: 1; }
+.kana span { display: flex; flex-direction: column; align-items: center; gap: 16px; font-size: clamp(64px, 7.4vw, 124px); font-weight: 500; }
+.kana small { font: italic 400 16px/1 var(--f-display); letter-spacing: .14em; color: #8c927e; }
+.storyBody h2 { margin-top: 0; }
 .storyBody > p { color: var(--about-muted); line-height: 2.1; font-size: 16.5px; margin-bottom: 18px; }
-.storyBody .lead { color: #3a5142; font-size: 24px; margin-bottom: 24px; }
-.principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; border-top: 1px solid var(--about-line); margin-top: 35px; padding-top: 28px; }
-.principles span { font-size: 12px; letter-spacing: .08em; color: #837358; }
-.principles h3 { font-size: 22px; margin: 12px 0 8px; }
-.principles p { font-size: 14.5px; color: var(--about-muted); line-height: 1.9; }
+.storyBody .lead { color: #3a5142; font-size: 22px; line-height: 1.9; margin: 26px 0 20px; }
+.servicePhotos img, .extrasPhoto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* 服務：照片和文字左右交錯，第三項放高爾夫與滑雪兩張。 */
+.serviceList { display: flex; flex-direction: column; gap: clamp(64px, 8vw, 120px); }
+.service { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(36px, 5vw, 88px); align-items: center; }
+.serviceFlip .servicePhotos { order: 2; }
+.servicePhotos { display: grid; gap: 14px; }
+.servicePhotos figure { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #dfe3d7; }
+.servicePhotosPair { grid-template-columns: 1fr 1fr; }
+.servicePhotosPair figure { aspect-ratio: 3 / 4; }
+.servicePhotosPair figure:last-child { margin-top: 48px; }
+.serviceCopy { display: flex; flex-direction: column; align-items: flex-start; border-top: 1px solid #bbc4b3; padding-top: 26px; }
+.serviceNumber { font: italic 400 52px/1 var(--f-display); color: #919d85; margin-bottom: 24px; }
+.serviceCopy .eyebrow { font-size: 12px; }
+.serviceCopy h3 { font-size: clamp(26px, 2.4vw, 36px); margin: 10px 0 18px; }
+.serviceCopy > p:not(.eyebrow) { font-size: 16px; color: var(--about-muted); line-height: 2.05; margin-bottom: 28px; }
+/* 東京民宿・包車 */
+.extras { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 6vw, 96px); align-items: center; }
+.extrasPhoto { position: relative; aspect-ratio: 10 / 7; overflow: hidden; background: #e3e6dc; }
+.extrasCopy { display: flex; flex-direction: column; align-items: flex-start; }
+.extrasCopy > p:not(.eyebrow) { margin: 22px 0 26px !important; font-size: 16px; line-height: 2.05; color: var(--about-muted); }
+/* 結語 */
+.promise { text-align: center; padding: clamp(72px, 9vw, 130px) 24px; border-top: 1px solid var(--about-line); border-bottom: 1px solid var(--about-line); width: calc(100% - var(--f-gutter) * 2); max-width: var(--f-max); margin: 0 auto; }
+.promise > p:first-child { font-family: var(--f-serif); font-size: clamp(22px, 2.5vw, 36px); line-height: 1.9; color: #3a5142; }
+.promiseSign { margin-top: 30px !important; font: italic 400 clamp(22px, 2.3vw, 32px)/1.4 var(--f-display); color: #7c694d; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.promiseSign span { font: 400 14px/1 var(--f-sans); letter-spacing: .2em; color: var(--about-muted); font-style: normal; }
 .servicesSection { background: #eeeFE7; }
 .sectionHead { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin-bottom: 48px; }
 .sectionHead > p, .reviewIntro p { font-size: 16px; line-height: 2; color: var(--about-muted); }
-.serviceGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 45px; }
-.service { border-top: 1px solid #bbc4b3; display: flex; flex-direction: column; align-items: flex-start; padding-top: 26px; }
-.serviceNumber { font: italic 400 52px/1 var(--f-display); color: #919d85; margin-bottom: 28px; }
-.service .eyebrow { font-size: 12px; }
-.service h3 { font-size: 28px; margin: 10px 0 17px; }
-.service > p:not(.eyebrow) { font-size: 15.5px; color: var(--about-muted); line-height: 2; margin-bottom: 28px; }
-.service .underlinedLink { margin-top: auto; }
 .reviewTag { display: inline-block; font-size: 13px; letter-spacing: .08em; padding: 7px 12px; border: 1px solid #c4cbb9; border-radius: 2px; margin-bottom: 13px; }
 .featuredReview { display: grid; grid-template-columns: .75fr 1.6fr; background: #e8ece2; margin-bottom: 24px; }
 .featuredAside { display: flex; flex-direction: column; justify-content: space-between; gap: 20px; padding: 45px; background: #dce3d3; }
@@ -74,47 +96,56 @@
 .contactActions a:first-child { background: #f2f0e6; color: #304738; }
 .contactActions a:hover { background: #dce3d3; color: #293e36; }
 @media (max-width: 1100px) {
-  .hero, .heroPhoto { min-height: 650px; }
+  .story { gap: 45px; grid-template-columns: .7fr 1.3fr; }
+  .service { gap: 36px; }
+  .serviceCopy > p:not(.eyebrow) { font-size: 15px; }
+  .hero { min-height: 650px; }
   .heroCopy { padding: 50px 6% 35px 0; }
   .section { width: calc(100% - 72px); padding: 80px 0; }
-  .story { gap: 45px; grid-template-columns: .8fr 1.2fr; }
-  .principles { gap: 16px; }
-  .principles h3 { font-size: 17px; }
-  .serviceGrid { gap: 28px; }
-  .service h3 { font-size: 22px; }
   .featuredAside, .featuredBody { padding: 32px; }
   .reviewGrid { gap: 16px; }
   .reviewCard { padding: 23px; }
   .reviewCard h3 { font-size: 21px; }
 }
 @media (max-width: 760px) {
+  .heroFacts { gap: 16px 34px; margin-top: 36px; }
+  .heroFacts strong { font-size: 27px; }
+  .heroFacts span { font-size: 12px; }
+  .story { grid-template-columns: 1fr; gap: 26px; }
+  .nameMark { position: relative; }
+  .kana { margin-top: 18px !important; gap: 16px; }
+  .kana span { font-size: 64px; gap: 10px; }
+  .kana small { font-size: 13px; }
+  .storyBody .lead { font-size: 18px; }
+  .storyBody .lead br { display: none; }
+  .storyBody > p { font-size: 15px; }
+  .service { grid-template-columns: 1fr; gap: 26px; }
+  .serviceFlip .servicePhotos { order: 0; }
+  .servicePhotos { gap: 8px; }
+  .servicePhotosPair figure:last-child { margin-top: 28px; }
+  .serviceCopy { padding-top: 22px; }
+  .serviceNumber { font-size: 34px; margin-bottom: 16px; }
+  .serviceCopy h3 { font-size: 25px; }
+  .serviceCopy > p:not(.eyebrow) { font-size: 15px; margin-bottom: 15px; }
+  .extras { grid-template-columns: 1fr; gap: 28px; }
+  .extrasCopy > p:not(.eyebrow) { font-size: 15px; }
+  .promise { width: calc(100% - 48px); padding: 60px 0; }
+  .promise > p:first-child { font-size: 19px; }
+  .promise > p:first-child br { display: none; }
   .hero { grid-template-columns: 1fr; min-height: 0; width: 100%; margin-top: 0; }
   .heroCopy { padding: 42px 28px 38px; }
   .heroLabel { padding-top: 23px; }
   .hero h1 { font-size: clamp(37px, 8.2vw, 58px); line-height: 1.45; }
   .heroDescription { font-size: 14px; margin-top: 22px !important; }
   .heroSignature { display: none; }
-  .heroPhoto { min-height: 380px; }
-  .heroPhoto img { object-position: 50% 55%; }
-  .heroPhoto figcaption { bottom: 25px; font-size: 10px; }
   .sectionNav { justify-content: space-between; gap: 12px; margin-top: 28px; padding: 16px 0; }
   .sectionNav a { gap: 7px; }
   .sectionNav span { font-size: 12px; }
   .section { width: calc(100% - 48px); padding: 64px 0; }
-  .story { grid-template-columns: 1fr; gap: 30px; }
-  .storyBody .lead { font-size: 19px; }
-  .storyBody > p { font-size: 14px; }
-  .principles { gap: 12px; }
-  .principles h3 { font-size: 16px; }
-  .principles span { font-size: 9px; }
   .sectionHead { display: block; margin-bottom: 32px; }
   .sectionHead > p, .reviewIntro { margin-top: 24px; }
   .sectionHead > p, .reviewIntro p { font-size: 13px; }
-  .serviceGrid, .reviewGrid { grid-template-columns: 1fr; gap: 24px; }
-  .service { padding-top: 22px; }
-  .serviceNumber { font-size: 34px; margin-bottom: 18px; }
-  .service h3 { font-size: 25px; }
-  .service > p:not(.eyebrow) { margin-bottom: 15px; }
+  .reviewGrid { grid-template-columns: 1fr; gap: 24px; }
   .featuredReview { grid-template-columns: 1fr; }
   .featuredAside { padding: 26px; gap: 15px; }
   .memoryMark { font-size: 32px; }
