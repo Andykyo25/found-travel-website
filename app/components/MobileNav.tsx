@@ -5,7 +5,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { instagramUrl } from "./SocialLinks";
 
-export type NavLink = { href: string; label: string };
+/** external：連到其他網站（例如東京日記），用新分頁開啟。 */
+export type NavLink = { href: string; label: string; external?: boolean };
 
 // 首頁錨點用 <a>，跨頁連結用 <Link>，兩者共用同一份選單資料。
 function NavItem({
@@ -15,6 +16,13 @@ function NavItem({
   link: NavLink;
   onNavigate: () => void;
 }) {
+  if (link.external) {
+    return (
+      <a href={link.href} target="_blank" rel="noopener" onClick={onNavigate}>
+        {link.label} <span aria-hidden="true">↗</span>
+      </a>
+    );
+  }
   if (link.href.startsWith("#")) {
     return (
       <a href={link.href} onClick={onNavigate}>

@@ -728,3 +728,10 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .fh-intro-name { animation: fh-fade 0.3s ease 0.08s both; }
 .fh-intro-line { animation: fh-fade 0.2s ease 0s both; }
 .fh-intro-line i { animation: fh-fill 0.3s var(--f-ease-io) 0s both; }
+
+/* 導覽列多了「東京民宿包車」後，中等寬度放不下：縮小間距，1200px 以下改用漢堡選單。 */
+.site-navigation { gap: clamp(16px, 1.8vw, 42px); }
+@media (max-width: 1200px) {
+  .site-navigation { display: none; }
+  .site-header .hero-menu-button { display: flex; }
+}

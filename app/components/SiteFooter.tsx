@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { SiteContent } from "@/lib/site-content";
 import { telephoneHref } from "@/lib/structured-data";
 import { tripDestinations } from "@/lib/destinations";
-import { SocialLinks } from "./SocialLinks";
+import { SocialLinks, tokyoNikkiUrl } from "./SocialLinks";
 import { CommunityFooterLink } from "./CommunityInvite";
 
 // 全站共用頁尾：首頁與內頁使用同一套公司資訊與字標，錨點在首頁走頁內捲動。
@@ -54,6 +54,7 @@ export function SiteFooter({
           <Link href="/vip">VIP集點</Link>
           <Link href="/about">關於我們</Link>
           <Link href="/contact">聯絡表單</Link>
+          <a href={tokyoNikkiUrl} target="_blank" rel="noopener">東京民宿包車 <span aria-hidden="true">↗</span></a>
           <a href="/studio">內容管理</a>
         </nav>
       </div>
