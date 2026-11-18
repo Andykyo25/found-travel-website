@@ -68,3 +68,27 @@ test("descriptions are plain text and social tags are complete", () => {
   assert.deepEqual(socialMetadata({ title: "行程", description: "", path: "/trips/x", image: "https://example.com/a.jpg" }).openGraph.images, [{ url: "https://example.com/a.jpg" }]);
   assert.equal(socialMetadata({ title: "找到了旅行社｜首頁", description: "", path: "/" }).openGraph.title, "找到了旅行社｜首頁");
 });
+
+test("every live destination has a guide, and FAQs add trip lengths and custom groups", async () => {
+  const { destinationFaqs, destinationGuide, guidedDestinationSlugs, tripLengthSummary } = await import("../lib/destination-guides.ts");
+  const live = ["japan", "korea", "vietnam", "southeast-asia", "islands", "china", "eastern-europe", "northern-europe", "central-europe", "western-europe", "southern-europe", "middle-east-africa", "americas", "australia-new-zealand", "cruises"];
+  for (const slug of live) {
+    const guide = destinationGuide(slug);
+    assert.ok(guide, `${slug} 沒有指南`);
+    assert.ok(guide.paragraphs.length >= 2 && guide.faqs.length >= 3, `${slug} 內容太少`);
+    assert.ok(guide.faqs.every((faq) => faq.question.trim() && faq.answer.trim()));
+    assert.doesNotMatch(guide.paragraphs.join(""), /NT\$|\d{2},\d{3}/, `${slug} 不寫價格`);
+  }
+  assert.deepEqual([...guidedDestinationSlugs].sort(), [...live].sort());
+
+  const japan = tripDestinations([...trips, trip("kyushu", "日本", "九州", { days: "8日" })], today)[0];
+  assert.deepEqual(tripLengthSummary(japan), { min: 5, max: 8, common: 5 });
+  const faqs = destinationFaqs(japan);
+  assert.equal(faqs.length, destinationGuide("japan").faqs.length + 2);
+  assert.match(faqs.at(-2).answer, /從 5 天到 8 天.*最多的是 5 天/);
+  assert.match(faqs.at(-1).question, /客製日本行程/);
+
+  const custom = tripDestinations(trips, today).find((d) => d.slug === "獨家企劃");
+  assert.equal(destinationGuide(custom.slug), null);
+  assert.deepEqual(destinationFaqs(custom).map((faq) => faq.answer.startsWith("目前的獨家企劃行程都是 5 天") || faq.question.includes("客製")), [true, true], "沒有指南的分類仍有天數與客製兩題");
+});
