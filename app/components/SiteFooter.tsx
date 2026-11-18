@@ -39,6 +39,7 @@ export function SiteFooter({
             統一編號 {content.taxId} │ 負責人 {content.representative}
           </span>
           <span>地址：{content.address}</span>
+          <span>服務業務專員：高郁勛（Yui）</span>
           {content.telephone ? (
             <span>電話：<a href={telephoneHref(content.telephone)}>{content.telephone}</a></span>
           ) : null}
