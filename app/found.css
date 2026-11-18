@@ -354,6 +354,11 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
 /* 行程頁底下的相近行程、目的地頁的其他目的地 */
 .trip-related, .dest-others { margin-top: clamp(40px, 5vw, 72px); padding-top: 32px; border-top: 1px solid var(--f-line); }
 .trip-related h2, .dest-others h2 { margin: 0 0 18px; font: 500 clamp(1.3rem, 1.1rem + 0.8vw, 1.7rem)/1.5 var(--f-serif); }
+/* 目的地頁：行程列表後的旅遊指南與常見問題。 */
+.dest-guide, .dest-faq { margin-top: clamp(48px, 6vw, 88px); padding-top: 32px; border-top: 1px solid var(--f-line); }
+.dest-guide h2, .dest-faq h2 { margin: 0 0 20px; font: 500 clamp(1.3rem, 1.1rem + 0.8vw, 1.7rem)/1.5 var(--f-serif); }
+.dest-guide p { max-width: 42em; margin: 0 0 16px; color: var(--f-ink-2); font-size: clamp(15px, 0.9rem + 0.15vw, 16.5px); line-height: 2.05; letter-spacing: 0.02em; }
+.dest-faq + .board-cta { margin-top: clamp(48px, 6vw, 88px); }
 .trip-related ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; margin: 0 0 22px; padding: 0; list-style: none; }
 .trip-related li { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid var(--f-line); }
 .trip-related li a { font-size: 1.05rem; color: var(--f-ink); }

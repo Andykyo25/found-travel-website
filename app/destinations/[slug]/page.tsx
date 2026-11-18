@@ -9,7 +9,8 @@ import { decodePathSegment, destinationIntro, destinationTitle, findTripDestinat
 import { socialMetadata, truncateText } from "@/lib/page-metadata";
 import { getSiteContent } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
-import { breadcrumbJsonLd } from "@/lib/structured-data";
+import { breadcrumbJsonLd, faqJsonLd } from "@/lib/structured-data";
+import { destinationFaqs, destinationGuide } from "@/lib/destination-guides";
 import { nextDepartureLabel } from "@/lib/trip-filters";
 import { formatPrice, tripPath } from "@/lib/trip-values";
 
@@ -43,6 +44,8 @@ export default async function DestinationPage({ params }: PageProps) {
   if (decodePathSegment(slug) !== destination.slug) permanentRedirect(destination.path);
 
   const title = destinationTitle(destination.name);
+  const guide = destinationGuide(destination.slug);
+  const faqs = destinationFaqs(destination);
   const crumbs = [
     { name: "首頁", path: "/" },
     { name: "旅遊目的地", path: "/destinations" },
@@ -74,6 +77,7 @@ export default async function DestinationPage({ params }: PageProps) {
                 })),
               },
             },
+            faqJsonLd(faqs, `${origin}${destination.path}`),
           ]}
         />
         <nav className="page-breadcrumb" aria-label="麵包屑導覽">
@@ -140,6 +144,27 @@ export default async function DestinationPage({ params }: PageProps) {
             </div>
           </section>
         ))}
+
+        {guide ? (
+          <section className="dest-guide" aria-labelledby="dest-guide-title">
+            <h2 id="dest-guide-title">{guide.heading}</h2>
+            {guide.paragraphs.map((paragraph) => (
+              <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+            ))}
+          </section>
+        ) : null}
+
+        <section className="dest-faq" aria-labelledby="dest-faq-title">
+          <h2 id="dest-faq-title">{destination.name}旅遊常見問題</h2>
+          <div className="trip-faq-list">
+            {faqs.map((faq) => (
+              <details key={faq.question}>
+                <summary>{faq.question}</summary>
+                <p>{faq.answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
 
         <section className="board-cta">
           <div>
