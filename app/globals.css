@@ -3145,3 +3145,170 @@ body:has(.public-page) { background: #faf8f3; }
 .public-page .contact-form-status { border-radius: 2px; }
 .public-page :focus-visible { outline: 2px solid #52654b; outline-offset: 4px; }
 .public-page .finder-panel h2:focus { outline: none; }
+
+/* ---------- LINE 社群入口（與官方帳號的珊瑚色按鈕區隔） ---------- */
+.community-invite {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px 26px;
+  margin-top: 28px;
+  padding: 26px clamp(20px, 3.5vw, 36px);
+  border: 1px solid #c9d3c2;
+  border-radius: 24px;
+  background: #eef2e8;
+  color: #1c2e26;
+}
+
+.community-invite-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #223730;
+  color: #fff;
+}
+
+.community-invite-icon svg { width: 28px; height: 28px; }
+
+.community-invite-copy h2 {
+  margin: 2px 0 6px;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.community-invite-copy > p {
+  margin: 0;
+  color: #46564c;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.community-invite-copy .community-invite-kicker {
+  color: #526f5b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.community-invite-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.community-invite-tags li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: #3a5547;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.community-invite-action {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.community-invite-action small {
+  max-width: 190px;
+  color: #5d6b60;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.community-button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  border: 1.5px solid #223730;
+  border-radius: 999px;
+  background: transparent;
+  color: #223730;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.community-button:hover {
+  background: #223730;
+  color: #fff;
+}
+
+.community-invite-dark {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: #2b443a;
+  color: #fff;
+}
+
+.community-invite-dark .community-invite-icon { background: #e9ede0; color: #223730; }
+.community-invite-dark .community-invite-copy > p,
+.community-invite-dark .community-invite-action small { color: rgba(255, 255, 255, 0.72); }
+.community-invite-dark .community-invite-kicker { color: #c9d3c2; }
+.community-invite-dark .community-invite-tags li { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.community-invite-dark .community-button { border-color: #fff; color: #fff; }
+.community-invite-dark .community-button:hover { background: #fff; color: #223730; }
+
+@media (max-width: 760px) {
+  .community-invite {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+  }
+  .community-invite-icon { width: 42px; height: 42px; }
+  .community-invite-icon svg { width: 22px; height: 22px; }
+  .community-invite-action {
+    grid-column: 1 / -1;
+    justify-items: stretch;
+  }
+  .community-invite-action small { max-width: none; }
+  .community-button { justify-content: center; }
+}
+
+.community-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 14px 0 0;
+  color: #46564c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.community-inline svg { width: 20px; height: 20px; color: #526f5b; flex: none; }
+
+.community-inline a {
+  color: #223730;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.community-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 7px 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  font-size: 13px;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.community-footer-link:hover { opacity: 1; }
+.community-footer-link svg { width: 18px; height: 18px; flex: none; }
+.fh-tools .community-invite { background: var(--f-paper, #faf8f3); }

@@ -239,6 +239,13 @@ export function SiteSettingsEditor({
               onChange={(event) => updateRoot("lineUrl", event.target.value)}
             />
           </Field>
+          <Field label="LINE 社群網址（留空則不顯示）" wide>
+            <input
+              type="url"
+              value={draft.communityUrl}
+              onChange={(event) => updateRoot("communityUrl", event.target.value)}
+            />
+          </Field>
         </div>
       </section>
 

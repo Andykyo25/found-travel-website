@@ -27,6 +27,7 @@ import { TravelTools } from "./components/TravelTools";
 import { TripFilterBar } from "./components/TripFilterBar";
 import { LineFloatingButton } from "./components/LineFloatingButton";
 import { socialMetadata } from "@/lib/page-metadata";
+import { CommunityInvite } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -171,6 +172,7 @@ export default async function Home({
             <span>天氣、匯率與當地生活，一起準備好。</span>
           </div>
           <TravelTools destination={content.destination} />
+          <CommunityInvite url={content.communityUrl} />
         </div>
       </section>
 

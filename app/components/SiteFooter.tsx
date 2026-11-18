@@ -3,6 +3,7 @@ import type { SiteContent } from "@/lib/site-content";
 import { telephoneHref } from "@/lib/structured-data";
 import { tripDestinations } from "@/lib/destinations";
 import { SocialLinks } from "./SocialLinks";
+import { CommunityFooterLink } from "./CommunityInvite";
 
 // 全站共用頁尾：首頁與內頁使用同一套公司資訊與字標，錨點在首頁走頁內捲動。
 export function SiteFooter({
@@ -11,7 +12,7 @@ export function SiteFooter({
 }: {
   content: Pick<
     SiteContent,
-    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "telephone" | "email" | "lineUrl" | "trips"
+    "brandName" | "companyName" | "businessLicense" | "qualityLicense" | "taxId" | "representative" | "address" | "telephone" | "email" | "lineUrl" | "communityUrl" | "trips"
   >;
   home?: boolean;
 }) {
@@ -28,6 +29,7 @@ export function SiteFooter({
           </Link>
           <p>內容與報價以業務顧問最終確認為準</p>
           <SocialLinks lineUrl={content.lineUrl} labels className="fh-footer-social" />
+          <CommunityFooterLink url={content.communityUrl} />
         </div>
         <div className="fh-footer-company">
           <strong>{content.companyName}</strong>
