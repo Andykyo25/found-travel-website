@@ -18,6 +18,7 @@ import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
+import { CommunityInvite } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,8 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
         activeMonth={month}
         totalCount={allRows.length}
       />
+
+      <CommunityInvite url={content.communityUrl} title="開團消息，社群先知道" text="新團期、剩餘名額與早鳥優惠，會先在社群公布。不想錯過開團，加入社群就能收到通知。" />
 
       <DepartureBoardCta lineUrl={content.lineUrl} />
 

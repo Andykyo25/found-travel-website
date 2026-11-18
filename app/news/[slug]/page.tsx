@@ -13,6 +13,7 @@ import { getSiteOrigin } from "@/lib/site-url";
 import { agencyId, breadcrumbJsonLd } from "@/lib/structured-data";
 import { JsonLd } from "@/app/components/JsonLd";
 import styles from "../news.module.css";
+import { CommunityInvite } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -140,6 +141,8 @@ export default async function NewsArticlePage({ params }: Params) {
           ) : null}
         </div>
       </div>
+
+      <CommunityInvite url={content.communityUrl} title="喜歡這類旅遊須知？" text="新規定與出發前提醒會同步發到社群，加入就不會漏看。" />
 
       <section className="board-cta">
         <div>

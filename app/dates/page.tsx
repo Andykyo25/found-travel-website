@@ -17,6 +17,7 @@ import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
+import { CommunityInline, CommunityInvite } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,7 @@ export default async function AllDeparturesPage() {
           >
             LINE 詢問團期 <span aria-hidden="true">↗</span>
           </a>
+          <CommunityInline url={content.communityUrl} text="想第一時間知道新團期？" />
         </div>
       ) : (
         <DepartureBoard
@@ -74,6 +76,8 @@ export default async function AllDeparturesPage() {
           totalCount={rows.length}
         />
       )}
+
+      <CommunityInvite url={content.communityUrl} title="開團消息，社群先知道" text="新團期、剩餘名額與早鳥優惠，會先在社群公布。不想錯過開團，加入社群就能收到通知。" />
 
       <DepartureBoardCta lineUrl={content.lineUrl} />
 

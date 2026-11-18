@@ -9,6 +9,7 @@ import { newsDateLabel, publishedNews } from "@/lib/news";
 import { getSiteContent } from "@/lib/site-content";
 import { socialMetadata } from "@/lib/page-metadata";
 import styles from "./news.module.css";
+import { CommunityInvite } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,8 @@ export default async function NewsPage() {
           </ol>
         ) : null}
       </section>
+
+      <CommunityInvite url={content.communityUrl} title="新規定、旅遊須知，社群同步推播" text="這裡的每一則消息都會同步發到社群，也有大家分享的當地實況。" />
 
       <LineFloatingButton lineUrl={content.lineUrl} />
     </main>

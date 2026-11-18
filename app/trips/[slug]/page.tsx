@@ -20,6 +20,7 @@ import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
 import { tripFacts } from "@/lib/trip-facts";
+import { CommunityInline } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -206,6 +207,10 @@ export default async function TripPage({ params }: PageProps) {
           <p className="dates-footnote">
             日期與價格為即時參考，實際以業務顧問回覆為準。
           </p>
+          <CommunityInline
+            url={content.communityUrl}
+            text={departures.length === 0 ? "這個行程開團時，會先在社群公布。" : "新增團期與剩餘名額，社群會即時更新。"}
+          />
         </section>
 
         <TripNotes trip={{ notes: trip.notes, faqs }} />

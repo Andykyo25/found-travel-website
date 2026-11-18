@@ -103,6 +103,8 @@ export type SiteContent = {
   contactTitle: string;
   contactText: string;
   lineUrl: string;
+  /** LINE 社群（OpenChat）邀請連結；留空時前台不顯示任何社群入口。 */
+  communityUrl: string;
   companyName: string;
   businessLicense: string;
   qualityLicense: string;
@@ -132,6 +134,8 @@ export const defaultSiteContent: SiteContent = {
   contactText:
     "告訴我們想去的地方、預計日期與同行者，業務顧問會透過 LINE 一對一協助你規劃。",
   lineUrl: "https://lin.ee/OR5AYhI",
+  communityUrl:
+    "https://line.me/ti/g2/OI0fchc9N70U-zfIzYjhkJTPQVgshxM22V5X7A?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
   companyName: "找到了旅行社股份有限公司",
   businessLicense: "綜合旅行社 │ 交觀綜字222700號",
   qualityLicense: "旅行業品質保障協會北2738號",
@@ -577,6 +581,10 @@ export function normalizeSiteContent(value: unknown): SiteContent {
       savedLineUrl === "https://line.me/"
         ? defaultSiteContent.lineUrl
         : savedLineUrl,
+    communityUrl:
+      typeof input.communityUrl === "string"
+        ? safeOptionalString(input.communityUrl, 500)
+        : defaultSiteContent.communityUrl,
     companyName: safeString(
       input.companyName,
       defaultSiteContent.companyName,
