@@ -20,6 +20,7 @@
 .latestPoster { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr); }
 .latestPoster .latestMedia { aspect-ratio: 4 / 5; }
 .latestPoster .latestMedia img { transform: none; }
+.latest + .latest { margin-top: clamp(56px, 7vw, 96px); padding-top: clamp(56px, 7vw, 96px); border-top: 1px solid var(--f-line); }
 
 .rows { margin: clamp(56px, 7vw, 96px) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--f-ink); }
 .rows li { border-bottom: 1px solid var(--f-line); }

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default async function NewsPage() {
   const content = await getSiteContent();
-  const [latest, ...older] = publishedNews();
+  const articles = publishedNews();
 
   return (
     <>
@@ -43,33 +43,21 @@ export default async function NewsPage() {
       </section>
 
       <section id="news-list" aria-label="消息列表">
-        <article className={`${styles.latest}${latest.imagePoster ? ` ${styles.latestPoster}` : ""}`}>
-          <Link className={styles.latestMedia} href={`/news/${latest.slug}`} tabIndex={-1} aria-hidden="true">
-            <TravelImage src={latest.image} alt="" priority sizes="(max-width: 900px) 100vw, 54vw" />
-            {latest.imagePoster ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
-          </Link>
-          <div className={styles.latestCopy}>
-            <p className={styles.meta}><time dateTime={latest.publishedAt}>{newsDateLabel(latest.publishedAt)}</time><span>{latest.category}</span></p>
-            <h2><Link href={`/news/${latest.slug}`}>{latest.title}</Link></h2>
-            <p>{latest.summary}</p>
-            <Link className="fh-link" href={`/news/${latest.slug}`} aria-hidden="true" tabIndex={-1}>閱讀全文 <span aria-hidden="true">→</span></Link>
-          </div>
-        </article>
-
-        {older.length > 0 ? (
-          <ol className={styles.rows}>
-            {older.map((article) => (
-              <li key={article.slug}>
-                <Link href={`/news/${article.slug}`}>
-                  <time dateTime={article.publishedAt}>{newsDateLabel(article.publishedAt)}</time>
-                  <span>{article.category}</span>
-                  <strong>{article.title}</strong>
-                  <i aria-hidden="true">→</i>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        ) : null}
+        {/* 每一則都用大卡片呈現，新的在上；不再把舊消息縮成一行。 */}
+        {articles.map((article, index) => (
+          <article key={article.slug} className={`${styles.latest}${article.imagePoster ? ` ${styles.latestPoster}` : ""}`}>
+            <Link className={styles.latestMedia} href={`/news/${article.slug}`} tabIndex={-1} aria-hidden="true">
+              <TravelImage src={article.image} alt="" priority={index === 0} sizes="(max-width: 900px) 100vw, 54vw" />
+              {article.imagePoster ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
+            </Link>
+            <div className={styles.latestCopy}>
+              <p className={styles.meta}><time dateTime={article.publishedAt}>{newsDateLabel(article.publishedAt)}</time><span>{article.category}</span></p>
+              <h2><Link href={`/news/${article.slug}`}>{article.title}</Link></h2>
+              <p>{article.summary}</p>
+              <Link className="fh-link" href={`/news/${article.slug}`} aria-hidden="true" tabIndex={-1}>閱讀全文 <span aria-hidden="true">→</span></Link>
+            </div>
+          </article>
+        ))}
       </section>
 
       <CommunityInvite url={content.communityUrl} title="新規定、旅遊須知，社群同步推播" text="這裡的每一則消息都會同步發到社群，也有大家分享的當地實況。" />
