@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   formatDepartureDate,
   formatPrice,
@@ -17,12 +18,24 @@ export const dynamic = "force-dynamic";
 
 const description = "留下聯絡方式與想去的地方，找到了旅行社的業務顧問會在您方便的時段主動與您聯繫。";
 
-export const metadata = {
+const baseMetadata = {
   title: "聯絡表單",
   description,
   alternates: { canonical: "/contact" },
   ...socialMetadata({ title: "聯絡表單", description, path: "/contact" }),
 };
+
+// 從行程頁帶著行程、團期參數過來的表單網址（/contact?trip=…）只是預填內容，
+// 不該出現在搜尋結果裡；加上 noindex，Google 仍會跟著連結走，只收錄 /contact 本身。
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  if (Object.keys(params).length === 0) return baseMetadata;
+  return { ...baseMetadata, robots: { index: false, follow: true } };
+}
 
 export default async function ContactPage({
   searchParams,

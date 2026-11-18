@@ -140,6 +140,7 @@ test("the finished travel site replaces all starter content", async () => {
   assert.doesNotMatch(packageJson, /vinext|wrangler|drizzle-orm/);
   assert.match(page, /href="\/contact"/);
   assert.match(contactPage, /ContactForm/);
+  assert.match(contactPage, /robots: { index: false, follow: true }/);
   assert.match(contactApi, /parseContactRequestInput/);
   assert.match(contactApi, /deliverContact/);
   assert.match(contactNotify, /api\.line\.me\/v2\/bot\/message\/push/);
