@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  documentKey,
   importListFileName,
   matchImportFiles,
   parseImportList,
@@ -119,19 +120,22 @@ export function TripImport({ existingTripIds }: { existingTripIds: string[] }) {
     try {
       for (let start = 0; start < pending.length; start += tripsPerSave) {
         const batch = pending.slice(start, start + tripsPerSave);
-        const queue = batch.flatMap(({ files }) => [...files.entries()]);
+        // 用「行程＋版本」當 key：不同行程的版本編號相同時，PDF 才不會互相蓋掉。
+        const queue = batch.flatMap(({ trip, files }) =>
+          [...files.entries()].map(([planId, file]) => [documentKey(trip.id, planId), file] as const),
+        );
         // 同時傳兩份，避免一次塞爆網路或伺服器。
         await Promise.all(
           Array.from({ length: uploadConcurrency }, async () => {
             for (let next = queue.shift(); next; next = queue.shift()) {
-              const [planId, file] = next;
+              const [key, file] = next;
               const cached = cache[fileKey(file)];
               const url = cached ?? (await uploadPdf(file));
               if (!cached) {
                 cache[fileKey(file)] = url;
                 writeUploadCache(cache);
               }
-              urls.set(planId, url);
+              urls.set(key, url);
               filesDone += 1;
               const filesCount = filesDone;
               setProgress((current) => ({ ...current, files: filesCount }));

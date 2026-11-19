@@ -47,9 +47,13 @@ export function parseImportList(value: unknown): { list: ImportList } | { error:
     if (!/^[A-Za-z0-9_-]{1,80}$/.test(text(trip.id))) return { error: `「${name}」缺少行程編號` };
     if (!Array.isArray(trip.plans) || trip.plans.length === 0) return { error: `「${name}」沒有任何版本` };
     const plans: ImportPlan[] = [];
+    const planIds = new Set<string>();
     for (const plan of trip.plans) {
       const file = normalizeImportPath(text(plan?.file));
       if (!file || !/\.pdf$/i.test(file)) return { error: `「${name}」有版本沒有對應的 PDF` };
+      const planId = text(plan?.id);
+      if (!planId || planIds.has(planId)) return { error: `「${name}」有版本的編號空白或重複` };
+      planIds.add(planId);
       plans.push({ ...(plan as ImportPlan), file });
     }
     trips.push({ ...(trip as ImportTrip), plans });
@@ -88,14 +92,26 @@ export function matchImportFiles<F>(list: ImportList, files: Map<string, F>): Im
   return result;
 }
 
-/** PDF 上傳後換成網站用的版本（填入 PDF 網址、拿掉檔案路徑）。 */
+/**
+ * 上傳後的 PDF 網址用「行程編號＋版本編號」對應。不同行程的版本編號可能一樣（例如都叫 plan-1），
+ * 只用版本編號對應的話，同一批匯入裡後傳的 PDF 會蓋掉前一個行程的。
+ */
+export function documentKey(tripId: string, planId: string) {
+  return `${tripId}::${planId}`;
+}
+
+/** PDF 上傳後換成網站用的版本（填入 PDF 網址、拿掉檔案路徑）。urls 的 key 用 documentKey()。 */
 export function tripWithDocuments(trip: ImportTrip, urls: Map<string, string>): Trip {
   return {
     ...trip,
     plans: trip.plans.map((plan) => {
       const stored: Partial<ImportPlan> = { ...plan };
       delete stored.file;
-      return { ...(stored as Omit<ImportPlan, "file">), documentType: "pdf" as const, documentUrl: urls.get(plan.id) ?? "" };
+      return {
+        ...(stored as Omit<ImportPlan, "file">),
+        documentType: "pdf" as const,
+        documentUrl: urls.get(documentKey(trip.id, plan.id)) ?? "",
+      };
     }),
   };
 }
