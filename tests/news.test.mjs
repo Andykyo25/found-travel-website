@@ -60,7 +60,11 @@ test("LINE and Instagram links sit in the header, footer and mobile menu", async
       "../app/components/MobileNav.tsx",
     ].map((file) => readFile(new URL(file, import.meta.url), "utf8")),
   );
-  assert.match(links, /https:\/\/www\.instagram\.com\/yusyun1218\//);
+  // 網址放在 structured-data（Yui 的實體資料也用），SocialLinks 從那裡引入。
+  const { instagramUrl } = await import("../lib/structured-data.ts");
+  assert.equal(instagramUrl, "https://www.instagram.com/yusyun1218/");
+  assert.match(links, /import \{ instagramUrl \} from "@\/lib\/structured-data"/);
+  assert.match(links, /href=\{instagramUrl\}/);
   assert.match(links, /href=\{lineUrl\}/);
   assert.match(header, /<SocialLinks lineUrl=\{lineUrl\}/);
   assert.match(footer, /<SocialLinks lineUrl=\{content\.lineUrl\}/);

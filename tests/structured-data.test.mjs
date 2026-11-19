@@ -226,3 +226,24 @@ test("VIP tiers and answers stay consistent with the published scheme", async ()
   // 辦法沒公布的事（折扣金額、點數期限）不能出現在答案裡。
   for (const faq of vipFaqs) assert.doesNotMatch(faq.answer, /\d+\s*(折|%|元)|過期|有效期/);
 });
+
+test("Yui is a Person who works for the agency, and the agency points back to Yui", async () => {
+  const { consultantId, consultantJsonLd, instagramUrl } = await import("../lib/structured-data.ts");
+  const person = JSON.parse(serializeJsonLd(consultantJsonLd(defaultSiteContent, origin)));
+  assert.equal(person["@type"], "Person");
+  assert.equal(person["@id"], `${origin}/about#yui`);
+  assert.equal(person.name, "高郁勛");
+  assert.ok(person.alternateName.includes("Yui"));
+  assert.equal(person.jobTitle, "服務業務專員");
+  assert.deepEqual(person.worksFor, { "@id": agencyId(origin) });
+  assert.equal(person.url, `${origin}/about`);
+  assert.deepEqual(person.sameAs, [instagramUrl]);
+  assert.match(person.image, /^https:\/\/www\.example\.com\.tw\/about\/.+\.jpg$/);
+
+  const agency = travelAgencyJsonLd(defaultSiteContent, origin);
+  assert.deepEqual(agency.employee, { "@id": consultantId(origin) });
+
+  const about = await readFile(new URL("../app/about/page.tsx", import.meta.url), "utf8");
+  assert.match(about, /consultantJsonLd\(content, origin\)/);
+  assert.match(about, /mainEntity: \{ "@id": consultantId\(origin\) \}/);
+});

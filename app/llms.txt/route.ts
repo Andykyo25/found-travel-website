@@ -1,7 +1,7 @@
 import { getSiteContent } from "@/lib/site-content";
 import { getRequestOrigin, getSiteOrigin, isTemporaryHost } from "@/lib/site-url";
 import { tripDestinations, destinationTitle } from "@/lib/destinations";
-import { siteDescription } from "@/lib/structured-data";
+import { consultant, siteDescription } from "@/lib/structured-data";
 import { resolveTripPrice } from "@/lib/trip-summary";
 import { bookableDepartures, formatPrice, parseDepartureDate, taipeiTodayTime, tripPath, upcomingDepartures } from "@/lib/trip-values";
 
@@ -24,6 +24,7 @@ export async function GET() {
     content.address && `- 地址：${content.address}`,
     content.telephone && `- 電話：${content.telephone}`,
     content.email && `- Email：${content.email}`,
+    `- 旅遊顧問：${consultant.name}（${consultant.nickname}），${consultant.jobTitle}；介紹：${origin}/about`,
     `- LINE 諮詢：${content.lineUrl}`,
     `- 服務：團體旅遊（跟團）、親友自組與客製旅遊、企業員工旅遊`,
   ].filter(Boolean);
@@ -60,7 +61,7 @@ export async function GET() {
     `- [旅遊目的地](${origin}/destinations)：依國家與地區瀏覽行程`,
     `- [幫我找旅行](${origin}/find-trip)：依日期、預算與目的地篩選行程`,
     `- [VIP 集點](${origin}/vip)：參加指定行程累積點數，升等會員卡後享團費優惠`,
-    `- [關於我們](${origin}/about)：服務理念與旅客回饋`,
+    `- [關於 Yui](${origin}/about)：旅遊顧問 Yui（${consultant.name}）的介紹、專屬服務與旅客回饋`,
     `- [聯絡與報名](${origin}/contact)：詢問表單`,
     `- [最新消息](${origin}/news)`,
     "",
