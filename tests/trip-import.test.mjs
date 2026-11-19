@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
+  documentKey,
   importListFileName,
   matchImportFiles,
   mergeImportedTrips,
@@ -56,7 +57,7 @@ test("versions whose PDF is not in the folder are dropped, and a trip without an
 });
 
 test("uploaded PDFs become the versions' document links and the file paths are not stored", () => {
-  const ready = tripWithDocuments(trip("a", [plan("p1", "x/one.pdf")]), new Map([["p1", "/api/trip-pdf?key=trip-pdfs/1.pdf"]]));
+  const ready = tripWithDocuments(trip("a", [plan("p1", "x/one.pdf")]), new Map([[documentKey("a", "p1"), "/api/trip-pdf?key=trip-pdfs/1.pdf"]]));
   assert.equal(ready.plans[0].documentUrl, "/api/trip-pdf?key=trip-pdfs/1.pdf");
   assert.equal(ready.plans[0].documentType, "pdf");
   assert.equal("file" in ready.plans[0], false);
@@ -111,4 +112,26 @@ test("import page and API: studio-only, appends on the server and saves in batch
   assert.match(header, /active === "import"/);
   assert.match(editor, /href="\/studio\/import"/);
   assert.match(pkg, /tests\/trip-import\.test\.mjs/);
+});
+
+test("two trips whose versions share an ID each keep their own PDF", () => {
+  const urls = new Map([
+    [documentKey("sydney", "plan-starlux"), "/api/trip-pdf?key=trip-pdfs/sydney.pdf"],
+    [documentKey("new-zealand", "plan-starlux"), "/api/trip-pdf?key=trip-pdfs/nz.pdf"],
+  ]);
+  const sydney = tripWithDocuments(trip("sydney", [plan("plan-starlux", "s.pdf")]), urls);
+  const nz = tripWithDocuments(trip("new-zealand", [plan("plan-starlux", "n.pdf")]), urls);
+  assert.equal(sydney.plans[0].documentUrl, "/api/trip-pdf?key=trip-pdfs/sydney.pdf");
+  assert.equal(nz.plans[0].documentUrl, "/api/trip-pdf?key=trip-pdfs/nz.pdf");
+});
+
+test("a trip whose versions repeat an ID is rejected before anything uploads", () => {
+  const parsed = parseImportList({ version: 1, source: "x", trips: [trip("a", [plan("p1", "a.pdf"), plan("p1", "b.pdf")])] });
+  assert.match(parsed.error, /編號空白或重複/);
+});
+
+test("the importer uploads and links PDFs by trip and version together", async () => {
+  const source = await readFile(new URL("../app/components/TripImport.tsx", import.meta.url), "utf8");
+  assert.match(source, /documentKey\(trip\.id, planId\)/);
+  assert.doesNotMatch(source, /urls\.set\(planId,/);
 });
