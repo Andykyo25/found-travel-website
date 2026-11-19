@@ -9,6 +9,7 @@ import { JsonLd } from "./components/JsonLd";
 import {
   categoryOptions,
   filterTrips,
+  homepageTripOrder,
   monthOptions,
   readTripFilters,
   shownTripCount,
@@ -59,12 +60,13 @@ export default async function Home({
   // 按過「看更多」之後：手機版從橫向滑動改成直排，切換分類時也維持展開。
   const expanded = shown > tripFirstCount;
 
-  // 精選行程排在前面，其餘接著顯示，兩者共用同一個列表與篩選。
+  // 精選行程排在前面：封面照片與「旅行地圖」沿用這個順序。
   const orderedTrips = [
     ...content.trips.filter((trip) => trip.featured),
     ...content.trips.filter((trip) => !trip.featured),
   ];
-  const matchedTrips = filterTrips(orderedTrips, filters);
+  // 行程列表：最新的、有價格的排前面，沒價格的接在後面（一開始的 6 個都會是有價格的最新行程）。
+  const matchedTrips = filterTrips(homepageTripOrder(content.trips), filters);
   const visibleTrips = matchedTrips.slice(0, shown);
   const remaining = matchedTrips.length - visibleTrips.length;
   // 這次新出現的第一個行程：「看更多」的連結會捲到這裡。

@@ -300,6 +300,26 @@ export function groupDeparturesByMonth(rows: DepartureRow[]) {
   return groups;
 }
 
+/**
+ * 首頁行程列表的順序：有價格的行程排前面，沒價格（洽詢）的接在後面；兩組各自從最新的開始。
+ * 「最新」看建立時間；這個欄位上線前就有的行程沒有建立時間，排在有建立時間的後面，改看上次修改時間，
+ * 都一樣時後台列表裡越後面的越新（新行程都接在最後）。
+ */
+export function homepageTripOrder<T extends Pick<Trip, "price" | "createdAt" | "updatedAt">>(trips: T[]): T[] {
+  const time = (value?: string) => (value ? Date.parse(value) || 0 : 0);
+  const newest = trips
+    .map((trip, index) => ({ trip, index }))
+    .sort(
+      (a, b) =>
+        time(b.trip.createdAt) - time(a.trip.createdAt) ||
+        time(b.trip.updatedAt) - time(a.trip.updatedAt) ||
+        b.index - a.index,
+    )
+    .map(({ trip }) => trip);
+  const priced = (trip: T) => (priceValue(trip.price) ?? 0) > 0;
+  return [...newest.filter(priced), ...newest.filter((trip) => !priced(trip))];
+}
+
 // 首頁行程列表一開始列 6 個，按「看更多行程」每次多 24 個。
 // 原本是一次列出全部：行程有近三百個時，那一頁有 2.6 MB、上萬個元素，手機開起來很吃力。
 export const tripFirstCount = 6;
