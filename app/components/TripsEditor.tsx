@@ -112,7 +112,8 @@ function formatDeparturePrice(value: string) {
 
 // 讓業務不用逐一展開就看得出哪幾團還沒補齊。
 // todayTime 由伺服端算好傳進來，避免前後端各自取當天日期造成 hydration 不一致。
-function tripIssues(trip: Trip, todayTime: number) {
+// synced：「團期同步」帶進來的團數。有同步團期的行程，團期與起價都由同步資料決定，不再檢查後台填的團期。
+function tripIssues(trip: Trip, todayTime: number, synced = 0) {
   const issues: string[] = [];
   if (tripDraftProblems(trip).length > 0) issues.push("資料未填完");
   if (trip.plans.length === 0) issues.push("缺航空方案");
@@ -121,6 +122,8 @@ function tripIssues(trip: Trip, todayTime: number) {
   } else if (trip.plans.some((plan) => !plan.documentUrl)) {
     issues.push("方案待補");
   }
+
+  if (synced > 0) return issues;
 
   if (priceMismatch(trip, todayTime) !== null) issues.push("起價與團期不符");
 
@@ -145,10 +148,13 @@ export function TripsEditor({
   initialUpdatedAt,
   todayTime,
   initialTripId = null,
+  syncedDepartureCounts = {},
 }: {
   initialContent: SiteContent;
   initialUpdatedAt: string | null;
   todayTime: number;
+  /** 「團期同步」帶進來的團數（行程 ID → 團數）。 */
+  syncedDepartureCounts?: Record<string, number>;
   /** 網址上的 ?trip=：直接打開這個行程的編輯頁。 */
   initialTripId?: string | null;
 }) {
@@ -688,7 +694,7 @@ export function TripsEditor({
     .map((trip, index) => ({
       trip,
       index,
-      issues: tripIssues(trip, todayTime),
+      issues: tripIssues(trip, todayTime, syncedDepartureCounts[trip.id]),
     }))
     .filter(({ trip, issues }) => {
       if (filter === "featured" && !trip.featured) return false;
@@ -710,7 +716,7 @@ export function TripsEditor({
 
   const featuredCount = draft.trips.filter((trip) => trip.featured).length;
   const todoCount = draft.trips.filter(
-    (trip) => tripIssues(trip, todayTime).length > 0,
+    (trip) => tripIssues(trip, todayTime, syncedDepartureCounts[trip.id]).length > 0,
   ).length;
   const filtering = needle !== "" || filter !== "all";
   const activeIndex = activeTripId ? draft.trips.findIndex((trip) => trip.id === activeTripId) : -1;
@@ -721,6 +727,9 @@ export function TripsEditor({
       : summary.totalDepartures > 0
         ? "團期都已過"
         : "尚無團期";
+  // 團期由「團期同步」帶進來的行程，顯示同步的團數（後台不另外填團期）。
+  const departureText = (trip: Trip, summary: ReturnType<typeof tripListSummary>) =>
+    syncedDepartureCounts[trip.id] ? `團期同步・共 ${syncedDepartureCounts[trip.id]} 團` : nextDepartureText(summary);
   const documentsText = (summary: ReturnType<typeof tripListSummary>) =>
     summary.documentsTotal === 0
       ? "尚無行程文件"
@@ -776,7 +785,7 @@ export function TripsEditor({
               共 {draft.trips.length} 筆 ・ 精選 {featuredCount} ・ 其他{" "}
               {draft.trips.length - featuredCount}
               {todoCount > 0 ? ` ・ 待補資料 ${todoCount}` : ""}
-              。點卡片進入該行程編輯。首頁行程區會把「精選」排在前面，「其他」接在後面；卡片順序就是網站上的順序。
+              。點卡片進入該行程編輯。首頁行程區先列最新、有價格的行程；「精選」只影響首頁封面與旅行地圖。已過期的團期會自動移除。
             </p>
           </div>
           <div className="studio-heading-actions">
@@ -865,7 +874,7 @@ export function TripsEditor({
                     </span>
                     <span className="studio-trip-card-price">{summary.price || "價格未填"}</span>
                     <span className="studio-trip-card-facts">
-                      <span>{nextDepartureText(summary)}</span>
+                      <span>{departureText(trip, summary)}</span>
                       <span className={documentsWarn(summary) ? "is-warn" : undefined}>{documentsText(summary)}</span>
                     </span>
                     <span className="studio-trip-card-issues">
@@ -934,7 +943,7 @@ export function TripsEditor({
 
   // ---------- 單一行程編輯頁 ----------
   const renderTripDetail = (trip: Trip, index: number) => {
-    const issues = tripIssues(trip, todayTime);
+    const issues = tripIssues(trip, todayTime, syncedDepartureCounts[trip.id]);
     const summary = tripListSummary(trip, todayTime);
     const simple = trip.plans.length === 1;
     const expiredCount = countExpiredDepartures(trip, todayTime);
@@ -990,7 +999,7 @@ export function TripsEditor({
               </div>
               <div>
                 <dt>團期</dt>
-                <dd>{nextDepartureText(summary)}</dd>
+                <dd>{departureText(trip, summary)}</dd>
               </div>
               <div>
                 <dt>行程文件</dt>
