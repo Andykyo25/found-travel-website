@@ -5,6 +5,7 @@ import {
   countExpiredDepartures,
   isExpiredDeparture,
   removeExpiredDepartures,
+  removeExpiredFromContent,
   sortDeparturesByDate,
   upcomingMonthCounts,
 } from "../lib/departure-tools.ts";
@@ -67,6 +68,29 @@ test("clearing expired dates also drops them from each version's list and never 
   const nothing = removeExpiredDepartures(cleaned, today);
   assert.equal(nothing.removed, 0);
   assert.equal(nothing.trip, cleaned);
+});
+
+test("expired dates are removed across the whole content, and untouched content is returned as is", () => {
+  const content = { brandName: "x", trips: [trip(), trip({ id: "clean", departures: [{ id: "later", date: "2027/01/05", price: "" }] })] };
+  const { content: cleaned, removed } = removeExpiredFromContent(content, today);
+  assert.equal(removed, 1);
+  assert.equal(cleaned.brandName, "x");
+  assert.deepEqual(cleaned.trips[0].departures.map((d) => d.id), ["dec", "bad", "nov", "today", "ask"]);
+  assert.equal(cleaned.trips[1], content.trips[1], "沒有過期團期的行程原樣保留");
+  const again = removeExpiredFromContent(cleaned, today);
+  assert.equal(again.removed, 0);
+  assert.equal(again.content, cleaned);
+});
+
+test("saving and opening the studio both drop expired dates; synced trips are not flagged as missing dates", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const [store, studio, editor] = await Promise.all(
+    ["../lib/site-content.ts", "../app/studio/page.tsx", "../app/components/TripsEditor.tsx"].map((file) => readFile(new URL(file, import.meta.url), "utf8")),
+  );
+  assert.match(store, /removeExpiredFromContent\(normalizeSiteContent\(value\), taipeiTodayTime\(\)\)/);
+  assert.match(studio, /removeExpiredFromContent\(stored, todayTime\)/);
+  assert.match(studio, /syncedDepartureCounts=\{syncedDepartureCounts\}/);
+  assert.match(editor, /if \(synced > 0\) return issues;/);
 });
 
 test("sorting puts dates in order, keeps same-day rows stable and leaves typos last", () => {

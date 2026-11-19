@@ -2,6 +2,7 @@ import { defaultHeroImages, normalizeHeroImages } from "./hero-slides";
 import { cleanTripSlug, formatDepartureDate, taipeiTodayTime } from "@/lib/trip-values";
 import { carryPreviousSlugs, suggestTripSlug, uniqueTripSlug } from "@/lib/trip-slug";
 import { applyAutoPrices, stampTripUpdates } from "@/lib/trip-summary";
+import { removeExpiredFromContent } from "@/lib/departure-tools";
 import { applyTourFeed } from "@/lib/tour-feed-overlay";
 import { getTourFeedState } from "@/lib/tour-feed-store";
 import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
@@ -818,8 +819,9 @@ export async function saveSiteContent(
   ).toISOString();
   // 代稱改了（手動或跟著名稱自動更新）就把舊的記下來，舊連結才轉得過去；
   // 內容有變的行程記下這次的時間，沒變的維持原本的時間。
+  // 已過期的團期每次儲存都自動移除（後台打開時也已先拿掉），儲存的資料裡只留還沒出發的團。
   const content = stampTripUpdates(
-    carryPreviousSlugs(normalizeSiteContent(value), previousContent),
+    carryPreviousSlugs(removeExpiredFromContent(normalizeSiteContent(value), taipeiTodayTime()).content, previousContent),
     previousContent,
     updatedAt,
   );

@@ -34,6 +34,20 @@ export function removeExpiredDepartures(trip: Trip, todayTime: number): { trip: 
   };
 }
 
+/**
+ * 整份內容的已過期團期一起移除：後台打開時與每次儲存前自動執行，業務不必再手動清除。
+ * 日期打錯（讀不出日期）的列保留，讓業務看得到並修正。
+ */
+export function removeExpiredFromContent<C extends { trips: Trip[] }>(content: C, todayTime: number): { content: C; removed: number } {
+  let removed = 0;
+  const trips = content.trips.map((trip) => {
+    const result = removeExpiredDepartures(trip, todayTime);
+    removed += result.removed;
+    return result.trip;
+  });
+  return removed === 0 ? { content, removed } : { content: { ...content, trips }, removed };
+}
+
 /** 依出發日期由近到遠排序；日期無效的列放最後，同一天維持原本順序。 */
 export function sortDeparturesByDate(trip: Trip): Trip {
   const ordered = trip.departures

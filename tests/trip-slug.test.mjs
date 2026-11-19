@@ -90,7 +90,8 @@ test("saving records slug history and the editor follows the name until a slug i
       readFile(new URL(file, import.meta.url), "utf8"),
     ),
   );
-  assert.match(content, /carryPreviousSlugs\(\s*normalizeSiteContent\(value\)/);
+  // 儲存時先移除過期團期，再把舊代稱帶到新內容。
+  assert.match(content, /carryPreviousSlugs\(\s*removeExpiredFromContent\(normalizeSiteContent\(value\), taipeiTodayTime\(\)\)\.content, previousContent\)/);
   assert.match(editor, /trip\.slugManual \? change : \{ \.\.\.change, slug: autoTripSlug/);
   assert.match(editor, /slug \? \{ slug, slugManual: true \} : \{ slug: "", slugManual: false \}/);
   assert.match(editor, /改回自動產生/);
