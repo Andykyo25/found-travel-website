@@ -1,4 +1,6 @@
-export const instagramUrl = "https://www.instagram.com/yusyun1218/";
+import { instagramUrl } from "@/lib/structured-data";
+
+export { instagramUrl };
 // 關係網站「東京日記」：西日暮里民宿與東京包車，獨立部署在子網域。
 export const tokyoNikkiUrl = "https://tokyonikki.tabiyoi.com/";
 

@@ -12,6 +12,46 @@ const officeGeo = { latitude: 25.0816567, longitude: 121.5638093 };
 export const siteDescription =
   "找到了旅行社是台北內湖的綜合旅行社，提供出國精選跟團、親友自組客製旅遊與企業員工旅遊。線上查看出發團期、團費與完整行程，LINE 即時諮詢。";
 
+/** Yui 的 Instagram；頁首、頁尾的社群連結與結構化資料共用。 */
+export const instagramUrl = "https://www.instagram.com/yusyun1218/";
+
+/**
+ * 旅遊顧問 Yui 的實體資料：讓搜尋引擎與 AI 知道「這個網站的 Yui」是誰、在哪家旅行社服務，
+ * 不會和其他同名的人（創作者、歌手）混在一起。內容只寫關於頁與頁尾公開過的事實。
+ */
+export const consultant = {
+  name: "高郁勛",
+  nickname: "Yui",
+  jobTitle: "服務業務專員",
+  description:
+    "找到了旅行社的服務業務專員與旅遊顧問 Yui（高郁勛）。走訪超過 20 個國家、曾在日本生活五年，提供全球深度旅遊規劃、高端私人訂製旅行、高爾夫與滑雪主題假期，以及企業員工旅遊與獎勵旅遊。",
+  knowsAbout: ["日本旅遊", "全球深度旅遊規劃", "私人訂製旅行", "高爾夫旅遊", "滑雪旅遊", "企業員工旅遊", "獎勵旅遊"],
+  image: "/about/yui-mount-fuji.jpg",
+};
+
+export function consultantId(origin: string) {
+  return `${origin}/about#yui`;
+}
+
+export function consultantJsonLd(content: Pick<SiteContent, "lineUrl" | "companyName">, origin: string): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": consultantId(origin),
+    name: consultant.name,
+    alternateName: [consultant.nickname, `${consultant.name}（${consultant.nickname}）`, `${content.companyName} ${consultant.nickname}`],
+    jobTitle: consultant.jobTitle,
+    description: consultant.description,
+    image: `${origin}${consultant.image}`,
+    url: `${origin}/about`,
+    worksFor: { "@id": agencyId(origin) },
+    knowsAbout: consultant.knowsAbout,
+    knowsLanguage: "zh-Hant",
+    sameAs: [instagramUrl],
+    contactPoint: { "@type": "ContactPoint", contactType: "customer service", url: content.lineUrl, availableLanguage: "zh-Hant" },
+  };
+}
+
 /** 全站共用的公司實體 ID，其他頁面的行程、文章用它指回同一家旅行社。 */
 export function agencyId(origin: string) {
   return `${origin}/#organization`;
@@ -112,6 +152,7 @@ export function travelAgencyJsonLd(content: AgencyFields, origin: string): JsonL
       availableLanguage: "zh-Hant",
     },
     sameAs: [content.lineUrl, googleMapsPlaceUrl],
+    employee: { "@id": consultantId(origin) },
   };
 }
 

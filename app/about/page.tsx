@@ -9,7 +9,7 @@ import { TravelImage } from "@/app/components/TravelImage";
 import { tokyoNikkiUrl } from "@/app/components/SocialLinks";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { JsonLd } from "@/app/components/JsonLd";
-import { agencyId, travelAgencyJsonLd } from "@/lib/structured-data";
+import { agencyId, consultantId, consultantJsonLd, travelAgencyJsonLd } from "@/lib/structured-data";
 import { getSiteOrigin } from "@/lib/site-url";
 import { FilmDeck } from "./FilmDeck";
 import styles from "./page.module.css";
@@ -111,13 +111,15 @@ export default async function AboutPage() {
     <JsonLd
       data={[
         travelAgencyJsonLd(content, origin),
+        consultantJsonLd(content, origin),
         {
           "@context": "https://schema.org",
           "@type": "AboutPage",
           url: `${origin}/about`,
-          name: `關於${content.brandName}`,
+          name: `關於 Yui｜${content.brandName}`,
           inLanguage: "zh-Hant",
-          mainEntity: { "@id": agencyId(origin) },
+          mainEntity: { "@id": consultantId(origin) },
+          about: [{ "@id": consultantId(origin) }, { "@id": agencyId(origin) }],
         },
       ]}
     />
