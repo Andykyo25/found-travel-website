@@ -85,6 +85,8 @@ export type Trip = {
   priceMode?: "auto";
   /** 這個行程上次被修改的時間（ISO）。儲存時自動記錄，sitemap 用它告訴搜尋引擎哪些頁面真的更新了。 */
   updatedAt?: string;
+  /** 這個行程第一次存進網站的時間（ISO）。儲存時自動記錄，首頁用它排出「最新行程」；這個欄位加上之前的行程沒有。 */
+  createdAt?: string;
   image: string;
   plans: TripPlan[];
   departures: TripDeparture[];
@@ -527,6 +529,7 @@ export function normalizeSiteContent(value: unknown): SiteContent {
         price: safeString(source.price, fallback.price, 60),
         ...(source.priceMode === "auto" ? { priceMode: "auto" as const } : {}),
         ...(typeof source.updatedAt === "string" && Number.isFinite(Date.parse(source.updatedAt)) ? { updatedAt: new Date(source.updatedAt).toISOString() } : {}),
+        ...(typeof source.createdAt === "string" && Number.isFinite(Date.parse(source.createdAt)) ? { createdAt: new Date(source.createdAt).toISOString() } : {}),
         image: safeString(source.image, fallback.image, 800),
         plans,
         departures,

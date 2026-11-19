@@ -92,3 +92,43 @@ test("every live destination has a guide, and FAQs add trip lengths and custom g
   assert.equal(destinationGuide(custom.slug), null);
   assert.deepEqual(destinationFaqs(custom).map((faq) => faq.answer.startsWith("目前的獨家企劃行程都是 5 天") || faq.question.includes("客製")), [true, true], "沒有指南的分類仍有天數與客製兩題");
 });
+
+test("a trip gets its creation time on its first save and keeps it afterwards", () => {
+  const before = { trips: [{ ...trips[0], createdAt: "2026-02-01T00:00:00.000Z" }, trips[1]] };
+  const next = {
+    trips: [
+      { ...trips[0], createdAt: "2030-01-01T00:00:00.000Z", title: "改了名稱" },
+      { ...trips[1], createdAt: "2030-01-01T00:00:00.000Z" },
+      trips[5],
+    ],
+  };
+  const stamped = stampTripUpdates(next, before, "2026-11-19T00:00:00.000Z").trips;
+  assert.equal(stamped[0].createdAt, "2026-02-01T00:00:00.000Z", "沿用原本的建立時間，送來的值不算數");
+  assert.equal("createdAt" in stamped[1], false, "欄位上線前就有的行程：維持沒有建立時間");
+  assert.equal(stamped[1].updatedAt, undefined, "只送來建立時間不算內容有變");
+  assert.equal(stamped[2].createdAt, "2026-11-19T00:00:00.000Z", "新行程記下這次儲存的時間");
+});
+
+test("the homepage lists the newest priced trips first and trips without a price after them", async () => {
+  const { homepageTripOrder, tripFirstCount } = await import("../lib/trip-filters.ts");
+  const t = (id, price, extra = {}) => ({ id, price, ...extra });
+  const ordered = homepageTripOrder([
+    t("old-priced", "NT$29,900 起"),
+    t("updated-priced", "35,900", { updatedAt: "2026-11-16T00:00:00.000Z" }),
+    t("new-ask", "價格洽詢", { createdAt: "2026-11-19T00:00:00.000Z" }),
+    t("new-priced", "NT$55,900", { createdAt: "2026-11-18T00:00:00.000Z" }),
+    t("newer-priced", "NT$45,900", { createdAt: "2026-11-19T00:00:00.000Z" }),
+    t("last-priced", "19,900"),
+    t("empty", ""),
+  ]);
+  assert.deepEqual(ordered.map((trip) => trip.id), [
+    "newer-priced",
+    "new-priced",
+    "updated-priced",
+    "last-priced",
+    "old-priced",
+    "new-ask",
+    "empty",
+  ]);
+  assert.equal(tripFirstCount, 6);
+});

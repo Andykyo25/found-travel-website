@@ -40,17 +40,22 @@ export function applyAutoPrices(content: SiteContent, todayTime: number): SiteCo
  * 以前 sitemap 把全站的儲存時間當成每一頁的更新時間，改一個行程，三百頁都顯示剛更新，搜尋引擎就不再相信它。
  */
 export function stampTripUpdates(next: SiteContent, previous: SiteContent | null, now: string): SiteContent {
-  const fingerprint = (trip: Trip) => JSON.stringify({ ...trip, updatedAt: undefined });
+  const fingerprint = (trip: Trip) => JSON.stringify({ ...trip, updatedAt: undefined, createdAt: undefined });
   const before = new Map((previous?.trips ?? []).map((trip) => [trip.id, trip]));
   return {
     ...next,
     trips: next.trips.map((trip) => {
       const old = before.get(trip.id);
-      if (!old || fingerprint(old) !== fingerprint(trip)) return { ...trip, updatedAt: now };
-      const unchanged = { ...trip };
-      if (old.updatedAt) unchanged.updatedAt = old.updatedAt;
-      else delete unchanged.updatedAt;
-      return unchanged;
+      // 建立時間：第一次出現的行程記下這次儲存的時間；之後一律沿用舊值，後台送來的值不算數。
+      // 這個欄位上線前就有的行程維持沒有建立時間。
+      const createdAt = old ? old.createdAt : now;
+      const stamped = { ...trip };
+      if (createdAt) stamped.createdAt = createdAt;
+      else delete stamped.createdAt;
+      if (!old || fingerprint(old) !== fingerprint(trip)) return { ...stamped, updatedAt: now };
+      if (old.updatedAt) stamped.updatedAt = old.updatedAt;
+      else delete stamped.updatedAt;
+      return stamped;
     }),
   };
 }
