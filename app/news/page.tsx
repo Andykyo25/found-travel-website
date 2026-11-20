@@ -6,6 +6,7 @@ import { SiteHeader } from "@/app/components/SiteHeader";
 import { SplitText } from "@/app/components/SplitText";
 import { TravelImage } from "@/app/components/TravelImage";
 import { newsDateLabel, publishedNews } from "@/lib/news";
+import { titlePhrases } from "@/lib/title-phrases";
 import { getSiteContent } from "@/lib/site-content";
 import { socialMetadata } from "@/lib/page-metadata";
 import styles from "./news.module.css";
@@ -45,14 +46,21 @@ export default async function NewsPage() {
       <section id="news-list" aria-label="消息列表">
         {/* 每一則都用大卡片呈現，新的在上；不再把舊消息縮成一行。 */}
         {articles.map((article, index) => (
-          <article key={article.slug} className={`${styles.latest}${article.imagePoster ? ` ${styles.latestPoster}` : ""}`}>
+          <article
+            key={article.slug}
+            className={`${styles.latest}${article.imagePoster ? ` ${styles.latestPoster}` : ""}${article.imageBanner ? ` ${styles.latestBanner}` : ""}`}
+          >
             <Link className={styles.latestMedia} href={`/news/${article.slug}`} tabIndex={-1} aria-hidden="true">
               <TravelImage src={article.image} alt="" priority={index === 0} sizes="(max-width: 900px) 100vw, 54vw" />
-              {article.imagePoster ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
+              {article.imagePoster || article.imageBanner ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
             </Link>
             <div className={styles.latestCopy}>
               <p className={styles.meta}><time dateTime={article.publishedAt}>{newsDateLabel(article.publishedAt)}</time><span>{article.category}</span></p>
-              <h2><Link href={`/news/${article.slug}`}>{article.title}</Link></h2>
+              <h2>
+                <Link href={`/news/${article.slug}`}>
+                  {titlePhrases(article.title).map((phrase) => <span className="fh-phrase" key={phrase}>{phrase}</span>)}
+                </Link>
+              </h2>
               <p>{article.summary}</p>
               <Link className="fh-link" href={`/news/${article.slug}`} aria-hidden="true" tabIndex={-1}>閱讀全文 <span aria-hidden="true">→</span></Link>
             </div>
