@@ -51,6 +51,25 @@ test("the Japan tax-free article keeps the facts travelers rely on", () => {
   assert.ok(text.includes("仍須完成海關確認"));
 });
 
+test("the E.SUN card Europe offer keeps its terms and points at trips on this site", () => {
+  const article = findNewsArticle("esun-card-europe-2026");
+  assert.ok(article);
+  // 主視覺含文字：用橫幅版面完整顯示，不裁切。
+  assert.equal(article.imageBanner, true);
+  const text = articleText(article);
+  for (const fact of ["NT$1,000", "2026/12/31", "2026/8/15", "線上分期付款不適用", "持卡人", "團體優惠", "每一團限折一次", "謹慎理財"]) {
+    assert.ok(text.includes(fact), fact);
+  }
+  // Unicard 回饋由銀行決定，必須留著但書。
+  assert.ok(text.includes("以玉山銀行公告為準"));
+  const routes = article.blocks.find((block) => block.kind === "routes");
+  assert.deepEqual(routes.items.map((route) => route.name), ["瑞士火車團", "芬蘭極光團", "巴爾幹半島團"]);
+  for (const route of routes.items) {
+    assert.ok(route.trips.length > 0, route.name);
+    for (const key of route.trips) assert.match(key, /^[a-z0-9]+(-[a-z0-9]+)*$/);
+  }
+});
+
 test("LINE and Instagram links sit in the header, footer and mobile menu", async () => {
   const [links, header, footer, mobileNav] = await Promise.all(
     [

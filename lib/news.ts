@@ -13,6 +13,16 @@ export type NewsMethod = {
   link?: NewsLink;
 };
 
+/** 文章裡介紹的團型：照片、天數與起價直接讀本站行程（trips 填行程網址代稱），行程下架就自動不顯示。 */
+export type NewsRoute = {
+  name: string;
+  area: string;
+  offer: string;
+  text: string;
+  highlights: string[];
+  trips: string[];
+};
+
 type NewsSection = { id: string; title: string };
 
 export type NewsBlock = NewsSection &
@@ -27,6 +37,7 @@ export type NewsBlock = NewsSection &
     | { kind: "methods"; lede: string; items: NewsMethod[] }
     | { kind: "names"; lede: string; items: string[]; note: string }
     | { kind: "tips"; items: { title: string; text: string }[] }
+    | { kind: "routes"; lede: string; items: NewsRoute[] }
   );
 
 export type NewsArticle = {
@@ -44,6 +55,8 @@ export type NewsArticle = {
   imageAlt: string;
   /** 圖片本身含文字（4:5 圖卡）：完整顯示，不裁切也不加取景框。 */
   imagePoster?: boolean;
+  /** 圖片本身含文字的橫幅（約 16:9 活動主視覺）：完整顯示，內頁放在標題下方滿版。 */
+  imageBanner?: boolean;
   blocks: NewsBlock[];
   video?: { title: string; text: string; link: NewsLink };
   sources: NewsLink[];
@@ -52,6 +65,145 @@ export type NewsArticle = {
 };
 
 export const newsArticles: NewsArticle[] = [
+  {
+    slug: "esun-card-europe-2026",
+    title: "刷玉山卡暢遊歐洲，熱門團每人現折 NT$1,000",
+    shortTitle: "玉山卡歐洲優惠",
+    category: "限時優惠",
+    publishedAt: "2026-11-20",
+    summary:
+      "12/31 前報名瑞士火車團、芬蘭極光團或巴爾幹半島團，用玉山信用卡付團費，每人現折 NT$1,000。歐洲想了很久的人，今年就把它排進行程吧。",
+    image: "/news/esun-card-europe-2026.jpg",
+    imageAlt:
+      "刷玉山卡暢遊歐洲活動主視覺：最熱門團型現折 NT$1,000，活動期間 2026/08/15～2026/12/31。畫面有布達佩斯國會大廈夜景、瑞士馬特洪峰與芬蘭極光玻璃屋，下方標示「謹慎理財 信用無價」與玉山銀行標誌。",
+    imageBanner: true,
+    blocks: [
+      {
+        kind: "facts",
+        id: "key-facts",
+        title: "先看重點",
+        items: [
+          {
+            label: "每人現折",
+            value: "NT$1,000",
+            note: "報名指定的歐洲團，用玉山信用卡支付團費。",
+          },
+          {
+            label: "報名截止",
+            value: "2026/12/31",
+            note: "活動自 2026/8/15 開始，在 12/31 前完成報名並刷卡付款。",
+          },
+          {
+            label: "適用卡片",
+            value: "玉山信用卡",
+            note: "所有玉山銀行信用卡都適用；持卡人須是實際出團的旅客。",
+          },
+        ],
+      },
+      {
+        kind: "routes",
+        id: "routes",
+        title: "三種歐洲熱門團",
+        lede: "優惠適用以下三種團型。每一種都附上本站的行程，點進去看每日行程與出發日；實際適用的團期，報名時跟顧問確認就好。",
+        items: [
+          {
+            name: "瑞士火車團",
+            area: "西歐",
+            offer: "每人現折 NT$1,000",
+            text: "把瑞士最有名的景觀列車串成一條路線：冰河列車、黃金列車輪流上場，再換登山火車與纜車上到少女峰、遠望阿萊奇冰河，最後在策馬特等馬特洪峰被日出染成金色。",
+            highlights: ["馬特洪峰", "少女峰", "阿萊奇冰河", "景觀列車"],
+            trips: ["switzerland-train-15d", "switzerland-train-10d"],
+          },
+          {
+            name: "芬蘭極光團",
+            area: "北歐",
+            offer: "每人現折 NT$1,000",
+            text: "冬天到拉普蘭追極光：住進玻璃屋，躺在床上就能等極光出現。白天去聖誕老人村、坐哈士奇與馴鹿雪橇，再搭破冰船出海，看整片結冰的海面。",
+            highlights: ["極光玻璃屋", "破冰船", "聖誕老人村", "哈士奇雪橇"],
+            trips: ["finland-icebreaker-glass-igloo-10d", "finland-aurora-10d"],
+          },
+          {
+            name: "巴爾幹半島團",
+            area: "東歐",
+            offer: "每人現折 NT$1,000",
+            text: "走進還不算熱門的東南歐：羅馬尼亞的布拉索夫與中世紀古城、保加利亞的山城與修道院。想走得更深，17 天行程一路串起巴爾幹 8 國，延伸到亞得里亞海岸。",
+            highlights: ["羅馬尼亞", "保加利亞", "中世紀古城", "亞得里亞海"],
+            trips: ["balkans-leisure-9d", "balkans-value-17d"],
+          },
+        ],
+      },
+      {
+        kind: "text",
+        id: "unicard",
+        title: "Unicard 卡友再加碼",
+        paragraphs: [
+          "用玉山 Unicard 付團費，除了每人現折 NT$1,000，依玉山銀行的 Unicard 權益，最高還能拿到 4.5% 玉山 e point 回饋，1 點可折抵 NT$1。",
+          "e point 由玉山銀行發放，回饋比例、適用通路與上限以玉山銀行公告為準。",
+        ],
+      },
+      {
+        kind: "methods",
+        id: "how-to-book",
+        title: "怎麼報名",
+        lede: "跟平常報名一樣，只要記得一件事：報名時先說要用玉山卡優惠。",
+        items: [
+          {
+            name: "找顧問報名",
+            audience: "已經選好團型，或還在比較出發日的人",
+            steps: [
+              "挑好團型與想出發的月份，還沒決定也可以先問",
+              "用 LINE 或聯絡表單找顧問，說明要使用「玉山卡歐洲優惠」",
+              "顧問確認名額與團費後，用玉山信用卡付團費，每人現折 NT$1,000",
+            ],
+            note: "線上分期付款不適用本優惠。",
+          },
+        ],
+      },
+      {
+        kind: "tips",
+        id: "notes",
+        title: "注意事項",
+        items: [
+          {
+            title: "限用玉山信用卡付款",
+            text: "須在活動期間內用玉山信用卡支付團費；線上分期付款不適用。",
+          },
+          {
+            title: "不與其他優惠併用",
+            text: "不能和團體優惠、VIP 優惠或其他促銷方案同時使用。",
+          },
+          {
+            title: "持卡人須是出團旅客",
+            text: "刷卡的持卡人必須實際參團。每位旅客、每張卡、每一團限折一次。",
+          },
+          {
+            title: "報名時先告訴顧問",
+            text: "請在報名時主動說要使用玉山卡優惠，團費會直接折抵。",
+          },
+          {
+            title: "以公告為準",
+            text: "優惠內容如有調整，以找到了旅行社的公告為準。",
+          },
+          {
+            title: "謹慎理財，信用無價",
+            text: "刷卡付團費前，請先評估自己的還款能力。",
+          },
+        ],
+      },
+    ],
+    sources: [
+      {
+        label: "找到了旅行社官網：刷玉山卡暢遊歐洲活動公告",
+        href: "https://discoveredtravel.com.tw/news/detail/2026traveldiscount-esunbank-europe",
+      },
+    ],
+    disclaimer:
+      "本文整理至 2026/11/20。優惠內容以找到了旅行社公告為準，Unicard 回饋以玉山銀行公告為準。謹慎理財，信用無價。",
+    closing: {
+      title: "歐洲想了很久，今年就出發吧。",
+      text: "12/31 前報名都能折。想知道哪一團還有位子、哪個月份最適合，直接問顧問最快。",
+    },
+  },
   {
     slug: "tokyo-nikki-stay-and-charter",
     title: "東京日記：西日暮里民宿＋台灣人司機接送包車，一次排好",

@@ -86,7 +86,7 @@ export default async function NewsArticlePage({ params }: Params) {
       <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/news" />
       <nav className="page-breadcrumb" aria-label="麵包屑導覽"><Link href="/news">最新消息</Link><span aria-hidden="true">/</span><span aria-current="page">{article.shortTitle}</span></nav>
 
-      <div className={`${styles.hero}${article.imagePoster ? ` ${styles.heroPoster}` : ""}`}>
+      <div className={`${styles.hero}${article.imagePoster ? ` ${styles.heroPoster}` : ""}${article.imageBanner ? ` ${styles.heroBanner}` : ""}`}>
         <header className={styles.articleHead}>
           <p className="eyebrow">
             <span />
@@ -102,8 +102,13 @@ export default async function NewsArticlePage({ params }: Params) {
         </header>
 
         <figure className={styles.cover}>
-          <TravelImage src={article.image} alt={article.imageAlt} priority sizes="(max-width: 900px) 100vw, 46vw" />
-          {article.imagePoster ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
+          <TravelImage
+            src={article.image}
+            alt={article.imageAlt}
+            priority
+            sizes={article.imageBanner ? "(max-width: 1440px) 100vw, 1360px" : "(max-width: 900px) 100vw, 46vw"}
+          />
+          {article.imagePoster || article.imageBanner ? null : <span className="fh-marks" aria-hidden="true"><b /><b /><b /><b /></span>}
         </figure>
       </div>
 
@@ -116,7 +121,7 @@ export default async function NewsArticlePage({ params }: Params) {
         </nav>
 
         <div className={styles.articleMain} id="article-content">
-          <NewsBlocks blocks={article.blocks} />
+          <NewsBlocks blocks={article.blocks} trips={content.trips} />
 
           {article.video ? (
             <aside className={styles.video} aria-label="影片">

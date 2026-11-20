@@ -29,6 +29,9 @@ import { TripFilterBar } from "./components/TripFilterBar";
 import { LineFloatingButton } from "./components/LineFloatingButton";
 import { socialMetadata } from "@/lib/page-metadata";
 import { CommunityInvite } from "@/app/components/CommunityInvite";
+import { activePromotion } from "@/lib/promotions";
+import { PromoCard } from "./components/PromoCard";
+import { PromoPopup } from "./components/PromoPopup";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +93,8 @@ export default async function Home({
   // 結構化資料：讓搜尋引擎辨識這是一家旅行社，並帶出公司資訊。
   const agencyJsonLd = travelAgencyJsonLd(content, origin);
   const marqueeItems = content.announcement.split(/[・|｜]/).map((item) => item.trim()).filter(Boolean);
+  // 進行中的活動（lib/promotions.ts）：行程列表上方的卡片與進站彈窗，過了結束日自動消失。
+  const promotion = activePromotion();
 
   return (
     <main className="editorial-home fh" id="top">
@@ -187,6 +192,8 @@ export default async function Home({
               不把行程塞滿，而是留下剛好的空白。每一團皆可依航班、季節與同行者需求微調。
             </p>
           </header>
+
+          {promotion ? <PromoCard promotion={promotion} /> : null}
 
           <TripFilterBar
             key={`packages-${filters.month}-${filters.budget}-${filters.category}-${filters.region}-${filters.keyword}`}
@@ -338,6 +345,7 @@ export default async function Home({
       <SiteFooter content={content} home />
 
       <LineFloatingButton lineUrl={content.lineUrl} />
+      {promotion ? <PromoPopup promotion={promotion} /> : null}
     </main>
   );
 }

@@ -740,3 +740,50 @@ html[data-intro="skip"] .fh-intro { display: none; }
   .site-navigation { display: none; }
   .site-header .hero-menu-button { display: flex; }
 }
+
+/* 現正優惠（首頁行程列表上方）與進站活動彈窗：內容與起訖日在 lib/promotions.ts。
+   活動主視覺本身含文字，一律照原圖比例完整顯示，不裁切。 */
+.fh-offer { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: clamp(24px, 3.4vw, 52px); align-items: center; margin-top: clamp(40px, 5vw, 64px); padding: clamp(14px, 1.4vw, 20px); background: #fffdf9; border: 1px solid var(--f-line); }
+.fh-offer-media { position: relative; display: block; aspect-ratio: 1672 / 941; overflow: hidden; background: var(--f-mist); }
+.fh-offer-media img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.fh-offer-copy { min-width: 0; padding-right: clamp(0px, 2vw, 28px); }
+.fh-offer-kicker, .fh-promo-kicker { margin: 0; color: var(--f-pink-deep); font: 500 12.5px/1.5 var(--f-sans); letter-spacing: 0.16em; }
+.fh-offer h3 { margin: 10px 0 0; font: 500 clamp(1.3rem, 1.05rem + 0.9vw, 1.85rem)/1.42 var(--f-serif); letter-spacing: -0.01em; text-wrap: balance; }
+.fh-offer h3 a { padding-bottom: 2px; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 0.7s var(--f-ease); }
+.fh-offer:hover h3 a { background-size: 100% 1px; }
+.fh-offer-text { margin: 10px 0 0; color: var(--f-ink-2); font-size: 15px; line-height: 1.9; }
+.fh-offer-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 20px; margin-top: 4px; }
+.fh-offer-foot small, .fh-promo-warning { color: var(--f-ink-3); font-size: 12.5px; letter-spacing: 0.18em; }
+
+.fh-promo { width: min(720px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto; border: 0; background: var(--f-paper); color: var(--f-ink); box-shadow: 0 30px 80px rgba(14, 32, 26, 0.35); }
+.fh-promo::backdrop { background: rgba(14, 32, 26, 0.58); }
+.fh-promo[open] { animation: fh-promo-in 0.7s var(--f-ease) both; }
+.fh-promo[open]::backdrop { animation: fh-fade 0.4s ease both; }
+@keyframes fh-promo-in { from { opacity: 0; transform: translateY(28px) scale(0.98); } }
+html:has(.fh-promo[open]) { overflow: hidden; }
+.fh-promo-box { position: relative; }
+.fh-promo-close { position: absolute; z-index: 2; top: 10px; right: 10px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgba(250, 248, 243, 0.94); color: var(--f-ink); cursor: pointer; transition: background 0.3s, color 0.3s; }
+.fh-promo-close:hover { background: var(--f-forest); color: #fff; }
+.fh-promo-media { display: block; aspect-ratio: 1672 / 941; background: var(--f-mist); }
+.fh-promo-media img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.fh-promo-copy { padding: clamp(20px, 3vw, 30px) clamp(20px, 3.4vw, 36px) clamp(20px, 2.8vw, 28px); }
+.fh-promo h2 { margin: 8px 0 0; font: 500 clamp(1.3rem, 1.1rem + 0.9vw, 1.75rem)/1.42 var(--f-serif); letter-spacing: -0.01em; text-wrap: balance; }
+.fh-promo-copy > p:not(.fh-promo-kicker) { margin: 8px 0 0; color: var(--f-ink-2); font-size: 15px; line-height: 1.85; }
+.fh-promo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 26px; margin-top: 18px; }
+.fh-promo-actions .fh-link { border: 0; background: none; color: var(--f-ink-2); font-family: inherit; cursor: pointer; }
+.fh-promo-warning { display: block; margin-top: 12px; }
+.fh-promo :focus-visible { outline: 2px solid var(--f-pink-deep); outline-offset: 3px; }
+/* 標題分段（lib/title-phrases.ts）：段內只在空白處換行，太長才硬斷，避免溢出。 */
+.fh-phrase { display: inline-block; word-break: keep-all; overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  .fh-offer { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 10px 10px 14px; }
+  .fh-offer-copy { padding: 0 6px; }
+  .fh-promo-actions .fh-btn { flex: 1 1 auto; }
+  /* 手機上主視覺的標題貼近右上角：關閉鈕移到圖片下方，不蓋住字 */
+  .fh-promo-close { top: calc(min(720px, 100vw - 32px) * 941 / 1672 + 8px); right: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fh-promo[open], .fh-promo[open]::backdrop { animation: none; }
+  .fh-offer h3 a { transition: none; }
+}
