@@ -22,7 +22,17 @@ const nextConfig: NextConfig = {
   },
   // 公開頁面給 Cloudflare 的暫存時間（說明見 lib/edge-cache.ts）。
   async headers() {
-    return edgeCacheHeaders();
+    return [
+      ...edgeCacheHeaders(),
+      // service worker 改版要馬上生效：瀏覽器與 Cloudflare 都不留舊檔。
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
+        ],
+      },
+    ];
   },
   async redirects() {
     // 沒有正式網域（SITE_URL）之前不轉址；設定後下面兩種規則自動生效。

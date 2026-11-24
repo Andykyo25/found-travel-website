@@ -66,6 +66,101 @@ export type NewsArticle = {
 
 export const newsArticles: NewsArticle[] = [
   {
+    // 步驟對應 app/manifest.ts、public/sw.js 與 app/components/PwaClient.tsx 的實際行為；改了那邊記得回來對一下。
+    slug: "add-to-home-screen",
+    title: "把找到了加到手機主畫面，下次一點就打開",
+    shortTitle: "加到主畫面教學",
+    category: "網站使用教學",
+    publishedAt: "2026-11-24",
+    summary:
+      "常來看行程、查團期的朋友，可以把找到了旅行社的網站加到手機主畫面。不用另外下載安裝，下次點一下愛心圖示就直接打開。iPhone、Android 各 30 秒就能完成。",
+    image: "/news/add-to-home-screen.jpg",
+    imageAlt: "示意圖：從瀏覽器的分享選單點「加入主畫面」，手機主畫面就多了一個找到了旅行社的粉紅愛心圖示。",
+    blocks: [
+      {
+        kind: "facts",
+        id: "key-facts",
+        title: "先看重點",
+        items: [
+          {
+            label: "需要時間",
+            value: "30 秒",
+            note: "跟著下面的步驟點 3、4 下就完成。",
+          },
+          {
+            label: "要不要下載",
+            value: "不用",
+            note: "不用到 App Store 或 Google Play，也不用註冊帳號，主畫面多一個圖示而已。",
+          },
+          {
+            label: "內容",
+            value: "隨時最新",
+            note: "有網路時，每次打開都是網站目前的行程與團期，不用等更新。",
+          },
+        ],
+      },
+      {
+        kind: "methods",
+        id: "how-to",
+        title: "怎麼加到主畫面",
+        lede: "依你的手機選一種做法。請用 Safari 或 Chrome 打開本站；從 LINE、Facebook 裡直接點開的頁面沒有這個選項，做法看下面的常見問題。",
+        items: [
+          {
+            name: "iPhone／iPad",
+            badge: "Safari",
+            audience: "iPhone、iPad 使用者",
+            steps: [
+              "用 Safari 打開找到了旅行社網站，任何一頁都可以",
+              "點「分享」按鈕（方框加向上箭頭）；沒看到的話，先點網址列旁的「⋯」再點「分享」",
+              "往下滑，選「加入主畫面」",
+              "名稱會帶出「找到了」，按右上角「新增」就完成",
+            ],
+            note: "iPhone 上用 Chrome 也可以：點網址列右邊的分享按鈕，一樣選「加入主畫面」。",
+          },
+          {
+            name: "Android",
+            badge: "Chrome",
+            audience: "Android 手機使用者",
+            steps: [
+              "用 Chrome 打開找到了旅行社網站",
+              "畫面左下角出現「加到手機主畫面」提示時，直接點「安裝」",
+              "沒看到提示的話，點右上角「⋮」，選「加到主畫面」或「安裝應用程式」",
+              "再按一次「安裝」，愛心圖示就會出現在主畫面",
+            ],
+          },
+        ],
+      },
+      {
+        kind: "tips",
+        id: "faq",
+        title: "常見問題",
+        items: [
+          {
+            title: "從 LINE 點開的頁面加不了？",
+            text: "LINE、Facebook、Instagram 裡開的是 APP 自己的瀏覽器，沒有加到主畫面的選項。點右上角的選單，改用 Safari 或 Chrome 開啟，再照上面的步驟做。",
+          },
+          {
+            title: "團期和價格會不會是舊的？",
+            text: "有網路時，每次打開都向網站拿最新內容。沒網路時可以打開之前看過的頁面，畫面上方會提醒那是上次存下的內容；報名前，團期與價格請以顧問確認為準。",
+          },
+          {
+            title: "會不會一直跳通知？",
+            text: "不會。加到主畫面不會開啟通知，新消息與團期一樣在 LINE 社群分享。",
+          },
+          {
+            title: "不想要了怎麼刪？",
+            text: "跟刪除一般 APP 一樣：長按圖示，選「移除」或「刪除」。刪掉的只是主畫面上的圖示，之後仍然可以用瀏覽器打開網站。",
+          },
+        ],
+      },
+    ],
+    sources: [],
+    closing: {
+      title: "下次想看行程，點主畫面的愛心就好。",
+      text: "看到喜歡的行程，直接按 LINE 問顧問，團期與價格我們幫你確認。",
+    },
+  },
+  {
     slug: "esun-card-europe-2026",
     title: "刷玉山卡暢遊歐洲，熱門團每人現折 NT$1,000",
     shortTitle: "玉山卡歐洲優惠",

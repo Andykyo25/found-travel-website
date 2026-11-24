@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { getSiteOrigin } from "@/lib/site-url";
 import { siteDescription } from "@/lib/structured-data";
 import { FoundMotion } from "./components/FoundMotion";
+import { PwaClient } from "./components/PwaClient";
 import { display, latin, serif } from "./fonts";
 import "./globals.css";
 import "./editorial.css";
@@ -24,6 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s｜找到了旅行社",
     },
     description: siteDescription,
+    // iPhone「加入主畫面」後的名稱與全螢幕開啟（manifest 見 app/manifest.ts）。
+    appleWebApp: { capable: true, title: "找到了", statusBarStyle: "default" },
     openGraph: {
       title: "找到了旅行社｜好旅行，被好好照顧",
       description: "把每一段期待，排成剛剛好的旅程。",
@@ -70,6 +73,7 @@ export default function RootLayout({
       <body>
         {children}
         <FoundMotion />
+        <PwaClient />
       </body>
     </html>
   );
