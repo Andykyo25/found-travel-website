@@ -57,7 +57,7 @@ export function SiteFooter({
           <Link href="/contact">聯絡表單</Link>
           <Link href="/news/add-to-home-screen">加到手機主畫面</Link>
           <a href={tokyoNikkiUrl} target="_blank" rel="noopener">東京民宿包車 <span aria-hidden="true">↗</span></a>
-          <a href="/studio">內容管理</a>
+          {/* 後台入口不放在前台：業務直接輸入 /studio 登入。 */}
         </nav>
       </div>
       {destinations.length > 0 ? (

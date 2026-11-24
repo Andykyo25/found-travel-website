@@ -99,9 +99,9 @@ test("the finished travel site replaces all starter content", async () => {
 
   assert.match(page, /精選行程/);
   assert.match(page, /TravelTools/);
-  // 頁尾（含內容管理入口）已抽成全站共用元件，首頁以 SiteFooter 引用。
+  // 頁尾已抽成全站共用元件，首頁以 SiteFooter 引用；後台入口不給顧客看到。
   assert.match(page, /SiteFooter/);
-  assert.match(siteFooter, /內容管理/);
+  assert.doesNotMatch(siteFooter, /內容管理|href="\/studio/);
   assert.match(page, /PackageCard/);
   assert.match(page, /TripFilterBar/);
   assert.match(page, /hero-full/);
