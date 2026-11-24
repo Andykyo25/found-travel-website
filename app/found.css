@@ -712,7 +712,7 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .fh-card-foot { flex-wrap: wrap; }
 .fh-card-price { min-width: 0; }
 
-/* ---------- LINE／Instagram 連結 ---------- */
+/* ---------- LINE／Instagram／Facebook 連結 ---------- */
 .site-social { display: flex; align-items: center; gap: 2px; }
 .site-social a { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 40px; min-height: 40px; color: inherit; transition: background 0.3s, color 0.3s; }
 .site-social svg { width: 21px; height: 21px; flex: none; }
@@ -721,6 +721,8 @@ html[data-intro="skip"] .fh-intro { display: none; }
 .fh-footer-social a { min-height: 44px; color: #e8ecdf; font-size: 14.5px; }
 .fh-footer-social a:hover { color: #ff9dc3; }
 @media (max-width: 520px) { .site-header-actions { gap: 6px; } }
+/* 三個社群圖示在一般手機寬度要讓出空間給選單鈕 */
+@media (max-width: 420px) { .site-header .site-social { gap: 0; } .site-header .site-social a { min-width: 32px; } .site-header .site-social svg { width: 19px; height: 19px; } }
 /* 窄手機的影片框只放得下播放鈕，片名留給 aria-label */
 @media (max-width: 480px) { .fh-film-play { gap: 12px; } .fh-film-label i { display: none; } }
 /* 太窄時標頭放不下，改由選單內的連結提供 */

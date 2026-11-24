@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { instagramUrl } from "./SocialLinks";
+import { facebookUrl, instagramUrl } from "./SocialLinks";
 
 /** external：連到其他網站（例如東京日記），用新分頁開啟。 */
 export type NavLink = { href: string; label: string; external?: boolean };
@@ -198,6 +198,15 @@ export function MobileNav({
                     onClick={closeForNavigation}
                   >
                     Instagram <span aria-hidden="true">↗</span>
+                  </a>
+                  <a
+                    className="button button-secondary"
+                    href={facebookUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={closeForNavigation}
+                  >
+                    Facebook <span aria-hidden="true">↗</span>
                   </a>
                 </div>
               </div>

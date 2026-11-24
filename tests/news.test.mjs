@@ -70,7 +70,7 @@ test("the E.SUN card Europe offer keeps its terms and points at trips on this si
   }
 });
 
-test("LINE and Instagram links sit in the header, footer and mobile menu", async () => {
+test("LINE, Instagram and Facebook links sit in the header, footer and mobile menu", async () => {
   const [links, header, footer, mobileNav] = await Promise.all(
     [
       "../app/components/SocialLinks.tsx",
@@ -88,6 +88,9 @@ test("LINE and Instagram links sit in the header, footer and mobile menu", async
   assert.match(header, /<SocialLinks lineUrl=\{lineUrl\}/);
   assert.match(footer, /<SocialLinks lineUrl=\{content\.lineUrl\}/);
   assert.match(mobileNav, /href=\{instagramUrl\}/);
+  assert.match(links, /export const facebookUrl = "https:\/\/www\.facebook\.com\/profile\.php\?id=61596819122408"/);
+  assert.match(links, /href=\{facebookUrl\}/);
+  assert.match(mobileNav, /href=\{facebookUrl\}/);
 });
 
 test("news is reachable from the navigation, footer, sitemap and host redirect", async () => {
