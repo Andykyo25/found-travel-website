@@ -49,3 +49,6 @@ next-env.d.ts
 
 # 業務放在專案資料夾裡的旅展行程 PDF（用後台「批次匯入」上傳，不進 git）
 /旅展行程/
+
+# graphify 知識圖譜（本機用 `python -m graphify update .` 重建，不進 git）
+/graphify-out/
