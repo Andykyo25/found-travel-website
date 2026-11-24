@@ -3,8 +3,10 @@ import { instagramUrl } from "@/lib/structured-data";
 export { instagramUrl };
 // 關係網站「東京日記」：西日暮里民宿與東京包車，獨立部署在子網域。
 export const tokyoNikkiUrl = "https://tokyonikki.tabiyoi.com/";
+// Facebook 粉專「Tabiyoi 旅好時光」（分享短網址解開後的正式網址，不帶追蹤參數）。
+export const facebookUrl = "https://www.facebook.com/profile.php?id=61596819122408";
 
-// 兩個圖示都用 1.5 線寬、currentColor，隨標頭與頁尾的文字色變化。
+// 圖示都用 1.5 線寬、currentColor，隨標頭與頁尾的文字色變化。
 function LineIcon() {
   return (
     <svg viewBox="-1 -1 26 26" fill="currentColor" aria-hidden="true">
@@ -24,6 +26,15 @@ function InstagramIcon() {
   );
 }
 
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9.25" />
+      <path d="M13.2 21.2v-7.4h2.4l.4-2.8h-2.8V9.3c0-.8.3-1.4 1.4-1.4H16V5.4c-.3 0-1.1-.1-2-.1-2 0-3.4 1.2-3.4 3.5V11H8.2v2.8h2.4v7.4" />
+    </svg>
+  );
+}
+
 // 標頭只放圖示，頁尾加上文字（labels）。
 export function SocialLinks({ lineUrl, labels = false, className = "" }: { lineUrl: string; labels?: boolean; className?: string }) {
   return (
@@ -35,6 +46,10 @@ export function SocialLinks({ lineUrl, labels = false, className = "" }: { lineU
       <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="前往 Instagram" title="Instagram">
         <InstagramIcon />
         {labels ? "Instagram" : null}
+      </a>
+      <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="前往 Facebook 粉絲專頁" title="Facebook">
+        <FacebookIcon />
+        {labels ? "Facebook" : null}
       </a>
     </div>
   );
