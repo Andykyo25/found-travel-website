@@ -55,6 +55,7 @@ export function SiteFooter({
           <Link href="/vip">VIP集點</Link>
           <Link href="/about">關於我們</Link>
           <Link href="/contact">聯絡表單</Link>
+          <Link href="/news/add-to-home-screen">加到手機主畫面</Link>
           <a href={tokyoNikkiUrl} target="_blank" rel="noopener">東京民宿包車 <span aria-hidden="true">↗</span></a>
           <a href="/studio">內容管理</a>
         </nav>
