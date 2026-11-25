@@ -14,13 +14,14 @@ import { CommunityInvite } from "@/app/components/CommunityInvite";
 
 export const dynamic = "force-dynamic";
 
-const description = "出國前該知道的新規定、旅遊須知與找到了旅行社的最新動態，都整理在這裡。";
+const title = "最新消息：出國新規定、旅遊須知與限時優惠";
+const description = "出國前該知道的新規定與旅遊須知（例如日本免稅新制怎麼退稅）、找到了旅行社的限時優惠、東京住宿包車介紹與網站使用教學，都整理在這裡，出發前先看一遍更安心。";
 
 export const metadata: Metadata = {
-  title: "最新消息",
+  title,
   description,
   alternates: { canonical: "/news" },
-  ...socialMetadata({ title: "最新消息", description, path: "/news" }),
+  ...socialMetadata({ title, description, path: "/news" }),
 };
 
 export default async function NewsPage() {

@@ -8,8 +8,9 @@ import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
-const description = "先整理日期、預算與旅行需求，比較行程，再交給顧問確認。";
-export const metadata = { title: "幫我找適合的旅行", description, alternates: { canonical: "/find-trip" }, ...socialMetadata({ title: "幫我找適合的旅行", description, path: "/find-trip" }) };
+const title = "幫我找適合的旅行：依日期、預算與目的地比較行程";
+const description = "還沒決定去哪裡？依序選旅行方式、目的地、可出發日期、出發機場、每人預算與人數，從日本、韓國、歐洲、東南亞等行程中找出符合條件的選擇並互相比較，再交給顧問確認細節，不用先留電話。";
+export const metadata = { title, description, alternates: { canonical: "/find-trip" }, ...socialMetadata({ title, description, path: "/find-trip" }) };
 
 export default async function FindTripPage() {
   // 和其他前台頁面共用記憶體裡的發布內容，不必每次進來都等 Bucket；讀不到時明講並停用配對。

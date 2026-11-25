@@ -5,6 +5,7 @@ import { isRailwayStorageConfigured } from "@/lib/railway-storage";
 import { tripPdfKeyFromDocumentUrl } from "@/lib/storage-keys";
 import { maxImportTrips, mergeImportedTrips } from "@/lib/trip-import";
 import { tripDraftProblems, validateContentDraft } from "@/lib/trip-validation";
+import { notifyChangedTrips } from "@/lib/indexnow-notify";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
         _updatedAt: meta.updatedAt,
         _updatedBy: meta.updatedBy,
       });
+      await notifyChangedTrips(previous.trips, saved.content.trips);
       return NextResponse.json({ added: merged.added.length, alreadyThere: merged.alreadyThere.length, savedAt: saved.updatedAt });
     } catch (error) {
       const conflict =

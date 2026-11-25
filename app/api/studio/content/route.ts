@@ -5,6 +5,7 @@ import {
   isSameOriginRequest,
 } from "@/lib/studio-auth";
 import { getSiteContentWithMeta, saveSiteContent } from "@/lib/site-content";
+import { notifyChangedTrips } from "@/lib/indexnow-notify";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -52,6 +53,7 @@ export async function PUT(request: NextRequest) {
       _updatedAt: meta.updatedAt,
       _updatedBy: meta.updatedBy,
     });
+    await notifyChangedTrips(previousContent.trips, saved.content.trips);
     // Keep retired PDFs so history snapshots and concurrent drafts remain restorable.
     const pdfCleanup = { deleted: 0, protectedRecent: 0, failed: false };
     return NextResponse.json({
