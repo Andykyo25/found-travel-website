@@ -21,13 +21,14 @@ import { CommunityInline, CommunityInvite } from "@/app/components/CommunityInvi
 
 export const dynamic = "force-dynamic";
 
-const description = "找到了旅行社所有行程的出發日期與團費一次看，可依月份篩選，並直接查看完整行程內容。";
+const title = "出發團期總表：日本、韓國、歐洲、東南亞跟團日期與團費";
+const description = "找到了旅行社日本、韓國、歐洲、東南亞等跟團行程的出發日期與團費一次看，可依出發月份篩選，點進去就是完整行程內容；想問的日期沒列出來，也可以直接 LINE 詢問顧問。";
 
 export const metadata = {
-  title: "出發團期總表",
+  title,
   description,
   alternates: { canonical: "/dates" },
-  ...socialMetadata({ title: "出發團期總表", description, path: "/dates" }),
+  ...socialMetadata({ title, description, path: "/dates" }),
 };
 
 export default async function AllDeparturesPage() {
