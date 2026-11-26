@@ -580,3 +580,42 @@ export async function writeTourFeedObject(name: keyof typeof tourFeedKeys, value
     }),
   );
 }
+
+// ---------- 詢問來源統計（lib/inquiry-events.ts） ----------
+// 每次點擊一個空物件，資訊都在檔名裡；檔名以日期開頭，列表時從起始日期開始讀就好。
+
+export async function writeInquiryEventObject(key: string) {
+  const storage = getClient();
+  if (!storage) return false;
+  await storage.client.send(
+    new PutObjectCommand({
+      Bucket: storage.config.bucket,
+      Key: key,
+      Body: "",
+      ContentType: "text/plain",
+      CacheControl: "no-store",
+    }),
+  );
+  return true;
+}
+
+/** 列出某天以後的事件檔名。上限避免異常大量時拖垮後台。 */
+export async function listInquiryEventKeys(sinceDate: string, limit = 50_000): Promise<string[] | null> {
+  const storage = getClient();
+  if (!storage) return null;
+  const keys: string[] = [];
+  let continuationToken: string | undefined;
+  do {
+    const page = await storage.client.send(
+      new ListObjectsV2Command({
+        Bucket: storage.config.bucket,
+        Prefix: "inquiry-events/",
+        StartAfter: continuationToken ? undefined : `inquiry-events/${sinceDate}`,
+        ContinuationToken: continuationToken,
+      }),
+    );
+    for (const object of page.Contents ?? []) if (object.Key) keys.push(object.Key);
+    continuationToken = page.IsTruncated && keys.length < limit ? page.NextContinuationToken : undefined;
+  } while (continuationToken);
+  return keys;
+}

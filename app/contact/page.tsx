@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {
   formatDepartureDate,
   formatPrice,
+  tripPath,
   upcomingDepartures,
 } from "@/lib/trip-values";
 import { publishedTripPlans, tripPlanLabel } from "@/lib/trip-plans";
@@ -91,6 +92,7 @@ export default async function ContactPage({
           key={initialMessage}
           lineUrl={content.lineUrl}
           initialMessage={initialMessage}
+          source={trip ? tripPath(trip) : undefined}
         />
       </section>
 

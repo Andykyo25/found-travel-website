@@ -9,6 +9,7 @@ const tabs = [
     label: "聯絡諮詢",
     title: "聯絡諮詢",
   },
+  { id: "inquiries", href: "/studio/inquiries", label: "詢問來源", title: "詢問來源" },
   { id: "tour-feed", href: "/studio/tour-feed", label: "團期同步", title: "團期同步" },
   {
     id: "settings",

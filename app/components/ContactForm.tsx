@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { contactTimeSlots, type ContactTimeSlotId } from "@/lib/contact-fields";
 import { recordFinderEvent } from "@/lib/finder-events";
+import { recordInquiry } from "@/lib/inquiry-events";
 
 type Status =
   | { kind: "idle" }
@@ -15,10 +16,13 @@ export function ContactForm({
   lineUrl,
   initialMessage = "",
   contextMessage = "",
+  source,
 }: {
   lineUrl: string;
   initialMessage?: string;
   contextMessage?: string;
+  /** 詢問來源統計用：從行程頁帶過來的表單算在那個行程頁，沒給就算在目前這一頁。 */
+  source?: string;
 }) {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -68,6 +72,7 @@ export function ContactForm({
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error ?? "送出失敗");
       setStatus({ kind: "success", context: contextMessage });
+      recordInquiry("form", source);
       if (contextMessage) recordFinderEvent("contact_saved");
     } catch (error) {
       setStatus({
