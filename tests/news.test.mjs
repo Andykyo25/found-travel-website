@@ -128,6 +128,15 @@ test("new travel articles keep their checked facts and link to trips on this sit
   const all = "2099-01-01";
   const keta = JSON.stringify(findNewsArticle("korea-k-eta-2027", newsArticles, all));
   for (const fact of ["2027/12/31", "抵達前 3 天", "₩10,000", "e-arrivalcard.go.kr", "bbsSn=332884"]) assert.ok(keta.includes(fact), fact);
+  const holidays = JSON.stringify(findNewsArticle("2027-long-weekends", newsArticles, all));
+  for (const fact of ["121 天", "9 個", "2/4（四）–2/10（三）", "2/4–2/14 連休 11 天", "10/9–10/25 連休 17 天", "以各公司規定為準"]) assert.ok(holidays.includes(fact), fact);
+  const aurora = JSON.stringify(findNewsArticle("northern-lights-guide", newsArticles, all));
+  for (const fact of ["約 50%", "午夜前後", "3 月到 4 月初", "無法保證"]) assert.ok(aurora.includes(fact), fact);
+  // 排程中的兩篇在上線日前不會出現。
+  assert.equal(findNewsArticle("2027-long-weekends", newsArticles, "2026-12-02"), undefined);
+  assert.ok(findNewsArticle("2027-long-weekends", newsArticles, "2026-12-03"));
+  assert.equal(findNewsArticle("northern-lights-guide", newsArticles, "2026-12-09"), undefined);
+  assert.ok(findNewsArticle("northern-lights-guide", newsArticles, "2026-12-10"));
   const starlux = JSON.stringify(findNewsArticle("starlux-sydney-auckland", newsArticles, all));
   for (const fact of ["2027/3/23", "每週 4 班", "A330-900", "JX183", "JX184", "sydney-gold-coast-highlights-8d", "new-zealand-north-south-highlights-12d", "NZeTA", "最終公告為準"]) assert.ok(starlux.includes(fact), fact);
 });
