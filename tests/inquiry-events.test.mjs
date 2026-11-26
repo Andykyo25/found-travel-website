@@ -99,3 +99,14 @@ test("full departures offer a waitlist instead of a dead end", async () => {
   assert.match(table, /fullDeparturesLast/);
   assert.match(contact, /params\.waitlist === "1"/);
 });
+
+test("every route to a full date ends in a waitlist request", async () => {
+  const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+  const [card, contact] = await Promise.all([read("../app/components/TripPlanCard.tsx"), read("../app/contact/page.tsx")]);
+  // 航空版本卡片選到額滿日期：按鈕與連結都改成排候補。
+  assert.match(card, /waitlist \? "&waitlist=1"/);
+  assert.match(card, /排候補或問相近日期（\$\{versionName\}版）/);
+  assert.match(card, /fullDeparturesLast/);
+  // 表單頁不只看網址：帶進來的日期本身額滿也算候補。
+  assert.match(contact, /departureAvailability\(departure\?\.note\) === "full"/);
+});
