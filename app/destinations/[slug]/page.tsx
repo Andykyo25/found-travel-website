@@ -169,7 +169,7 @@ export default async function DestinationPage({ params }: PageProps) {
         <section className="board-cta">
           <div>
             <h2>還在比較，或沒看到剛好的行程？</h2>
-            <p>告訴我們想去的地方、時間與人數，顧問會整理適合的選擇再與你聯繫。</p>
+            <p>告訴我們想去的地方、時間與人數，Yui 會整理適合的選擇再與你聯繫。</p>
           </div>
           <div className="board-cta-actions">
             <a className="button" href={content.lineUrl} target="_blank" rel="noreferrer">

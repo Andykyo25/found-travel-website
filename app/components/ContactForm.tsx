@@ -92,7 +92,7 @@ export function ContactForm({
         </span>
         <h2>已收到您的諮詢</h2>
         <p>
-          您的需求已成功收件，顧問會依您希望的時段安排聯繫。
+          您的需求已成功收件，Yui 會依您希望的時段與您聯繫。
           若有急件，也歡迎直接透過 LINE 找我們。
         </p>
         <div className="contact-success-actions">

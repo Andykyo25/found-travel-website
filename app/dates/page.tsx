@@ -22,7 +22,7 @@ import { CommunityInline, CommunityInvite } from "@/app/components/CommunityInvi
 export const dynamic = "force-dynamic";
 
 const title = "出發團期總表：日本、韓國、歐洲、東南亞跟團日期與團費";
-const description = "找到了旅行社日本、韓國、歐洲、東南亞等跟團行程的出發日期與團費一次看，可依出發月份篩選，點進去就是完整行程內容；想問的日期沒列出來，也可以直接 LINE 詢問顧問。";
+const description = "找到了旅行社日本、韓國、歐洲、東南亞等跟團行程的出發日期與團費一次看，可依出發月份篩選，點進去就是完整行程內容；想問的日期沒列出來，也可以直接 LINE 問 Yui。";
 
 export const metadata = {
   title,
@@ -52,7 +52,7 @@ export default async function AllDeparturesPage() {
         <SplitText as="h1" text="出發團期總表" />
         <p className="board-lede">
           所有行程的出發日期與團費集中在這一頁，依日期由近到遠排列。
-          已出發的團期不再顯示，想確認名額請直接與顧問聯繫。
+          已出發的團期不再顯示，想確認名額請直接問 Yui。
         </p>
       </section>
 

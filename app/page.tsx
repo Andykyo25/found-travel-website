@@ -264,7 +264,7 @@ export default async function Home({
           <div className="fh-film-aside" data-rv>
             <p>旅行的樣子，很難只靠文字說完。看一段片，感受城市的呼吸、山野的光，以及你想留下的步調。</p>
             <a className="fh-link fh-link-light" href="#contact">
-              和顧問聊聊旅程 <Arrow direction="up-right" />
+              和 Yui 聊聊旅程 <Arrow direction="up-right" />
             </a>
           </div>
         </div>
@@ -284,7 +284,7 @@ export default async function Home({
           <SplitText as="h2" id="why-title" className="fh-statement" text="找到的不只是景點，是適合你的旅行方式。" lit track="enter" />
           <div className="fh-why-body" data-rv>
             <p>
-              找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由熟悉目的地的業務顧問陪你完成。
+              找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由 Yui 陪你完成。
             </p>
             <Link className="fh-link" href="/about">
               認識我們・閱讀旅人好評 <Arrow direction="up-right" />
@@ -318,7 +318,7 @@ export default async function Home({
               LINE 找 Yui 聊旅行 <Arrow direction="up-right" />
             </a>
             <Link className="fh-btn fh-btn-ghost fh-btn-lg" href="/contact" data-magnetic>
-              請顧問幫我規劃 <Arrow />
+              請 Yui 幫我規劃 <Arrow />
             </Link>
             <span className="fh-contact-company">{content.companyName}</span>
           </div>

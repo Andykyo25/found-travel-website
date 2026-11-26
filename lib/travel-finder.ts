@@ -146,7 +146,7 @@ export function findTravel(trips: Trip[], needs: TravelNeeds, today = taipeiToda
         const fit = budget === null ? null : budgetFit(plan, plan.price || trip.price, budget);
         if (fit === "over") { excluded.budget++; continue; }
         if (fit === "unsure") missing.push(priceUnsure);
-        open.push({ plan, missing, reasons: [...matched, ...(fit === "within" ? ["已列價格在每人預算內"] : [])], pending: [...missing, "團期尚未公布，出發日、團位與報價須由顧問確認", ...always] });
+        open.push({ plan, missing, reasons: [...matched, ...(fit === "within" ? ["已列價格在每人預算內"] : [])], pending: [...missing, "團期尚未公布，出發日、團位與報價須由 Yui 確認", ...always] });
         continue;
       }
       const confirmed: TripDeparture[] = [];
@@ -162,7 +162,7 @@ export function findTravel(trips: Trip[], needs: TravelNeeds, today = taipeiToda
       const usable = confirmed.length ? confirmed : unsure;
       if (budget !== null && !confirmed.length) missing.push(priceUnsure);
       const reasons = ["有已公布的未來團期", ...matched, ...(needs.start || needs.end ? ["出發日在指定範圍內"] : []), ...(budget !== null && confirmed.length ? ["已列價格在每人預算內"] : [])];
-      const pending = [...missing, "團位、最終報價與特殊需求須由顧問確認", ...always];
+      const pending = [...missing, "團位、最終報價與特殊需求須由 Yui 確認", ...always];
       const candidate = { key: `${trip.id}/${plan.id}`, trip, plan, departures: usable, reasons, pending, unconfirmed: missing, needsConfirmation: missing.length > 0, moreVersions: 0 };
       (missing.length ? pendingCandidates : candidates).push(candidate);
     }
@@ -226,6 +226,6 @@ export function needsSummary(needs: TravelNeeds, selected: { candidate: TravelCa
     const d = c.departures.find(item => item.id === departureId);
     const price = d?.price || c.plan.price || c.trip.price;
     const basis = basisLabels[priceBasis(c.plan, price)];
-    return `${c.trip.title}｜${tripPlanLabel(c.plan)} [${c.key}]\n出發日：${d?.date || (c.departures.length ? "待選擇" : "團期尚未公布，請顧問提供")}\n團期備註：${d?.note || "未提供"}\n參考價格：${price || "價格洽詢"}${basis ? `（${basis}）` : ""}`;
-  }), ...(selected.length ? [] : ["尚未選擇方案，請顧問依原始條件協助。"]), "人數、住宿、行李及其他文字需求尚未自動配對，須人工確認。"].join("\n");
+    return `${c.trip.title}｜${tripPlanLabel(c.plan)} [${c.key}]\n出發日：${d?.date || (c.departures.length ? "待選擇" : "團期尚未公布，請 Yui 提供")}\n團期備註：${d?.note || "未提供"}\n參考價格：${price || "價格洽詢"}${basis ? `（${basis}）` : ""}`;
+  }), ...(selected.length ? [] : ["尚未選擇方案，請 Yui 依原始條件協助。"]), "人數、住宿、行李及其他文字需求尚未自動配對，須人工確認。"].join("\n");
 }

@@ -38,8 +38,8 @@ test("a destination is found by its slug or its category name", () => {
 });
 test("the intro only states what the data shows", () => {
   const [japan, korea] = tripDestinations(trips, today);
-  assert.equal(destinationIntro(japan), "找到了旅行社目前有 3 個日本行程，涵蓋北海道、東京。其中 2 個已公布出發日期，團費 NT$29,900 起；其餘行程的團期與報價可直接向顧問洽詢。");
-  assert.equal(destinationIntro(korea), "找到了旅行社目前有 1 個韓國行程。行程的團期與報價可直接向顧問洽詢。");
+  assert.equal(destinationIntro(japan), "找到了旅行社目前有 3 個日本行程，涵蓋北海道、東京。其中 2 個已公布出發日期，團費 NT$29,900 起；其餘行程的團期與報價可直接問 Yui。");
+  assert.equal(destinationIntro(korea), "找到了旅行社目前有 1 個韓國行程。行程的團期與報價可直接問 Yui。");
   const allDated = tripDestinations([trip("a", "日本", "東京", dated("20,000"))], today)[0];
   assert.equal(destinationIntro(allDated), "找到了旅行社目前有 1 個日本行程。全部已公布出發日期，團費 NT$20,000 起。");
 });

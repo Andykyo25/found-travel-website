@@ -63,9 +63,9 @@ export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: numbe
   const items = [
     { label: "行程", value: [trip.region, trip.days].filter(Boolean).join("・") },
     { label: "團費", value: lowest ? `${priceText}${highest && highest > lowest ? `（最高 ${money(highest)}）` : ""}` : "依出發日期報價" },
-    { label: "出發日期", value: upcoming.length > 0 ? `${range}，共 ${upcoming.length} 團` : "由顧問依想出發的月份回覆" },
+    { label: "出發日期", value: upcoming.length > 0 ? `${range}，共 ${upcoming.length} 團` : "由 Yui 依想出發的月份回覆" },
     ...(upcoming.length > 0
-      ? [{ label: "可報名", value: open.length > 0 ? `${open.length} 團${next ? `，最近一團 ${next}` : ""}` : "目前公布的團期皆已額滿，可洽顧問候補或加開" }]
+      ? [{ label: "可報名", value: open.length > 0 ? `${open.length} 團${next ? `，最近一團 ${next}` : ""}` : "目前公布的團期皆已額滿，可找 Yui 排候補或問加開" }]
       : []),
     ...(airlines.length > 0 ? [{ label: "航空", value: airlines.join("、") }] : []),
     { label: "出團旅行社", value: [organizer, company.businessLicense].filter(Boolean).join("｜") },
@@ -77,9 +77,9 @@ export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: numbe
     summary +=
       open.length > 0
         ? `其中 ${open.length} 個仍可報名${priceText ? `，團費${priceText}` : ""}，最近可報名的出發日是 ${next}。`
-        : "目前皆已額滿，可洽顧問候補或詢問加開團期。";
+        : "目前皆已額滿，可找 Yui 排候補或詢問加開團期。";
   } else {
-    summary += `${priceText ? `參考團費${priceText}；` : ""}出發日期與實際團費由顧問依想出發的月份與人數回覆。`;
+    summary += `${priceText ? `參考團費${priceText}；` : ""}出發日期與實際團費由 Yui 依想出發的月份與人數回覆。`;
   }
   summary += flies;
 
@@ -89,8 +89,8 @@ export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: numbe
   add(
     `${trip.title}多少錢？`,
     lowest
-      ? `${prices.length > 0 ? `截至 ${asOf}，還能報名的團期裡` : "參考"}團費${priceText}${highest && highest > lowest ? `，依出發日期最高 ${money(highest)}` : ""}。實際費用以顧問回覆為準。`
-      : `團費依出發日期與人數而定，請透過 LINE 或詢問表單向${company.brandName}的顧問索取報價。`,
+      ? `${prices.length > 0 ? `截至 ${asOf}，還能報名的團期裡` : "參考"}團費${priceText}${highest && highest > lowest ? `，依出發日期最高 ${money(highest)}` : ""}。實際費用以 Yui 回覆為準。`
+      : `團費依出發日期與人數而定，請透過 LINE 或詢問表單向${company.brandName}的旅遊顧問 Yui 索取報價。`,
   );
   add(
     `${trip.title}什麼時候出發？`,
@@ -100,7 +100,7 @@ export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: numbe
             ? `最近可報名的是 ${open.slice(0, 5).map((departure) => dateLabel(departure.date)).join("、")}${open.length > 5 ? " 等" : ""}。`
             : "") +
           "完整日期見本頁「出發日期與團費」。"
-      : "這個行程的出發日期由顧問依你想出發的月份回覆，可透過 LINE 或詢問表單洽詢。",
+      : "這個行程的出發日期由 Yui 依你想出發的月份回覆，可透過 LINE 或詢問表單洽詢。",
   );
   if (airlines.length > 0) add(`${trip.title}搭哪家航空？`, `依出發日期搭乘${airlines.join("、")}，各團期的航空標示在出發日期旁。`);
   add(`怎麼報名${trip.title}？`, `在本頁選好出發日期後按「確認名額與完整團費」，或直接 LINE 找 Yui 聊旅行。行程由${licensed}出團。`);

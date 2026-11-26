@@ -21,7 +21,7 @@ import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 
-const description = "留下聯絡方式與想去的地方，找到了旅行社的業務顧問會在您方便的時段主動與您聯繫。";
+const description = "留下聯絡方式與想去的地方，找到了旅行社的旅遊顧問 Yui 會在您方便的時段主動與您聯繫。";
 
 const baseMetadata = {
   title: "聯絡表單",
@@ -103,10 +103,10 @@ export default async function ContactPage({
           <span />
           CONTACT US
         </p>
-        <SplitText as="h1" text="留下聯絡方式，讓顧問來找你。" />
+        <SplitText as="h1" text="留下聯絡方式，讓 Yui 來找你。" />
         <p className="contact-card-lede">
-          填寫下方表單後，我們會保存您的需求，並安排顧問於您希望的時段與您聯繫。
-          想先聊聊也可以直接用 LINE 找我們。
+          填寫下方表單後，Yui 會在您希望的時段與您聯繫。
+          想先聊聊，也可以直接用 LINE 找 Yui。
         </p>
 
         <ContactForm

@@ -92,7 +92,7 @@ export function DepartureBoard({
           </button>
         ) : null}
       </p>
-      <p className="board-price-note">團費依出發日期與航空公司不同，實際以顧問確認為準。</p>
+      <p className="board-price-note">團費依出發日期與航空公司不同，實際金額由 Yui 跟你確認。</p>
 
       {filtered.length === 0 && fullCount > 0 ? (
         <p className="board-empty-full">這裡的團期目前都已額滿，可以展開來看，並幫你排候補或找相近日期。</p>
@@ -214,14 +214,14 @@ export function DepartureBoardCta({ lineUrl }: { lineUrl: string }) {
     <section className="board-cta">
       <div>
         <h2>找到想去的團期了嗎？</h2>
-        <p>名額與最新價格以顧問回覆為準，留下需求我們會主動與你聯繫。</p>
+        <p>留下需求，Yui 會主動跟你確認名額與最新價格。</p>
       </div>
       <div className="board-cta-actions">
         <a className="button" href={lineUrl} target="_blank" rel="noreferrer">
           LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
         </a>
         <Link className="button button-secondary" href="/contact">
-          請顧問幫我規劃 <span aria-hidden="true">→</span>
+          請 Yui 幫我規劃 <span aria-hidden="true">→</span>
         </Link>
       </div>
     </section>

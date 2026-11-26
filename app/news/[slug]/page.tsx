@@ -183,7 +183,7 @@ export default async function NewsArticlePage({ params }: Params) {
 
       <section className="board-cta">
         <div>
-          <h2>{article.closing?.title ?? "有問題，問顧問最快。"}</h2>
+          <h2>{article.closing?.title ?? "有問題，問 Yui 最快。"}</h2>
           <p>{article.closing?.text ?? "想確認行程或出發前的準備，歡迎直接與我們聯繫。"}</p>
         </div>
         <div className="board-cta-actions">
