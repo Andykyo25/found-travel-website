@@ -25,6 +25,15 @@ test("the service worker keeps pages fresh and never touches the studio or API",
   assert.match(sw, /studio\|api/);
   assert.match(sw, /request\.method !== "GET"/);
   assert.match(sw, /OFFLINE_URL = "\/offline"/);
+  // 不能沿用瀏覽器 HTTP 快取裡的舊頁面（Cloudflare 會叫瀏覽器留 4 小時）。
+  assert.match(sw, /cache: "no-cache"/);
+  assert.match(sw, /Response\.redirect\(response\.url/);
+});
+
+test("the home screen app has its own back button", async () => {
+  const client = await readFile(new URL("../app/components/PwaClient.tsx", import.meta.url), "utf8");
+  assert.match(client, /standalone && pathname !== "\/"/);
+  assert.match(client, /router\.back\(\)/);
 });
 
 test("the install guide covers iPhone, Android and in-app browsers", () => {

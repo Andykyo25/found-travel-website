@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import "./pwa.css";
 
@@ -30,6 +30,13 @@ function subscribeOnline(callback: () => void) {
     window.removeEventListener("online", callback);
     window.removeEventListener("offline", callback);
   };
+}
+
+// 從主畫面打開時沒有瀏覽器的上一頁按鈕（iPhone 也沒有系統返回鍵），自己補一顆。
+function subscribeDisplayMode(callback: () => void) {
+  const query = window.matchMedia("(display-mode: standalone)");
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
 }
 
 function isStandalone() {
@@ -61,6 +68,8 @@ function writeStorage(key: string, value: string) {
 
 export function PwaClient() {
   const pathname = usePathname();
+  const router = useRouter();
+  const standalone = useSyncExternalStore(subscribeDisplayMode, isStandalone, () => false);
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   const [hint, setHint] = useState<"ios" | "install" | null>(null);
   const installEvent = useRef<InstallPromptEvent | null>(null);
@@ -120,8 +129,20 @@ export function PwaClient() {
     else setHint(null);
   };
 
+  const goBack = () => {
+    // 有上一頁就回上一頁；直接從連結打開（沒有上一頁）就回首頁。
+    if (window.history.length > 1) router.back();
+    else router.push("/");
+  };
+
   return (
     <>
+      {standalone && pathname !== "/" && !hiddenPaths.test(pathname) ? (
+        <button type="button" className="pwa-back" onClick={goBack} aria-label="回上一頁">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+          返回
+        </button>
+      ) : null}
       {online ? null : (
         <p className="pwa-offline" role="status">
           目前沒有網路，你看到的是上次瀏覽時存下的內容。團期與價格請以顧問確認為準。

@@ -5,7 +5,7 @@
 // 後台（/studio）與 API 完全不經過這裡。
 //
 // 改了快取規則就把 VERSION 加一，舊的快取會在新版啟用時清掉。
-const VERSION = "v1";
+const VERSION = "v2";
 // SHELL：離線頁和它需要的檔案，安裝時存好、不會被清掉。其他三個有數量上限。
 const SHELL = `found-shell-${VERSION}`;
 const PAGES = `found-pages-${VERSION}`;
@@ -58,9 +58,12 @@ async function store(cacheName, request, response) {
 async function networkFirstPage(event) {
   const { request } = event;
   try {
-    const response = await fetch(request);
-    // 只留真正的頁面；被轉址（例如換到正式網域）的不留。
-    if (!response.redirected) event.waitUntil(store(PAGES, request, response.clone()));
+    // 每次都向伺服器確認（cache: "no-cache"）：瀏覽器自己的 HTTP 快取可能還留著幾小時前的舊頁面，
+    // 業務改了團期或網站更新後，客人會看到舊的。navigate 請求不能直接加選項，所以用網址重新發一次。
+    const response = await fetch(request.url, { cache: "no-cache", credentials: "same-origin" });
+    // 被轉址（例如舊的行程網址、www）：讓瀏覽器自己轉過去，網址列才會是新網址；這種不存。
+    if (response.redirected) return Response.redirect(response.url, 302);
+    event.waitUntil(store(PAGES, request, response.clone()));
     return response;
   } catch {
     const cached = await caches.match(request, { cacheName: PAGES });
