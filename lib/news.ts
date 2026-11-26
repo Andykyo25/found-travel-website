@@ -62,6 +62,11 @@ export type NewsArticle = {
   sources: NewsLink[];
   disclaimer?: string;
   closing?: { title: string; text: string };
+  /**
+   * 文章底部「相關行程」要放的行程（行程網址代稱）。沒填就用文章團型卡裡的行程；
+   * 兩者都沒有（例如網站教學）就放最新的行程。
+   */
+  relatedTrips?: string[];
 };
 
 export const newsArticles: NewsArticle[] = [
@@ -748,6 +753,7 @@ export const newsArticles: NewsArticle[] = [
   },
   {
     slug: "tokyo-nikki-stay-and-charter",
+    relatedTrips: ["tokyo-value-5d", "tokyo-hakone-yurakujo-5d", "tokyo-highlights-5d"],
     title: "東京日記：西日暮里民宿＋台灣人司機接送包車，一次排好",
     shortTitle: "東京日記民宿包車",
     category: "東京住宿・包車",
@@ -921,6 +927,7 @@ export const newsArticles: NewsArticle[] = [
   },
   {
     slug: "japan-tax-free-2026",
+    relatedTrips: ["tokyo-highlights-5d", "osaka-nara-value-5d", "kyushu-highlights-5d"],
     title: "日本免稅新制 11/1 上路：退稅 3 種方式一次看懂",
     shortTitle: "日本免稅新制",
     category: "日本旅遊須知",
@@ -1206,6 +1213,18 @@ export function adjacentNews(slug: string, articles: NewsArticle[] = newsArticle
 }
 
 /** 延伸閱讀：同一類的優先，不夠再補最新的其他文章。 */
+/**
+ * 文章底部「相關行程」的行程代稱：手動指定的優先，否則從各張團型卡輪流取（每張的第一個、再每張的第二個…），
+ * 前幾個就會來自不同團型；某個行程下架時，頁面往後取就好。
+ */
+export function articleTripKeys(article: NewsArticle): string[] {
+  if (article.relatedTrips?.length) return [...new Set(article.relatedTrips)];
+  const routes = article.blocks.flatMap((block) => (block.kind === "routes" ? block.items.map((route) => route.trips) : []));
+  const longest = Math.max(0, ...routes.map((trips) => trips.length));
+  const keys = Array.from({ length: longest }, (_, index) => routes.map((trips) => trips[index])).flat();
+  return [...new Set(keys.filter(Boolean))];
+}
+
 export function relatedNews(slug: string, articles: NewsArticle[] = newsArticles, today = taipeiDate(), limit = 3) {
   const list = publishedNews(articles, today);
   const current = list.find((article) => article.slug === slug);

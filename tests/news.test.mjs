@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
-import { adjacentNews, findNewsArticle, newsArticles, newsDateLabel, newsListPage, newsPageSize, newsTopic, newsTopicByCategory, newsTopics, publishedNews, relatedNews, taipeiDate } from "../lib/news.ts";
+import { adjacentNews, articleTripKeys, findNewsArticle, newsArticles, newsDateLabel, newsListPage, newsPageSize, newsTopic, newsTopicByCategory, newsTopics, publishedNews, relatedNews, taipeiDate } from "../lib/news.ts";
 
 const validDate = /^\d{4}-\d{2}-\d{2}$/;
 const articleText = (article) => JSON.stringify(article);
@@ -178,4 +178,24 @@ test("article pages link to the previous, next and related articles", () => {
   assert.equal(adjacentNews("c", list, today).next, undefined);
   // 同類（出國須知）優先，再補其他最新的。
   assert.deepEqual(relatedNews("a", list, today).map((item) => item.slug), ["c", "b"]);
+});
+
+test("every article ends with related trips, falling back to the newest trips", async () => {
+  for (const article of newsArticles) {
+    const keys = articleTripKeys(article);
+    assert.equal(new Set(keys).size, keys.length, article.slug);
+    if (article.slug !== "add-to-home-screen") assert.ok(keys.length > 0, `${article.slug} has no related trips`);
+  }
+  assert.deepEqual(articleTripKeys(findNewsArticle("japan-tax-free-2026")), ["tokyo-highlights-5d", "osaka-nara-value-5d", "kyushu-highlights-5d"]);
+  const routes = { id: "r", title: "r", kind: "routes", lede: "", items: [
+    { name: "a", area: "", offer: "", text: "", highlights: [], trips: ["x-5d", "x-6d"] },
+    { name: "b", area: "", offer: "", text: "", highlights: [], trips: ["y-5d"] },
+    { name: "c", area: "", offer: "", text: "", highlights: [], trips: ["x-5d"] },
+  ] };
+  assert.deepEqual(articleTripKeys({ ...newsArticles[0], relatedTrips: undefined, blocks: [routes] }), ["x-5d", "y-5d", "x-6d"]);
+
+  const page = await readFile(new URL("../app/news/[slug]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /homepageTripOrder\(content\.trips\)/);
+  assert.match(page, /"相關行程" : "最近推出的行程"/);
+  assert.match(page, /LINE 找 Yui 聊旅行/);
 });
