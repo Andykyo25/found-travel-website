@@ -25,7 +25,10 @@ export function InquiryTracker() {
       const anchor = (event.target as Element | null)?.closest?.("a[href]");
       if (!(anchor instanceof HTMLAnchorElement) || !isOfficialAccountLink(anchor.href)) return;
       if (window.location.pathname.startsWith("/studio")) return;
-      const { lineId, lineMessage } = anchor.dataset;
+      // 行程頁上任何一個 LINE 按鈕（含頁首圖示、選單）都帶同一段預填訊息。
+      const source = anchor.dataset.lineMessage ? anchor : document.querySelector<HTMLElement>("[data-line-message]");
+      const lineId = source?.dataset.lineId;
+      const lineMessage = source?.dataset.lineMessage;
       if (lineId && lineMessage && isPhone()) anchor.href = lineMessageUrl(lineId, lineMessage);
       recordInquiry("line");
     };

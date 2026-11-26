@@ -119,3 +119,30 @@
     animation: none;
   }
 }
+
+/* 從主畫面打開時的「返回」按鈕：左下角，跟右下角的 LINE 按鈕對稱 */
+.pwa-back {
+  position: fixed;
+  left: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 0 18px 0 12px;
+  border: 1px solid rgba(38, 58, 49, 0.18);
+  border-radius: 999px;
+  background: rgba(250, 248, 243, 0.94);
+  color: #263a31;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 24px rgba(20, 30, 26, 0.16);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+.pwa-back:active { transform: scale(0.97); }
