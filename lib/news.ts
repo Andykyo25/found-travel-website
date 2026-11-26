@@ -1149,3 +1149,68 @@ export function findNewsArticle(slug: string, articles: NewsArticle[] = newsArti
 export function newsDateLabel(date: string) {
   return date.replaceAll("-", ".");
 }
+
+// ---------- 列表分類、分頁與文章之間的導覽 ----------
+
+/** 列表上的分類按鈕。文章的 category 可以寫得細（例如「韓國旅遊須知」），這裡歸成幾個大類。 */
+export const newsTopics = [
+  { slug: "guides", name: "出國須知" },
+  { slug: "planning", name: "旅遊規劃" },
+  { slug: "offers", name: "優惠與新行程" },
+  { slug: "how-to", name: "網站教學" },
+] as const;
+
+export type NewsTopicSlug = (typeof newsTopics)[number]["slug"];
+
+/** 新增文章用了新的 category，要在這裡補上歸到哪一類（測試會檢查）。 */
+export const newsTopicByCategory: Record<string, NewsTopicSlug> = {
+  日本旅遊須知: "guides",
+  韓國旅遊須知: "guides",
+  北歐旅遊須知: "guides",
+  旅遊規劃: "planning",
+  限時優惠: "offers",
+  "新航線・新行程": "offers",
+  "東京住宿・包車": "offers",
+  網站使用教學: "how-to",
+};
+
+export function newsTopic(article: Pick<NewsArticle, "category">): NewsTopicSlug {
+  return newsTopicByCategory[article.category] ?? (article.category.includes("須知") ? "guides" : "planning");
+}
+
+export function findNewsTopic(slug: string | undefined) {
+  return newsTopics.find((topic) => topic.slug === slug);
+}
+
+export const newsPageSize = 12;
+
+/** 列表的一頁：可依分類篩選；頁碼超出範圍就回到最接近的那一頁。 */
+export function newsListPage(articles: NewsArticle[], { topic, page = 1 }: { topic?: NewsTopicSlug; page?: number } = {}) {
+  const filtered = topic ? articles.filter((article) => newsTopic(article) === topic) : articles;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / newsPageSize));
+  const current = Math.min(Math.max(1, Math.floor(page) || 1), pageCount);
+  return {
+    items: filtered.slice((current - 1) * newsPageSize, current * newsPageSize),
+    page: current,
+    pageCount,
+    total: filtered.length,
+  };
+}
+
+/** 上一篇（較早發布）與下一篇（較新發布）。 */
+export function adjacentNews(slug: string, articles: NewsArticle[] = newsArticles, today = taipeiDate()) {
+  const list = publishedNews(articles, today);
+  const index = list.findIndex((article) => article.slug === slug);
+  if (index < 0) return { previous: undefined, next: undefined };
+  return { previous: list[index + 1], next: list[index - 1] };
+}
+
+/** 延伸閱讀：同一類的優先，不夠再補最新的其他文章。 */
+export function relatedNews(slug: string, articles: NewsArticle[] = newsArticles, today = taipeiDate(), limit = 3) {
+  const list = publishedNews(articles, today);
+  const current = list.find((article) => article.slug === slug);
+  if (!current) return [];
+  const others = list.filter((article) => article.slug !== slug);
+  const topic = newsTopic(current);
+  return [...others.filter((article) => newsTopic(article) === topic), ...others.filter((article) => newsTopic(article) !== topic)].slice(0, limit);
+}
