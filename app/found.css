@@ -163,14 +163,6 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
 .fh-slides button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 .fh-slide-loading { position: absolute; z-index: 7; left: var(--f-gutter); bottom: 90px; padding: 8px 14px; background: var(--f-forest); font-size: 12px; }
 
-/* ---------- 公告跑馬燈 ---------- */
-.fh-marquee { overflow: hidden; background: var(--f-forest); color: var(--f-paper); }
-.fh-marquee-track { display: flex; width: max-content; animation: fh-marquee 90s linear infinite; }
-.fh-marquee:hover .fh-marquee-track { animation-play-state: paused; }
-.fh-marquee ul { display: flex; flex: none; margin: 0; padding: 0; list-style: none; }
-.fh-marquee li { display: flex; align-items: center; gap: clamp(28px, 4vw, 64px); padding: clamp(24px, 3vw, 42px) clamp(28px, 4vw, 64px) clamp(24px, 3vw, 42px) 0; font: 500 clamp(1.5rem, 1rem + 1.9vw, 2.9rem)/1 var(--f-serif); letter-spacing: 0.02em; white-space: nowrap; }
-.fh-marquee li i { width: 0.34em; height: 0.34em; border-radius: 50%; background: var(--f-pink); flex: none; }
-
 /* ---------- 02 找旅行 ---------- */
 .fh-finder { padding-block: clamp(80px, 11vw, 170px); background: var(--f-paper); }
 .fh-finder-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: clamp(44px, 8vw, 140px); align-items: center; }
@@ -380,7 +372,6 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
 @keyframes fh-mark { from { opacity: 0; scale: 0.4; } to { opacity: 1; scale: 1; } }
 @keyframes fh-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes fh-scroll { 0% { transform: translateY(-101%); } 55%, 100% { transform: translateY(101%); } }
-@keyframes fh-marquee { to { transform: translate3d(-50%, 0, 0); } }
 @keyframes fh-underline { 0% { transform: scaleX(1); transform-origin: right; } 49% { transform: scaleX(0); transform-origin: right; } 50% { transform: scaleX(0); transform-origin: left; } 100% { transform: scaleX(1); transform-origin: left; } }
 
 /* ---------- 響應式 ---------- */
@@ -418,7 +409,6 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
   .fh-slide-arrow:not(.fh-slide-toggle) { display: none; }
   .fh-cta { flex-direction: column; align-items: flex-start; gap: 6px; }
   .fh-btn { min-height: 54px; }
-  .fh-marquee li { font-size: 1.45rem; }
   .fh-atlas-tabs { gap: 0 22px; }
   .fh .fh-tools-panel .tool { padding-inline: 16px 8px; }
   .fh .fh-tools-panel .tool:nth-child(even) { padding-left: 18px; }
@@ -447,9 +437,6 @@ html:has(.site-header.is-home[data-scrolled="false"]) .line-fab { opacity: 0; tr
   .fh-slide { clip-path: none; opacity: 0; }
   .fh-slide.is-active { opacity: 1; }
   .fh-slide-stack, .fh-hero-copy { transform: none; opacity: 1; }
-  .fh-marquee-track { width: auto; flex-wrap: wrap; justify-content: center; }
-  .fh-marquee ul:nth-child(2), .fh-marquee li.is-copy { display: none; }
-  .fh-marquee ul { flex-wrap: wrap; justify-content: center; }
   .fh-film-frame { clip-path: none; }
 }
 
