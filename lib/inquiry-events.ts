@@ -92,12 +92,13 @@ export function inquirySinceDate(days: number, now = new Date()) {
 }
 
 /** 行程詢問的 LINE 預填訊息：行程名稱、已選的團期與方案、留空給客人填的欄位，最後附上行程頁網址。 */
-export function tripLineMessage({ title, url, departure, plan }: { title: string; url: string; departure?: string; plan?: string }) {
+export function tripLineMessage({ title, url, departure, plan, waitlist = false }: { title: string; url: string; departure?: string; plan?: string; waitlist?: boolean }) {
   return [
-    `你好，我想詢問「${title}」`,
+    waitlist ? `你好，我想排候補「${title}」` : `你好，我想詢問「${title}」`,
     departure ? `出發日期：${departure}` : "想出發的月份：",
     plan ? `方案：${plan}` : "",
     "人數：",
+    waitlist ? "候補不到的話，也可以推薦相近日期" : "",
     url,
   ]
     .filter(Boolean)

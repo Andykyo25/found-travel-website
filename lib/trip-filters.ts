@@ -199,6 +199,8 @@ export type DepartureRow = {
   documentUrl: string;
   planCount: number;
   departureId: string;
+  /** 團期備註原文（「額滿」「即將額滿」等），用 departureAvailability 判斷狀態。 */
+  note: string;
   details: string;
   date: string;
   price: string;
@@ -224,6 +226,7 @@ export function departureRows(trips: Trip[]): DepartureRow[] {
         documentUrl: plans.length === 1 ? plans[0].documentUrl : "",
         planCount: plans.length,
         departureId: departure.id,
+        note: departure.note ?? "",
         details: [
           departure.note,
           ...plans.map((plan) => `${plan.airline}・${plan.title}`),

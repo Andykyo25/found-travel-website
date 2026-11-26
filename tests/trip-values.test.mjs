@@ -158,3 +158,17 @@ test("starting price ignores departures that are already full", async () => {
   const allFull = departures.slice(0, 2);
   assert.equal(resolveTripPrice({ departures: allFull, price: "價格洽詢", priceMode: "auto" }, today), "NT$33,900 起／人");
 });
+
+test("departure notes decide full, almost full and open, and full ones sort last", async () => {
+  const { departureAvailability, fullDeparturesLast, bookableDepartures } = await import("../lib/trip-values.ts");
+  assert.equal(departureAvailability("額滿"), "full");
+  assert.equal(departureAvailability("已額滿 / 保證出團"), "full");
+  // 「即將額滿」也含「額滿」兩個字，不能被當成額滿。
+  assert.equal(departureAvailability("即將額滿"), "almost");
+  assert.equal(departureAvailability("保證出團"), "open");
+  assert.equal(departureAvailability(undefined), "open");
+  const list = [{ id: "cheap-full", note: "額滿" }, { id: "open" }, { id: "almost", note: "即將額滿" }];
+  assert.deepEqual(fullDeparturesLast(list, (item) => item.note).map((item) => item.id), ["open", "almost", "cheap-full"]);
+  const departures = [{ date: "2099-01-01", note: "額滿" }, { date: "2099-02-01", note: "即將額滿" }];
+  assert.deepEqual(bookableDepartures(departures, 0).map((item) => item.date), ["2099-02-01"]);
+});

@@ -112,11 +112,30 @@ export function formatPrice(value: string, from = false) {
 }
 
 /**
+ * 團期狀態看備註：「額滿」= 已額滿（可排候補），「即將額滿」= 還能報但快沒了。
+ * 「即將額滿」也包含「額滿」兩個字，要先判斷。
+ */
+export type DepartureAvailability = "full" | "almost" | "open";
+
+export function departureAvailability(note: string | undefined): DepartureAvailability {
+  const text = note ?? "";
+  if (text.includes("即將額滿")) return "almost";
+  if (text.includes("額滿")) return "full";
+  return "open";
+}
+
+/** 還能報名的排前面、額滿的排最後，同一組內維持原本的順序（日期或價格）。 */
+export function fullDeparturesLast<T>(list: T[], noteOf: (item: T) => string | undefined): T[] {
+  const full = (item: T) => departureAvailability(noteOf(item)) === "full";
+  return [...list.filter((item) => !full(item)), ...list.filter(full)];
+}
+
+/**
  * 算起價用的團期：還沒出發、而且還能報名的。備註是「額滿」的團不算，
  * 免得起價寫的是一個已經報不到的價格；全部都額滿時才退回用所有未出發的團。
  */
 export function bookableDepartures<T extends { date: string; note?: string }>(departures: T[], today = taipeiTodayTime()) {
   const upcoming = upcomingDepartures(departures, today);
-  const open = upcoming.filter((item) => !(item.note ?? "").includes("額滿") || (item.note ?? "").includes("即將額滿"));
+  const open = upcoming.filter((item) => departureAvailability(item.note) !== "full");
   return open.length > 0 ? open : upcoming;
 }
