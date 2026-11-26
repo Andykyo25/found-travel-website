@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
 import { HeroCarousel } from "./components/HeroCarousel";
+import { TravelImage } from "./components/TravelImage";
+import { travelerReviews } from "@/lib/traveler-reviews";
 import { ParticleGlobe } from "./components/ParticleGlobe";
 import Link from "next/link";
 import { getSiteContent } from "@/lib/site-content";
@@ -50,6 +51,11 @@ function Arrow({ direction = "right" }: { direction?: "right" | "up-right" | "do
     </svg>
   );
 }
+
+// 首頁信任區塊的三則旅客回饋：比較後選擇 Yui、長輩同行、陪家人第一次出國。完整摘要在關於我們。
+const homeReviews = ["張家界・八日旅行", "九州・家庭旅行", "陪家人第一次出國"]
+  .map((journey) => travelerReviews.find((review) => review.journey === journey))
+  .filter((review) => review !== undefined);
 
 export default async function Home({
   searchParams,
@@ -282,26 +288,49 @@ export default async function Home({
         <div className="fh-wrap">
           <p className="fh-eyebrow" data-rv><i>05</i>WHY FOUND</p>
           <SplitText as="h2" id="why-title" className="fh-statement" text="找到的不只是景點，是適合你的旅行方式。" lit track="enter" />
-          <div className="fh-why-body" data-rv>
-            <p>
-              找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由 Yui 陪你完成。
-            </p>
-            <Link className="fh-link" href="/about">
-              認識我們・閱讀旅人好評 <Arrow direction="up-right" />
-            </Link>
-          </div>
-          <div className="fh-values">
-            {[
-              ["01", "先聽，再排行程", "從同行者、體力與在意的小事開始，不套用制式答案。"],
-              ["02", "資訊說清楚", "費用、自由活動、移動時間與風險，在出發前完整確認。"],
-              ["03", "旅途中找得到人", "行前提醒、當地變動與回程協助，都有同一個窗口接手。"],
-            ].map(([no, title, text], index) => (
-              <article key={no} data-rv style={{ "--rv-i": index } as CSSProperties}>
-                <span className="fh-value-no">{no}</span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
+          {/* 信任區塊只放大綱：Yui 本人、三則旅客回饋、服務保障；完整內容在關於我們。 */}
+          <div className="fh-why-grid">
+            <figure className="fh-why-photo" data-rv>
+              <TravelImage src="/about/yui-hanbok.jpg" alt="Yui 穿著韓服，站在山城的觀景台上" sizes="(max-width: 760px) 100vw, 40vw" />
+              <figcaption>
+                <strong>Yui</strong>
+                <span>你的旅行顧問・走過 20 多個國家、在日本生活五年</span>
+              </figcaption>
+            </figure>
+
+            <div className="fh-why-main">
+              <div className="fh-why-body" data-rv>
+                <p>
+                  找到了旅行社相信「旅行應該被好好照顧」。從第一次聊想法、挑航班與住宿，到旅途中需要協助，都由 Yui 陪你完成。
+                </p>
+              </div>
+
+              <div className="fh-why-block" data-rv>
+                <h3>旅人怎麼說</h3>
+                <ul className="fh-why-reviews">
+                  {homeReviews.map((review) => (
+                    <li key={review.sourceUrl}>
+                      <span className="fh-why-stars" aria-label={`${review.rating} 顆星`}>★★★★★</span>
+                      <strong>{review.title}</strong>
+                      <small>{review.journey}・Google 評論摘要</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="fh-why-block" data-rv>
+                <h3>服務保障</h3>
+                <ul className="fh-why-promises">
+                  <li><strong>合法立案的綜合旅行社</strong><small>{content.businessLicense}</small></li>
+                  <li><strong>品保協會會員</strong><small>{content.qualityLicense}</small></li>
+                  <li><strong>從諮詢到回國，同一個窗口</strong><small>行前提醒、當地變動與回程協助，都找得到 Yui</small></li>
+                </ul>
+              </div>
+
+              <Link className="fh-link" href="/about#traveler-stories" data-rv>
+                認識 Yui・看全部旅人好評 <Arrow direction="up-right" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
