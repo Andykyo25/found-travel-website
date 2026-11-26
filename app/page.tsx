@@ -315,10 +315,10 @@ export default async function Home({
           </div>
           <div className="fh-contact-actions" data-rv>
             <a className="fh-btn fh-btn-light fh-btn-lg" href={content.lineUrl} target="_blank" rel="noreferrer" data-magnetic>
-              LINE 聯絡顧問 <Arrow direction="up-right" />
+              LINE 找 Yui 聊旅行 <Arrow direction="up-right" />
             </a>
             <Link className="fh-btn fh-btn-ghost fh-btn-lg" href="/contact" data-magnetic>
-              填寫聯絡表單 <Arrow />
+              請顧問幫我規劃 <Arrow />
             </Link>
             <span className="fh-contact-company">{content.companyName}</span>
           </div>

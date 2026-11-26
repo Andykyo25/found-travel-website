@@ -45,7 +45,7 @@ export function CommunityInvite({
         <a className="community-button" href={url} target="_blank" rel="noopener noreferrer">
           加入社群 <span aria-hidden="true">↗</span>
         </a>
-        <small>要報名或問自己的行程，請用「LINE 聯絡顧問」</small>
+        <small>要報名或問自己的行程，請用「LINE 找 Yui 聊旅行」</small>
       </div>
     </aside>
   );

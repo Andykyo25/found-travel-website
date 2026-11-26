@@ -39,7 +39,7 @@ function FacebookIcon() {
 export function SocialLinks({ lineUrl, labels = false, className = "" }: { lineUrl: string; labels?: boolean; className?: string }) {
   return (
     <div className={`site-social${className ? ` ${className}` : ""}`}>
-      <a href={lineUrl} target="_blank" rel="noopener noreferrer" aria-label="透過 LINE 聯絡顧問" title="LINE">
+      <a href={lineUrl} target="_blank" rel="noopener noreferrer" aria-label="LINE 找 Yui 聊旅行" title="LINE">
         <LineIcon />
         {labels ? "LINE" : null}
       </a>

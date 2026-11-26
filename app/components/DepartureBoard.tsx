@@ -117,7 +117,7 @@ export function DepartureBoard({
                     className="board-link primary"
                     href={`/contact?trip=${encodeURIComponent(row.tripId)}&departure=${encodeURIComponent(row.departureId)}`}
                   >
-                    詢問此團期
+                    確認名額與完整團費
                   </Link>
                   {row.documentUrl ? (
                     <a
@@ -185,10 +185,10 @@ export function DepartureBoardCta({ lineUrl }: { lineUrl: string }) {
       </div>
       <div className="board-cta-actions">
         <a className="button" href={lineUrl} target="_blank" rel="noreferrer">
-          LINE 聯絡顧問 <span aria-hidden="true">↗</span>
+          LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
         </a>
         <Link className="button button-secondary" href="/contact">
-          填寫聯絡表單 <span aria-hidden="true">→</span>
+          請顧問幫我規劃 <span aria-hidden="true">→</span>
         </Link>
       </div>
     </section>

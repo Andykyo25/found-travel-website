@@ -106,7 +106,7 @@ export function PackageCard({
           </small>
         </div>
         <Link className="fh-card-book" href={tripPath(trip)} aria-label={`查看${trip.title}行程內容`}>
-          查看行程
+          看看這趟旅行怎麼玩
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
         </Link>
       </div>

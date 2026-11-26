@@ -124,7 +124,8 @@ export default async function TripPage({ params }: PageProps) {
                 className="button"
                 href={`/contact?trip=${encodeURIComponent(trip.id)}`}
               >
-                諮詢這趟旅行
+                {/* 有公布團期的問名額；還沒公布的（價格洽詢）問什麼時候出發，不暗示已經有團位。 */}
+                {departures.length > 0 ? "幫我確認這團的名額" : "問問這團什麼時候出發"}
               </Link>
               {itinerary.days.length ? (
                 <a className="fh-link" href="#itinerary">
@@ -204,8 +205,8 @@ export default async function TripPage({ params }: PageProps) {
           ) : (
             <div className="dates-empty">
               告訴我們想出發的月份與人數，顧問會回覆可成行的團期與團費。{" "}
-              <Link href={`/contact?trip=${encodeURIComponent(trip.id)}`}>填寫詢問表單</Link>
-              ，或直接透過 LINE 聯絡。
+              <Link href={`/contact?trip=${encodeURIComponent(trip.id)}`}>請顧問幫我規劃</Link>
+              ，或直接 LINE 找 Yui 聊旅行。
             </div>
           )}
 
@@ -248,7 +249,7 @@ export default async function TripPage({ params }: PageProps) {
           rel="noreferrer"
           {...linePrefill}
         >
-          LINE 聯絡顧問報名 <span aria-hidden="true">↗</span>
+          LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
         </a>
       </section>
 

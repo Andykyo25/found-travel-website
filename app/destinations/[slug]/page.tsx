@@ -133,7 +133,7 @@ export default async function DestinationPage({ params }: PageProps) {
                   </div>
                   <div className="board-actions">
                     <Link className="board-link primary" href={tripPath(trip)} aria-label={`查看${trip.title}行程內容`}>
-                      查看行程
+                      看看這趟旅行怎麼玩
                     </Link>
                     <Link className="board-link" href={`/contact?trip=${encodeURIComponent(trip.id)}`} aria-label={`詢問${trip.title}`}>
                       詢問報價
@@ -173,7 +173,7 @@ export default async function DestinationPage({ params }: PageProps) {
           </div>
           <div className="board-cta-actions">
             <a className="button" href={content.lineUrl} target="_blank" rel="noreferrer">
-              LINE 聯絡顧問 <span aria-hidden="true">↗</span>
+              LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
             </a>
             <Link className="button button-secondary" href="/find-trip">
               幫我找旅行 <span aria-hidden="true">→</span>
