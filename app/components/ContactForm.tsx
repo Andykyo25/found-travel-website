@@ -97,7 +97,7 @@ export function ContactForm({
         </p>
         <div className="contact-success-actions">
           <a className="button" href={lineUrl} target="_blank" rel="noreferrer">
-            LINE 聯絡顧問 <span aria-hidden="true">↗</span>
+            LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
           </a>
           <Link className="button button-secondary" href="/">
             回到首頁

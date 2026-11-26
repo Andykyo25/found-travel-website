@@ -188,7 +188,7 @@ export default async function NewsArticlePage({ params }: Params) {
         </div>
         <div className="board-cta-actions">
           <a className="button" href={content.lineUrl} target="_blank" rel="noreferrer">
-            LINE 聯絡顧問 <span aria-hidden="true">↗</span>
+            LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
           </a>
           <Link className="button button-secondary" href="/dates">
             查看出發團期 <span aria-hidden="true">→</span>

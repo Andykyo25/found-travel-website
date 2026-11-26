@@ -213,7 +213,7 @@ export default async function AboutPage() {
 
     <section className={styles.contact} aria-labelledby="contact-title">
       <p className={styles.eyebrow}>YOUR NEXT CHAPTER</p><h2 id="contact-title">下一段旅程，<br />讓 Yui 陪你一起出發。</h2><p>一個想去的地方、一段期待的假期。<br />還沒想好也沒關係，先跟 Yui 聊聊。</p>
-      <div className={styles.contactActions}><a href={content.lineUrl} target="_blank" rel="noopener noreferrer">LINE 找 Yui <span aria-hidden="true">↗</span></a><Link href="/contact">填寫聯絡表單 <span aria-hidden="true">→</span></Link></div>
+      <div className={styles.contactActions}><a href={content.lineUrl} target="_blank" rel="noopener noreferrer">LINE 找 Yui <span aria-hidden="true">↗</span></a><Link href="/contact">請顧問幫我規劃 <span aria-hidden="true">→</span></Link></div>
     </section>
 
     <LineFloatingButton lineUrl={content.lineUrl} />

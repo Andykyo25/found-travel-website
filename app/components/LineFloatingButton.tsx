@@ -14,8 +14,8 @@ export function LineFloatingButton({
       href={lineUrl}
       target="_blank"
       rel="noreferrer"
-      aria-label="透過 LINE 聯絡顧問"
-      title="LINE 聯絡顧問"
+      aria-label="LINE 找 Yui 聊旅行"
+      title="LINE 找 Yui 聊旅行"
       {...prefill}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -74,7 +74,7 @@ export function DepartureTable({
                     className="board-link"
                     href={`/contact?trip=${encodeURIComponent(tripId)}&departure=${encodeURIComponent(departure.id)}`}
                   >
-                    詢問此團期
+                    確認名額與完整團費
                   </Link>
                 </td>
                 <td className="dates-price">{formatPrice(departure.price)}</td>

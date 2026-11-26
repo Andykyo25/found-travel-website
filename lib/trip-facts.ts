@@ -103,7 +103,7 @@ export function tripFacts(trip: FactTrip, company: FactCompany, todayTime: numbe
       : "這個行程的出發日期由顧問依你想出發的月份回覆，可透過 LINE 或詢問表單洽詢。",
   );
   if (airlines.length > 0) add(`${trip.title}搭哪家航空？`, `依出發日期搭乘${airlines.join("、")}，各團期的航空標示在出發日期旁。`);
-  add(`怎麼報名${trip.title}？`, `在本頁選好出發日期後按「詢問此團期」，或直接用 LINE 聯絡顧問。行程由${licensed}出團。`);
+  add(`怎麼報名${trip.title}？`, `在本頁選好出發日期後按「確認名額與完整團費」，或直接 LINE 找 Yui 聊旅行。行程由${licensed}出團。`);
 
   return { summary, items, faqs };
 }

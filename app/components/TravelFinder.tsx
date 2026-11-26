@@ -44,7 +44,7 @@ function ChoiceCard({ candidate: c, departureId, selected, disabled, compact, on
       {d?.note && <p className="finder-note">團期備註：{d.note}</p>}
       {c.reasons.length > 0 && <p className="finder-match">{c.reasons.join(" · ")}</p>}
       {c.unconfirmed.length > 0 && <p className="finder-pending">還要確認：{c.unconfirmed.join("、")}</p>}
-      <div className="finder-actions"><button type="button" className="button button-secondary" aria-pressed={selected} disabled={disabled} onClick={onSelect}>{selected ? "✓ 已收藏，點此移除" : "♡ 放進比較清單"}</button><Link className="button" href={`${tripPath(c.trip)}#plan-${encodeURIComponent(c.plan.id)}`}>查看行程 →</Link><a href={c.plan.documentUrl} target="_blank" rel="noreferrer">{c.plan.documentType === "pdf" ? "開啟行程 PDF ↗" : "開啟行程文件 ↗"}</a></div>
+      <div className="finder-actions"><button type="button" className="button button-secondary" aria-pressed={selected} disabled={disabled} onClick={onSelect}>{selected ? "✓ 已收藏，點此移除" : "♡ 放進比較清單"}</button><Link className="button" href={`${tripPath(c.trip)}#plan-${encodeURIComponent(c.plan.id)}`}>看看這趟旅行怎麼玩 →</Link><a href={c.plan.documentUrl} target="_blank" rel="noreferrer">{c.plan.documentType === "pdf" ? "開啟行程 PDF ↗" : "開啟行程文件 ↗"}</a></div>
     </div>
   </article>;
 }

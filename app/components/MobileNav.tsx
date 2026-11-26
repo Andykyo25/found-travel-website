@@ -179,7 +179,7 @@ export function MobileNav({
                     href="/contact"
                     onClick={closeForNavigation}
                   >
-                    填寫聯絡表單 <span aria-hidden="true">→</span>
+                    請顧問幫我規劃 <span aria-hidden="true">→</span>
                   </Link>
                   <a
                     className="button button-secondary"
@@ -188,7 +188,7 @@ export function MobileNav({
                     rel="noreferrer"
                     onClick={closeForNavigation}
                   >
-                    LINE 聯絡顧問 <span aria-hidden="true">↗</span>
+                    LINE 找 Yui 聊旅行 <span aria-hidden="true">↗</span>
                   </a>
                   <a
                     className="button button-secondary"
