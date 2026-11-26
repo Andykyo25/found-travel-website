@@ -135,7 +135,7 @@ export const defaultSiteContent: SiteContent = {
   videoUrl: "/media/homepage.mp4",
   contactTitle: "下一趟旅行，讓我們一起找到。",
   contactText:
-    "告訴我們想去的地方、預計日期與同行者，業務顧問會透過 LINE 一對一協助你規劃。",
+    "告訴我們想去的地方、預計日期與同行者，Yui 會透過 LINE 一對一協助你規劃。",
   lineUrl: "https://lin.ee/OR5AYhI",
   communityUrl:
     "https://line.me/ti/g2/OI0fchc9N70U-zfIzYjhkJTPQVgshxM22V5X7A?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",

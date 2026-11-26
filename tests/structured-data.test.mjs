@@ -207,7 +207,7 @@ test("trip facts give a quotable summary and answers drawn only from trip data",
 
   // 沒有團期的行程：不能說出不存在的日期或名額。
   const undated = tripFacts({ title: "豪華檳城5日", region: "檳城", days: "5日", price: "價格洽詢", plans: [{ airline: "航空方案" }], departures: [] }, company, today);
-  assert.equal(undated.summary, "「豪華檳城5日」是找到了旅行社出團的檳城 5日團體行程。出發日期與實際團費由顧問依想出發的月份與人數回覆。");
+  assert.equal(undated.summary, "「豪華檳城5日」是找到了旅行社出團的檳城 5日團體行程。出發日期與實際團費由 Yui 依想出發的月份與人數回覆。");
   assert.deepEqual(undated.faqs.map((faq) => faq.question), ["豪華檳城5日多少錢？", "豪華檳城5日什麼時候出發？", "怎麼報名豪華檳城5日？"]);
   assert.equal(undated.items.some((item) => item.label === "可報名" || item.label === "航空"), false);
 });

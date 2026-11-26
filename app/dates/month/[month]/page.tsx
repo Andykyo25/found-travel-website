@@ -78,7 +78,7 @@ export default async function MonthDeparturesPage({ params }: PageProps) {
         <SplitText as="h1" text={`${label}出發團期`} />
         <p className="board-lede">
           {label}可報名的出發日期與團費，依日期由近到遠排列。
-          名額與最新價格以業務顧問回覆為準。
+          名額與最新價格以 Yui 回覆為準。
         </p>
       </section>
 

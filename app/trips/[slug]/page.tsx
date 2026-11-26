@@ -166,7 +166,7 @@ export default async function TripPage({ params }: PageProps) {
               </h2>
               <p>
                 {plans.length > 1
-                  ? "先比較航空、航班時段與住宿，再選出發日期，查看對應版本的 PDF 或詢問顧問。"
+                  ? "先比較航空、航班時段與住宿，再選出發日期，查看對應版本的 PDF 或直接問 Yui。"
                   : "查看航空安排、適用團期與完整行程資料。"}
               </p>
             </div>
@@ -190,10 +190,10 @@ export default async function TripPage({ params }: PageProps) {
             <h2>{departures.length > 0 ? "出發日期與團費" : "團期與報價洽詢"}</h2>
             <p>
               {departures.length === 0
-                ? "這個行程的出發日期與團費，由顧問依你想出發的時間回覆。"
+                ? "這個行程的出發日期與團費，Yui 會依你想出發的時間回覆。"
                 : plans.length > 0
                   ? "可點選方案標籤回到對應的完整行程資料。"
-                  : "實際團位與價格請洽業務顧問確認。"}
+                  : "實際團位與價格請找 Yui 確認。"}
             </p>
           </div>
           {departures.length > 0 ? (
@@ -204,14 +204,14 @@ export default async function TripPage({ params }: PageProps) {
             />
           ) : (
             <div className="dates-empty">
-              告訴我們想出發的月份與人數，顧問會回覆可成行的團期與團費。{" "}
-              <Link href={`/contact?trip=${encodeURIComponent(trip.id)}`}>請顧問幫我規劃</Link>
+              告訴我們想出發的月份與人數，Yui 會回覆可成行的團期與團費。{" "}
+              <Link href={`/contact?trip=${encodeURIComponent(trip.id)}`}>請 Yui 幫我規劃</Link>
               ，或直接 LINE 找 Yui 聊旅行。
             </div>
           )}
 
           <p className="dates-footnote">
-            日期與價格為即時參考，團費依出發日期與航空公司不同，實際以業務顧問回覆為準。
+            日期與價格為即時參考，團費依出發日期與航空公司不同，實際以 Yui 回覆為準。
           </p>
           <CommunityInline
             url={content.communityUrl}

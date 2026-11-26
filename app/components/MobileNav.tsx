@@ -179,7 +179,7 @@ export function MobileNav({
                     href="/contact"
                     onClick={closeForNavigation}
                   >
-                    請顧問幫我規劃 <span aria-hidden="true">→</span>
+                    請 Yui 幫我規劃 <span aria-hidden="true">→</span>
                   </Link>
                   <a
                     className="button button-secondary"

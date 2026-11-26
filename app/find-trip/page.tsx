@@ -9,7 +9,7 @@ import { SplitText } from "@/app/components/SplitText";
 
 export const dynamic = "force-dynamic";
 const title = "幫我找適合的旅行：依日期、預算與目的地比較行程";
-const description = "還沒決定去哪裡？依序選旅行方式、目的地、可出發日期、出發機場、每人預算與人數，從日本、韓國、歐洲、東南亞等行程中找出符合條件的選擇並互相比較，再交給顧問確認細節，不用先留電話。";
+const description = "還沒決定去哪裡？依序選旅行方式、目的地、可出發日期、出發機場、每人預算與人數，從日本、韓國、歐洲、東南亞等行程中找出符合條件的選擇並互相比較，再交給 Yui 確認細節，不用先留電話。";
 export const metadata = { title, description, alternates: { canonical: "/find-trip" }, ...socialMetadata({ title, description, path: "/find-trip" }) };
 
 export default async function FindTripPage() {
@@ -23,7 +23,7 @@ export default async function FindTripPage() {
     <a className="skip-link" href="#finder-content">跳至旅行需求整理</a>
     <SiteHeader brandName={content.brandName} lineUrl={content.lineUrl} active="/find-trip" />
     <div className="finder-intro" id="finder-content"><p className="eyebrow">FIND YOUR JOURNEY</p><SplitText as="h1" text="先說說，你想怎麼旅行？" /><p>不用先留電話。整理幾個想法，找到值得比較的選擇，再一起確認細節。</p></div>
-    {!available && <p role="status" className="finder-empty">行程資料暫時無法載入，請稍後重試。您仍可先整理需求交給顧問；目前不提供商品配對。</p>}
+    {!available && <p role="status" className="finder-empty">行程資料暫時無法載入，請稍後重試。您仍可先整理需求交給 Yui；目前不提供商品配對。</p>}
     <TravelFinder trips={finderTrips(content.trips, today)} lineUrl={content.lineUrl} today={today} />
   </main>
   <SiteFooter content={content} />

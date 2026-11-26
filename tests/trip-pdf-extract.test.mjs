@@ -172,3 +172,25 @@ test("the studio previews the PDF that the trip page uses and can copy it into e
   assert.match(editor, /onChange\(\{ itinerary: \[\], includes: "", excludes: "" \}\)/);
   assert.match(content, /tripPdfSource\(trip, pdfKeyOf\)/);
 });
+
+test("symbol-font arrows from the PDF become real arrows instead of empty boxes", () => {
+  const v = String.fromCharCode(0xf076);
+  const plane = String.fromCharCode(0xf051);
+  const unknown = String.fromCharCode(0xf0a7);
+  const stored = normalizePdfTripContent({
+    version: pdfTripContentVersion,
+    days: [
+      { day: 1, title: `桃園國際機場${plane}→ 鄭州國際機場→鄭州${v}前往洛陽`, description: "", meals: "", hotel: "" },
+      { day: 8, title: `嘉峪關${v}約 2H${v}瓜州`, description: `敦煌${v}1.5H ${v}陽關${unknown}玉門關`, meals: "", hotel: "" },
+    ],
+    includes: [],
+    excludes: [],
+  });
+  assert.equal(stored.days[0].title, "桃園國際機場→ 鄭州國際機場→鄭州→前往洛陽");
+  assert.equal(stored.days[1].title, "嘉峪關→約 2H→瓜州");
+  assert.equal(stored.days[1].description, "敦煌→1.5H →陽關 玉門關");
+  assert.ok(!/[-]/.test(JSON.stringify(stored)));
+
+  const parsed = parseTripPdfPages([page(header, line("第 8 天", 36, 700), line(`嘉峪關${v}約 2H${v}瓜州`, 36, 680))]);
+  assert.ok(!/[-]/.test(JSON.stringify(parsed)));
+});

@@ -112,7 +112,7 @@ export function destinationIntro(destination: TripDestination) {
     datedCount > 0
       ? `${datedCount === trips.length ? "全部" : `其中 ${datedCount} 個`}已公布出發日期${lowestPrice ? `，團費 NT$${lowestPrice.toLocaleString("en-US")} 起` : ""}`
       : "";
-  const enquiry = datedCount < trips.length ? `${datedCount > 0 ? "其餘" : ""}行程的團期與報價可直接向顧問洽詢` : "";
+  const enquiry = datedCount < trips.length ? `${datedCount > 0 ? "其餘" : ""}行程的團期與報價可直接問 Yui` : "";
   return `找到了旅行社目前有 ${trips.length} 個${name}行程${coverage}。${[dated, enquiry].filter(Boolean).join("；")}。`;
 }
 

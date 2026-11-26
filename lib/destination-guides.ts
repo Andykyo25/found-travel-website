@@ -16,7 +16,7 @@ export type DestinationGuide = {
   faqs: DestinationFaq[];
 };
 
-const checkOfficial = "入境規定時有調整，出發前請以官方最新公告為準；報名後顧問也會提醒需要準備的文件。";
+const checkOfficial = "入境規定時有調整，出發前請以官方最新公告為準；報名後 Yui 也會提醒需要準備的文件。";
 
 const guides: Record<string, DestinationGuide> = {
   japan: {
@@ -36,7 +36,7 @@ const guides: Record<string, DestinationGuide> = {
       },
       {
         question: "第一次去日本，選哪個地區比較好？",
-        answer: "第一次去可以從東京或大阪京都開始，交通方便、景點集中；喜歡自然風景與溫泉可以選北海道或東北；想避開人潮則可以考慮九州、山陰山陽。不確定的話，告訴顧問同行者與想要的步調，我們幫你挑。",
+        answer: "第一次去可以從東京或大阪京都開始，交通方便、景點集中；喜歡自然風景與溫泉可以選北海道或東北；想避開人潮則可以考慮九州、山陰山陽。不確定的話，告訴 Yui 同行者與想要的步調，我們幫你挑。",
       },
     ],
   },
@@ -74,7 +74,7 @@ const guides: Record<string, DestinationGuide> = {
       },
       {
         question: "去越南需要簽證嗎？",
-        answer: `持台灣護照前往越南需要簽證，多數旅客申辦電子簽證。報名時顧問會說明辦理方式與需要準備的資料。${checkOfficial}`,
+        answer: `持台灣護照前往越南需要簽證，多數旅客申辦電子簽證。報名時 Yui 會說明辦理方式與需要準備的資料。${checkOfficial}`,
       },
       {
         question: "北越、峴港、富國島該怎麼選？",
@@ -107,7 +107,7 @@ const guides: Record<string, DestinationGuide> = {
     heading: "海島度假怎麼玩",
     paragraphs: [
       "海島行程的重點是「什麼都不做也很好」：帛琉有牛奶湖與水母湖，關島飛行時間短、適合親子與購物，馬爾地夫則是一島一飯店的水上屋度假。比起排滿景點，海島更適合留時間給浮潛、出海和好好休息。",
-      "我們的海島行程從四天到七天都有。住宿等級和島嶼差異很大，建議先告訴顧問預算與想要的度假方式。",
+      "我們的海島行程從四天到七天都有。住宿等級和島嶼差異很大，建議先告訴 Yui 預算與想要的度假方式。",
     ],
     faqs: [
       {
@@ -141,7 +141,7 @@ const guides: Record<string, DestinationGuide> = {
       },
       {
         question: "適合帶長輩去嗎？",
-        answer: "適合，語言相通、飲食也比較習慣。山區行程多半有纜車或步道，報名前可以跟顧問確認每天的步行量，挑選適合長輩體力的路線。",
+        answer: "適合，語言相通、飲食也比較習慣。山區行程多半有纜車或步道，報名前可以跟 Yui 確認每天的步行量，挑選適合長輩體力的路線。",
       },
     ],
   },
@@ -183,7 +183,7 @@ const guides: Record<string, DestinationGuide> = {
       },
       {
         question: "冬天去北歐要怎麼穿？",
-        answer: "以洋蔥式穿法為主：保暖內層、刷毛中層，加上防風防水外套，再準備毛帽、手套與防滑的鞋子。報名後顧問會提供更完整的行前裝備建議。",
+        answer: "以洋蔥式穿法為主：保暖內層、刷毛中層，加上防風防水外套，再準備毛帽、手套與防滑的鞋子。報名後 Yui 會提供更完整的行前裝備建議。",
       },
     ],
   },
@@ -322,7 +322,7 @@ const guides: Record<string, DestinationGuide> = {
     faqs: [
       {
         question: "郵輪費用包含哪些？",
-        answer: "一般包含船上住宿、主餐廳與自助餐的餐點，以及船上的表演和多數設施；岸上觀光、特色餐廳、酒精飲料與船上服務費通常另計。每條航線的內容不同，報名前顧問會逐項說明。",
+        answer: "一般包含船上住宿、主餐廳與自助餐的餐點，以及船上的表演和多數設施；岸上觀光、特色餐廳、酒精飲料與船上服務費通常另計。每條航線的內容不同，報名前 Yui 會逐項說明。",
       },
       {
         question: "基隆出發的郵輪需要帶護照嗎？",
@@ -371,7 +371,7 @@ export function destinationFaqs(destination: TripDestination): DestinationFaq[] 
   }
   faqs.push({
     question: `可以客製${destination.name}行程或親友包團嗎？`,
-    answer: "可以。家庭出遊、親友自組或企業員工旅遊，都可以依人數、日期與預算調整行程與住宿。告訴顧問想去的地方和同行者的需求，我們會整理適合的安排再與你聯繫。",
+    answer: "可以。家庭出遊、親友自組或企業員工旅遊，都可以依人數、日期與預算調整行程與住宿。告訴 Yui 想去的地方和同行者的需求，我們會整理適合的安排再與你聯繫。",
   });
   return faqs;
 }

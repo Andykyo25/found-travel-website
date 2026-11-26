@@ -43,7 +43,7 @@ export default async function DestinationsPage() {
           <SplitText as="h1" text="想去哪裡，從目的地開始找。" />
           <p className="board-lede">
             目前共有 {total} 個行程，依目的地分成 {destinations.length} 類。點進去可以看到每個地區的全部行程；
-            已公布團期的會列出出發日與團費，其餘可直接向顧問洽詢。
+            已公布團期的會列出出發日與團費，其餘可直接問 Yui。
           </p>
         </section>
 
