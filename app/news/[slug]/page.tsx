@@ -7,7 +7,11 @@ import { SiteFooter } from "@/app/components/SiteFooter";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SplitText } from "@/app/components/SplitText";
 import { TravelImage } from "@/app/components/TravelImage";
-import { adjacentNews, findNewsArticle, newsDateLabel, relatedNews } from "@/lib/news";
+import { adjacentNews, articleTripKeys, findNewsArticle, newsDateLabel, relatedNews } from "@/lib/news";
+import { PackageCard } from "@/app/components/PackageCard";
+import { findTripByPathKey } from "@/lib/trip-values";
+import { homepageTripOrder } from "@/lib/trip-filters";
+import type { Trip } from "@/lib/site-content";
 import { NewsCard } from "../NewsCard";
 import { getSiteContent } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
@@ -48,6 +52,14 @@ export default async function NewsArticlePage({ params }: Params) {
   const [content, origin] = await Promise.all([getSiteContent(), getSiteOrigin()]);
   const { previous, next } = adjacentNews(article.slug);
   const related = relatedNews(article.slug);
+  // 底部「相關行程」：文章提到的行程；下架的自動略過，都沒有就放最新的行程。
+  const linkedTrips = [...new Map(
+    articleTripKeys(article)
+      .map((key) => findTripByPathKey(content.trips, key))
+      .filter((trip): trip is Trip => Boolean(trip))
+      .map((trip) => [trip.id, trip]),
+  ).values()];
+  const tripPicks = (linkedTrips.length > 0 ? linkedTrips : homepageTripOrder(content.trips)).slice(0, 3);
 
   // 結構化資料：讓搜尋結果認得這是一則有發布日期的消息。
   const articleJsonLd = {
@@ -165,6 +177,18 @@ export default async function NewsArticlePage({ params }: Params) {
             </Link>
           ) : <span />}
         </nav>
+      ) : null}
+
+      {tripPicks.length > 0 ? (
+        <section className={styles.related} aria-labelledby="related-trips-title">
+          <div className={styles.relatedHead}>
+            <h2 id="related-trips-title">{linkedTrips.length > 0 ? "相關行程" : "最近推出的行程"}</h2>
+            <Link className={styles.textLink} href="/#journeys">看全部行程 <span aria-hidden="true">→</span></Link>
+          </div>
+          <div className="fh-grid">
+            {tripPicks.map((trip, index) => <PackageCard key={trip.id} trip={trip} index={index} />)}
+          </div>
+        </section>
       ) : null}
 
       {related.length > 0 ? (
