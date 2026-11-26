@@ -66,6 +66,243 @@ export type NewsArticle = {
 
 export const newsArticles: NewsArticle[] = [
   {
+    slug: "starlux-sydney-auckland",
+    title: "星宇航空 2027/3/23 首航雪梨、奧克蘭：澳洲 8 日、紐西蘭 12 天新行程登場",
+    shortTitle: "星宇飛雪梨、奧克蘭",
+    category: "新航線・新行程",
+    publishedAt: "2026-11-26",
+    author: "Yui",
+    summary:
+      "星宇航空第一條大洋洲航線來了：2027 年 3 月 23 日首航桃園－雪梨－奧克蘭。我們也同步推出兩條搭星宇的新行程：雪梨・黃金海岸精彩雙城 8 日，以及紐西蘭南北島精彩 12 天。航班時間、行程亮點、入境要準備什麼，這篇一次看。",
+    image: "/news/starlux-sydney-auckland.jpg",
+    imageAlt: "從空中看雪梨港：前方是白色帆形屋頂的雪梨歌劇院，後方是雪梨港灣大橋與市區高樓。",
+    blocks: [
+      {
+        kind: "facts",
+        id: "key-facts",
+        title: "先看重點",
+        items: [
+          { label: "首航日期", value: "2027/3/23", note: "航線是桃園－雪梨－奧克蘭，從台灣直飛雪梨，再延伸到紐西蘭奧克蘭。" },
+          { label: "班次", value: "每週 4 班", note: "開航初期每週 4 班，2027 年 5 月 1 日起增加為每天 1 班。" },
+          { label: "機型", value: "A330-900", note: "星宇的中長程主力機型。" },
+        ],
+      },
+      {
+        kind: "compare",
+        id: "schedule",
+        title: "航班時間",
+        columns: ["去程 JX183", "回程 JX184"],
+        rows: [
+          { label: "桃園－雪梨", before: "桃園 19:40 起飛，隔天 08:10 抵達雪梨", after: "雪梨 21:35 起飛，隔天 04:05 抵達桃園" },
+          { label: "雪梨－奧克蘭", before: "雪梨 11:05 起飛，16:10 抵達奧克蘭", after: "奧克蘭 18:35 起飛，20:05 抵達雪梨" },
+          { label: "怎麼飛", before: "晚上出發、睡一覺就到雪梨", after: "半夜回到台灣，隔天可以休息" },
+        ],
+      },
+      {
+        kind: "routes",
+        id: "routes",
+        title: "搭星宇的兩條新行程",
+        lede: "兩條行程都搭星宇航空。出發日期與團費依想出發的月份與人數回覆，點進去看每日行程，有興趣直接問顧問。",
+        items: [
+          {
+            name: "雪梨・黃金海岸精彩雙城 8 日",
+            area: "澳洲",
+            offer: "星宇直飛雪梨",
+            text: "雪梨進出，再搭澳洲國內線到黃金海岸。天堂鄉農莊看剪羊毛秀、和無尾熊合照，去藍藤酒莊品酒、逛布里斯本，回到雪梨搭藍山的礦坑纜車和景觀纜車，最後走過歌劇院、港灣大橋與岩石區。",
+            highlights: ["雪梨歌劇院", "藍山國家公園", "黃金海岸", "無尾熊合照"],
+            trips: ["sydney-gold-coast-highlights-8d"],
+          },
+          {
+            name: "紐西蘭南北島精彩 12 天",
+            area: "紐西蘭",
+            offer: "經雪梨飛奧克蘭",
+            text: "南島沿著 8 號觀景公路看蒂卡波湖、好牧羊人教堂和庫克山，在皇后鎮搭天際纜車吃晚餐，坐船進米佛峽灣、看蒂阿瑙螢火蟲洞；再到北島羅吐魯阿認識毛利文化，最後逛奧克蘭和 Devonport 小鎮。",
+            highlights: ["米佛峽灣", "蒂卡波湖", "皇后鎮", "毛利文化"],
+            trips: ["new-zealand-north-south-highlights-12d"],
+          },
+        ],
+      },
+      {
+        kind: "tips",
+        id: "tips",
+        title: "去澳紐前，先準備好這些",
+        items: [
+          { title: "澳洲要辦 ETA", text: "台灣護照去澳洲觀光要先申請電子旅行許可（ETA），用澳洲政府官方的「Australia ETA」App 申請，需要感應晶片護照和自拍。" },
+          { title: "紐西蘭要辦 NZeTA", text: "台灣護照去紐西蘭觀光免簽，但要先申請 NZeTA，建議出發前至少兩週辦好；起飛前 24 小時內，還要線上填紐西蘭旅客申報（NZTD）。" },
+          { title: "食物別亂帶", text: "澳洲、紐西蘭的檢疫都很嚴格，新鮮蔬果、肉類、蛋奶製品不能帶，帶了食品或藥品一定要申報，不確定就申報。" },
+          { title: "季節和台灣相反", text: "南半球的 3 到 5 月是秋天，早晚溫差大，特別是紐西蘭南島，外套要帶夠。" },
+          { title: "班機時間以最終公告為準", text: "新航線的時刻表可能還會調整，實際航班與景點順序，以星宇航空公告和出發前說明會資料為準。" },
+        ],
+      },
+    ],
+    sources: [
+      { label: "中時新聞網：星宇「台北－雪梨－奧克蘭」開賣（2026/11/17）", href: "https://www.chinatimes.com/realtimenews/20261117001975-260405" },
+      { label: "鏡週刊：星宇航空雪梨、奧克蘭雙航點開賣（2026/11/17）", href: "https://www.mirrormedia.mg/story/20261117tour001" },
+      { label: "澳洲內政部：電子旅行許可 ETA", href: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/electronic-travel-authority-601" },
+      { label: "紐西蘭移民局：NZeTA", href: "https://www.immigration.govt.nz/new-zealand-visas/visas/visa/nzeta" },
+      { label: "紐西蘭旅客申報 NZTD", href: "https://www.travellerdeclaration.govt.nz/" },
+    ],
+    disclaimer: "本文整理至 2026/11/26。航班時刻、機型與班次以星宇航空最終公告為準；入境規定以各國官方公告為準。",
+    closing: {
+      title: "南半球的第一趟，交給我們安排。",
+      text: "想去澳洲還是紐西蘭、哪個月出發、幾個人，跟顧問說一聲，我們幫你查出得了的團期與團費。",
+    },
+  },
+  {
+    slug: "korea-k-eta-2027",
+    title: "韓國 K-ETA 免申請延長到 2027 年底：台灣人去韓國還要準備什麼",
+    shortTitle: "韓國 K-ETA 延長",
+    category: "韓國旅遊須知",
+    publishedAt: "2026-11-26",
+    author: "Yui",
+    summary:
+      "韓國法務部 11/23 公告：K-ETA 暫時免申請再延長一年，到 2027/12/31。台灣護照去韓國觀光，明年一樣不用申請 K-ETA，但每個人都要記得填電子入境卡。跨年、春節要去韓國的朋友，看這篇就夠了。",
+    image: "/news/korea-k-eta-2027.jpg",
+    imageAlt: "仁川國際機場的登機門候機區：整面落地玻璃窗，陽光照在一排排座椅上。",
+    blocks: [
+      {
+        kind: "facts",
+        id: "key-facts",
+        title: "先看重點",
+        items: [
+          {
+            label: "K-ETA 免申請到",
+            value: "2027/12/31",
+            note: "韓國時間。2027/1/1 到 12/31 這段期間，原本就免申請的國家與地區（包含台灣）繼續免申請。",
+          },
+          {
+            label: "電子入境卡",
+            value: "抵達前 3 天",
+            note: "沒有 K-ETA 的人要填。抵達前 3 天（韓國時間）起就能線上填寫，免費。",
+          },
+          {
+            label: "想自己申請 K-ETA",
+            value: "₩10,000",
+            note: "免申請的人也可以自費申請，好處是入境不用再填入境卡，效期 3 年。",
+          },
+        ],
+      },
+      {
+        kind: "compare",
+        id: "keta-or-card",
+        title: "要申請 K-ETA，還是填入境卡就好？",
+        columns: ["不申請 K-ETA（多數人）", "自己申請 K-ETA"],
+        rows: [
+          { label: "費用", before: "免費", after: "1 萬韓元" },
+          { label: "入境前要做的事", before: "每次去都要填電子入境卡", after: "核准後效期內不用再填入境卡" },
+          { label: "適合誰", before: "一年去韓國一兩次", after: "常跑韓國、不想每次填表的人" },
+        ],
+      },
+      {
+        kind: "methods",
+        id: "how-to",
+        title: "兩種做法，選一種就好",
+        lede: "去韓國觀光，台灣護照不用簽證。明年出發的朋友只要從下面兩種做法選一種：大多數人填電子入境卡就好。",
+        items: [
+          {
+            name: "電子入境卡",
+            badge: "大多數人",
+            audience: "一年去一兩次、不想多花錢的人",
+            steps: [
+              "抵達韓國前 3 天內（韓國時間），打開韓國官方的電子入境卡網站",
+              "填護照資料、航班、在韓國的住宿地址",
+              "送出後收到確認，入境時出示護照就好",
+              "送出後 3 天內沒有入境，要重新填一次",
+            ],
+            note: "跟團的朋友也是每個人各填一張。住宿地址不知道怎麼寫，出發前問顧問就好。",
+            link: { label: "韓國電子入境卡官方網站", href: "https://www.e-arrivalcard.go.kr/" },
+          },
+          {
+            name: "自己申請 K-ETA",
+            audience: "常跑韓國的人",
+            steps: [
+              "到 K-ETA 官方網站申請，建議出發前至少 72 小時送出",
+              "上傳護照與大頭照，線上付 1 萬韓元",
+              "核准後效期 3 年，期間內入境都不用再填入境卡",
+            ],
+            note: "以前申請過、還在效期內的 K-ETA 可以繼續用，已付的費用不會退。",
+            link: { label: "K-ETA 官方網站", href: "https://www.k-eta.go.kr/" },
+          },
+        ],
+      },
+      {
+        kind: "tips",
+        id: "tips",
+        title: "出發前再提醒",
+        items: [
+          {
+            title: "只認官方網站",
+            text: "搜尋「韓國入境卡」「K-ETA」會跑出不少代辦網站，有的會另外收手續費。電子入境卡本來就是免費的，認明 go.kr 結尾的官方網址。",
+          },
+          {
+            title: "今年底以前入境一樣免申請",
+            text: "這次延長是接在原本的期限後面，2026 年跨年前出發的朋友，同樣不用申請 K-ETA，填入境卡就好。",
+          },
+          {
+            title: "規定以出發當時為準",
+            text: "免申請是韓國的暫時措施，每年都可能調整。出發前我們會再幫你確認一次最新公告。",
+          },
+        ],
+      },
+      {
+        kind: "routes",
+        id: "routes",
+        title: "冬天去韓國，這幾團正適合",
+        lede: "跨年、春節想去韓國，可以先從這幾種團型挑。點進去看每日行程與出發日，連假團位比較搶手，有興趣早點跟顧問說。",
+        items: [
+          {
+            name: "冬季限定玩法",
+            area: "首爾・釜山",
+            offer: "冬季限定",
+            text: "冬天才有的玩法：冰柱節、冰上釣魚，或是到滑雪場玩一整天。",
+            highlights: ["冰柱節", "冰釣", "滑雪"],
+            trips: ["seoul-ice-festival-5d", "seoul-ice-fishing-5d", "seoul-ski-5d", "busan-ski-5d"],
+          },
+          {
+            name: "釜山與慶州",
+            area: "釜山",
+            offer: "第一次去也適合",
+            text: "釜山看海、逛市場，再到古都慶州走一走，節奏輕鬆，帶長輩也合適。",
+            highlights: ["海景", "慶州古都", "市場美食"],
+            trips: ["busan-gyeongju-daegu-5d", "busan-gyeongju-daegu-6d"],
+          },
+          {
+            name: "濟州島",
+            area: "濟州",
+            offer: "度假型",
+            text: "想放慢一點，就去濟州：看海岸風景、步調悠閒，冬天也有自己的味道。",
+            highlights: ["海岸風景", "慢步調"],
+            trips: ["jeju-landing-resort-5d", "jeju-special-5d"],
+          },
+        ],
+      },
+    ],
+    sources: [
+      {
+        label: "K-ETA 官方網站：暫時免申請延長公告（2026/11/23）",
+        href: "https://www.k-eta.go.kr/portal/board/viewboarddetail.do?bbsSn=332884",
+      },
+      { label: "韓國電子入境卡官方網站", href: "https://www.e-arrivalcard.go.kr/" },
+      {
+        label: "韓國出入境外國人政策本部：電子入境卡說明",
+        href: "https://www.immigration.go.kr/bbs/immigration/223/593810/artclView.do",
+      },
+      {
+        label: "EY：韓國 2026 年起外國人入境改用電子入境卡",
+        href: "https://globaltaxnews.ey.com/news/2025-2474-republic-of-korea-mandates-e-arrival-card-for-all-foreign-nationals-effective-1-january-2026",
+      },
+      {
+        label: "TRAICY：K-ETA 免申請延長至 2027 年底（2026/11/23）",
+        href: "https://en.traicy.com/posts/2026112342616/",
+      },
+    ],
+    disclaimer: "本文整理至 2026/11/26。入境規定以韓國官方公告為準，出發前請再確認。",
+    closing: {
+      title: "入境的事交給我們確認，你只要想好去哪玩。",
+      text: "跨年、春節的韓國團都在陸續開，想去哪裡、幾個人去，直接問顧問就好。",
+    },
+  },
+  {
     // 步驟對應 app/manifest.ts、public/sw.js 與 app/components/PwaClient.tsx 的實際行為；改了那邊記得回來對一下。
     slug: "add-to-home-screen",
     title: "把找到了加到手機主畫面，下次一點就打開",
@@ -680,12 +917,23 @@ export const newsArticles: NewsArticle[] = [
   },
 ];
 
-export function publishedNews(articles: NewsArticle[] = newsArticles) {
-  return [...articles].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+/** 台灣今天的日期（YYYY-MM-DD）。 */
+export function taipeiDate(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(now);
 }
 
-export function findNewsArticle(slug: string, articles: NewsArticle[] = newsArticles) {
-  return articles.find((article) => article.slug === slug);
+/**
+ * 排程發布：publishedAt 還沒到的文章先不出現（列表、內頁、網站地圖都看不到），
+ * 到了那天（台灣時間）自動上線。可以一次寫好幾篇、日期排開，每週固定出一篇。
+ */
+export function publishedNews(articles: NewsArticle[] = newsArticles, today = taipeiDate()) {
+  return articles
+    .filter((article) => article.publishedAt <= today)
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+}
+
+export function findNewsArticle(slug: string, articles: NewsArticle[] = newsArticles, today = taipeiDate()) {
+  return publishedNews(articles, today).find((article) => article.slug === slug);
 }
 
 export function newsDateLabel(date: string) {
