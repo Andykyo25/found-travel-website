@@ -88,11 +88,9 @@ export default async function Home({
     .filter((trip, index, all) => all.findIndex((item) => item.badge === trip.badge) === index)
     .slice(0, 4)
     .map(({ id, slug, title, region, badge, summary, image }) => ({ id, slug, title, region, badge, summary, image }));
-  // 公告可由後台編輯：以「・」分段，重複排列成跑馬燈。
   const origin = await getSiteOrigin();
   // 結構化資料：讓搜尋引擎辨識這是一家旅行社，並帶出公司資訊。
   const agencyJsonLd = travelAgencyJsonLd(content, origin);
-  const marqueeItems = content.announcement.split(/[・|｜]/).map((item) => item.trim()).filter(Boolean);
   // 進行中的活動（lib/promotions.ts）：行程列表上方的卡片與進站彈窗，過了結束日自動消失。
   const promotion = activePromotion();
 
@@ -132,21 +130,6 @@ export default async function Home({
           <i aria-hidden="true" />
         </a>
       </section>
-
-      <div className="fh-marquee" role="group" aria-label={content.announcement}>
-        <div className="fh-marquee-track" aria-hidden="true">
-          {[0, 1].map((group) => (
-            <ul key={group}>
-              {Array.from({ length: 3 }, () => marqueeItems).flat().map((item, index) => (
-                <li key={index} className={index >= marqueeItems.length ? "is-copy" : undefined}>
-                  <span>{item}</span>
-                  <i />
-                </li>
-              ))}
-            </ul>
-          ))}
-        </div>
-      </div>
 
       <section className="fh-finder" id="intro" aria-labelledby="finder-home-title">
         <div className="fh-wrap fh-finder-grid">

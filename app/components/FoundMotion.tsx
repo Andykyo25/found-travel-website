@@ -91,26 +91,8 @@ export function FoundMotion() {
         }
       }
     };
-    // 跑馬燈速度隨捲動速度加快，停下後緩緩回到原速。
-    let speed = 1;
-    let speedFrame = 0;
-    let lastScroll = window.scrollY;
-    const easeSpeed = () => {
-      speedFrame = 0;
-      const marquee = document.querySelector(".fh-marquee-track");
-      const animation = marquee?.getAnimations()[0];
-      if (!animation) return;
-      const delta = Math.abs(window.scrollY - lastScroll);
-      lastScroll = window.scrollY;
-      const target = 1 + Math.min(9, delta * 0.35);
-      speed += (target - speed) * 0.12;
-      animation.updatePlaybackRate(speed);
-      if (Math.abs(speed - 1) > 0.02 || delta > 0) speedFrame = requestAnimationFrame(easeSpeed);
-      else animation.updatePlaybackRate(1);
-    };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
-      if (!reduced && !speedFrame) speedFrame = requestAnimationFrame(easeSpeed);
     };
 
     // 情境游標：只在帶有 data-cursor 的區塊上出現，並隨區塊顯示對應動作文字。
@@ -204,7 +186,6 @@ export function FoundMotion() {
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(cursorFrame);
-      cancelAnimationFrame(speedFrame);
       cancelAnimationFrame(pending);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);

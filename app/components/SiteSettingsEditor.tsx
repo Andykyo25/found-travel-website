@@ -94,17 +94,6 @@ export function SiteSettingsEditor({
         <h2>首頁主內容</h2>
         <p>商標與首頁影片已固定使用公司提供的正式素材。</p>
         <div className="field-grid">
-          <Field
-            label="公告文字"
-            hint="首頁封面下方的跑馬燈文字。要分成多段時，用「・」隔開。"
-          >
-            <input
-              value={draft.announcement}
-              onChange={(event) =>
-                updateRoot("announcement", event.target.value)
-              }
-            />
-          </Field>
           <Field label="主標上方小字" hint="封面大標題上方的小字，例如：FOUND TRAVEL。">
             <input
               value={draft.heroKicker}
