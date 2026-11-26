@@ -3,6 +3,7 @@ import { getSiteOrigin } from "@/lib/site-url";
 import { siteDescription } from "@/lib/structured-data";
 import { FoundMotion } from "./components/FoundMotion";
 import { PwaClient } from "./components/PwaClient";
+import { InquiryTracker } from "./components/InquiryTracker";
 import { display, latin, serif } from "./fonts";
 import "./globals.css";
 import "./editorial.css";
@@ -74,6 +75,7 @@ export default function RootLayout({
         {children}
         <FoundMotion />
         <PwaClient />
+        <InquiryTracker />
       </body>
     </html>
   );
