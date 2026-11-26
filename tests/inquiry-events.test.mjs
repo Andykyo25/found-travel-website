@@ -82,3 +82,20 @@ test("trip LINE messages carry the chosen departure and plan when there is one",
   assert.match(contact, /prefill=\{linePrefill\}/);
   assert.match(contact, /\{\.\.\.linePrefill\}/);
 });
+
+test("full departures offer a waitlist instead of a dead end", async () => {
+  const { tripLineMessage } = await import("../lib/inquiry-events.ts");
+  const message = tripLineMessage({ title: "釜山超值六日", url: "https://tabiyoi.com/trips/busan-value-6d", departure: "2027/02/04(四)", waitlist: true });
+  assert.match(message, /^你好，我想排候補「釜山超值六日」/);
+  assert.match(message, /推薦相近日期/);
+  const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+  const [board, table, contact] = await Promise.all([read("../app/components/DepartureBoard.tsx"), read("../app/components/DepartureTable.tsx"), read("../app/contact/page.tsx")]);
+  for (const source of [board, table]) {
+    assert.match(source, /waitlist=1/);
+    assert.match(source, /排候補或問相近日期/);
+  }
+  // 團期總表預設收起額滿的團。
+  assert.match(board, /useState\(false\)/);
+  assert.match(table, /fullDeparturesLast/);
+  assert.match(contact, /params\.waitlist === "1"/);
+});

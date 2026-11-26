@@ -211,7 +211,7 @@ export default async function TripPage({ params }: PageProps) {
           )}
 
           <p className="dates-footnote">
-            日期與價格為即時參考，實際以業務顧問回覆為準。
+            日期與價格為即時參考，團費依出發日期與航空公司不同，實際以業務顧問回覆為準。
           </p>
           <CommunityInline
             url={content.communityUrl}

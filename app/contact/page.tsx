@@ -60,6 +60,8 @@ export default async function ContactPage({
           p.departureMode === "all" ||
           p.departureIds.includes(departure.id)),
     );
+  // 額滿的團期點「排候補或問相近日期」過來（&waitlist=1）：訊息改成排候補。
+  const waitlist = params.waitlist === "1" && Boolean(departure);
   // 從行程頁點「諮詢這趟旅行」或「詢問此團期」過來的：這頁所有 LINE 按鈕一樣預填行程（和已選的團期、方案）。
   const linePrefill = trip
     ? linePrefillAttributes(
@@ -69,17 +71,19 @@ export default async function ContactPage({
           url: `${await getSiteOrigin()}${tripPath(trip)}`,
           departure: departure ? formatDepartureDate(departure.date) : undefined,
           plan: plan ? tripPlanLabel(plan) : undefined,
+          waitlist,
         }),
       )
     : {};
   const initialMessage = trip
     ? [
-        `想諮詢：${trip.title}`,
+        waitlist ? `想排候補：${trip.title}` : `想諮詢：${trip.title}`,
         departure ? `出發日期：${formatDepartureDate(departure.date)}` : "",
         departure?.note ? `團期備註：${departure.note}` : "",
         departure?.price ? `參考價格：${formatPrice(departure.price)}` : "",
         plan ? `方案：${tripPlanLabel(plan)}` : "",
         "同行人數：",
+        waitlist ? "候補不到的話，也可以推薦相近日期" : "",
         "其他需求：",
       ]
         .filter(Boolean)

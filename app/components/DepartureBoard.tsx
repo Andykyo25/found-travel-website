@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { formatDepartureDate, formatPrice } from "@/lib/trip-values";
+import { departureAvailability, formatDepartureDate, formatPrice } from "@/lib/trip-values";
 import Link from "next/link";
 import {
   groupDeparturesByMonth,
@@ -21,8 +21,13 @@ export function DepartureBoard({
 }) {
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
+  // 額滿的團預設收起來：客人第一眼看到的都是還能報的；要看再展開（可以排候補）。
+  const [showFull, setShowFull] = useState(false);
   const categories = [...new Set(rows.map((row) => row.region))];
-  const filtered = rows.filter((row) => !category || row.region === category);
+  const inCategory = rows.filter((row) => !category || row.region === category);
+  const isFull = (row: DepartureRow) => departureAvailability(row.note) === "full";
+  const fullCount = inCategory.filter(isFull).length;
+  const filtered = showFull ? inCategory : inCategory.filter((row) => !isFull(row));
   const pageCount = Math.max(1, Math.ceil(filtered.length / 24));
   const activePage = Math.min(page, pageCount);
   const groups = groupDeparturesByMonth(
@@ -72,8 +77,26 @@ export function DepartureBoard({
 
       <p className="board-summary">
         {activeLabel ? `${activeLabel}共 ` : "共 "}
-        <strong>{filtered.length}</strong> 個團期 ・ {tripCount} 條行程
+        <strong>{filtered.length}</strong> 個{showFull ? "" : "可報名的"}團期 ・ {tripCount} 條行程
+        {fullCount > 0 ? (
+          <button
+            type="button"
+            className="board-full-toggle"
+            aria-pressed={showFull}
+            onClick={() => {
+              setShowFull(!showFull);
+              setPage(1);
+            }}
+          >
+            {showFull ? `收起已額滿的 ${fullCount} 團` : `另有 ${fullCount} 團已額滿（可排候補）・顯示`}
+          </button>
+        ) : null}
       </p>
+      <p className="board-price-note">團費依出發日期與航空公司不同，實際以顧問確認為準。</p>
+
+      {filtered.length === 0 && fullCount > 0 ? (
+        <p className="board-empty-full">這裡的團期目前都已額滿，可以展開來看，並幫你排候補或找相近日期。</p>
+      ) : null}
 
       {groups.map((group) => (
         <section className="board-group" key={group.id || "unknown"}>
@@ -85,7 +108,7 @@ export function DepartureBoard({
           <div className="board-rows">
             {group.rows.map((row) => (
               <article
-                className="board-row"
+                className={`board-row${isFull(row) ? " is-full" : ""}`}
                 key={`${row.tripId}-${row.departureId}`}
               >
                 <div className="board-date">
@@ -100,6 +123,7 @@ export function DepartureBoard({
                     <span>{row.region}</span>
                     <span>{row.days}</span>
                     <span className="board-badge">{row.badge}</span>
+                    <AvailabilityBadge note={row.note} />
                   </p>
                   {row.details ? <p>{row.details}</p> : null}
                 </div>
@@ -113,12 +137,21 @@ export function DepartureBoard({
                 </div>
 
                 <div className="board-actions">
-                  <Link
-                    className="board-link primary"
-                    href={`/contact?trip=${encodeURIComponent(row.tripId)}&departure=${encodeURIComponent(row.departureId)}`}
-                  >
-                    確認名額與完整團費
-                  </Link>
+                  {isFull(row) ? (
+                    <Link
+                      className="board-link"
+                      href={`/contact?trip=${encodeURIComponent(row.tripId)}&departure=${encodeURIComponent(row.departureId)}&waitlist=1`}
+                    >
+                      排候補或問相近日期
+                    </Link>
+                  ) : (
+                    <Link
+                      className="board-link primary"
+                      href={`/contact?trip=${encodeURIComponent(row.tripId)}&departure=${encodeURIComponent(row.departureId)}`}
+                    >
+                      確認名額與完整團費
+                    </Link>
+                  )}
                   {row.documentUrl ? (
                     <a
                       className="board-link"
@@ -193,4 +226,12 @@ export function DepartureBoardCta({ lineUrl }: { lineUrl: string }) {
       </div>
     </section>
   );
+}
+
+/** 「即將額滿」要醒目（還買得到、要快）；「額滿」講清楚還能排候補。 */
+export function AvailabilityBadge({ note }: { note: string | undefined }) {
+  const availability = departureAvailability(note);
+  if (availability === "almost") return <span className="availability-badge is-almost">即將額滿</span>;
+  if (availability === "full") return <span className="availability-badge is-full">已額滿・可排候補</span>;
+  return null;
 }
