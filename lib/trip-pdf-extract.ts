@@ -50,11 +50,26 @@ function chineseNumber(text: string) {
   return (tens ? (numerals[tens] ?? 0) : 1) * 10 + (ones ? (numerals[ones] ?? 0) : 0);
 }
 
+// 有些行程 PDF 用 Wingdings 之類的符號字型畫箭頭和飛機（「西安◆臨潼」「機場✈機場」），
+// 抽出來是 Unicode 私人使用區的字碼；網頁字型沒有這些字，會顯示成方框。
+// 認得的換成箭頭，其他的拿掉。
+const symbolFontChars: Record<string, string> = { "": "→", "": "→" };
+const privateUseChar = /[-]/g;
+
+export function replaceSymbolFontChars(text: string): string {
+  if (!/[-]/.test(text)) return text;
+  return text
+    .replace(privateUseChar, (char) => symbolFontChars[char] ?? " ")
+    // 飛機符號後面常常還跟著一個真的箭頭（「機場✈→ 布拉格」），換完會變成兩個箭頭。
+    .replace(/→(\s*→)+/g, "→")
+    .replace(/ {2,}/g, " ");
+}
+
 function clean(line: string): string {
   // 「宿 仁 川 ...」的標籤先拆開，免得跟後面的字一起被收掉空白。
   const label = line.match(/^\s*([宿食])\s+/);
   if (label) return `${label[1]} ${clean(line.slice(label[0].length))}`.trim();
-  return line
+  return replaceSymbolFontChars(line)
     .replace(/\s+/g, " ")
     // 「購 物 中 心」這種逐字加空白的排版收回來。
     .replace(spacedCjk, (match) => match.replace(/ /g, ""))
@@ -331,7 +346,9 @@ export function parseTripPdfPages(pages: PdfTextPage[]): PdfTripContent {
   };
 }
 
-const limit = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+// 已經存在 Bucket 的舊擷取結果也在這裡把符號字型的字換掉，不用重新擷取 PDF。
+const limit = (value: unknown, max: number) =>
+  typeof value === "string" ? replaceSymbolFontChars(value).trim().slice(0, max) : "";
 
 /** 從 Bucket 讀回來的擷取結果先檢查過再用；版本不符或格式不對就當作沒有。 */
 export function normalizePdfTripContent(value: unknown): PdfTripContent | null {
