@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
-import { findNewsArticle, newsArticles, newsDateLabel, publishedNews } from "../lib/news.ts";
+import { findNewsArticle, newsArticles, newsDateLabel, publishedNews, taipeiDate } from "../lib/news.ts";
 
 const validDate = /^\d{4}-\d{2}-\d{2}$/;
 const articleText = (article) => JSON.stringify(article);
@@ -32,9 +32,9 @@ test("news blocks have unique anchors and every source is a public https link", 
 test("news is listed newest first and unknown addresses find nothing", () => {
   const older = { ...newsArticles[0], slug: "older", publishedAt: "2026-01-02" };
   const newer = { ...newsArticles[0], slug: "newer", publishedAt: "2026-12-30" };
-  assert.deepEqual(publishedNews([older, newer]).map((article) => article.slug), ["newer", "older"]);
-  assert.equal(findNewsArticle("newer", [older, newer]), newer);
-  assert.equal(findNewsArticle("missing", [older, newer]), undefined);
+  assert.deepEqual(publishedNews([older, newer], "2027-01-01").map((article) => article.slug), ["newer", "older"]);
+  assert.equal(findNewsArticle("newer", [older, newer], "2027-01-01"), newer);
+  assert.equal(findNewsArticle("missing", [older, newer], "2027-01-01"), undefined);
   assert.equal(newsDateLabel("2026-10-31"), "2026.10.31");
 });
 
@@ -112,4 +112,22 @@ test("news is reachable from the navigation, footer, sitemap and host redirect",
   assert.match(articlePage, /notFound\(\)/);
   assert.match(articlePage, /NewsArticle/);
   assert.match(articlePage, /canonical/);
+});
+
+test("scheduled articles stay hidden until their publish date in Taiwan", () => {
+  const today = { ...newsArticles[0], slug: "today", publishedAt: "2026-12-03" };
+  const later = { ...newsArticles[0], slug: "later", publishedAt: "2026-12-10" };
+  assert.deepEqual(publishedNews([today, later], "2026-12-03").map((article) => article.slug), ["today"]);
+  assert.equal(findNewsArticle("later", [today, later], "2026-12-03"), undefined);
+  assert.equal(findNewsArticle("later", [today, later], "2026-12-10"), later);
+  // 台灣已經是 12/10 早上、UTC 還是 12/9：以台灣日期為準。
+  assert.equal(taipeiDate(new Date("2026-12-09T17:00:00Z")), "2026-12-10");
+});
+
+test("new travel articles keep their checked facts and link to trips on this site", () => {
+  const all = "2099-01-01";
+  const keta = JSON.stringify(findNewsArticle("korea-k-eta-2027", newsArticles, all));
+  for (const fact of ["2027/12/31", "抵達前 3 天", "₩10,000", "e-arrivalcard.go.kr", "bbsSn=332884"]) assert.ok(keta.includes(fact), fact);
+  const starlux = JSON.stringify(findNewsArticle("starlux-sydney-auckland", newsArticles, all));
+  for (const fact of ["2027/3/23", "每週 4 班", "A330-900", "JX183", "JX184", "sydney-gold-coast-highlights-8d", "new-zealand-north-south-highlights-12d", "NZeTA", "最終公告為準"]) assert.ok(starlux.includes(fact), fact);
 });
