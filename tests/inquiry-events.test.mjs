@@ -54,7 +54,7 @@ test("trip pages, the tracker and the form are wired up", async () => {
     read("../app/layout.tsx"),
     read("../app/api/inquiry-events/route.ts"),
   ]);
-  assert.match(trip, /data-line-message/);
+  assert.match(trip, /tripLineMessage\(/);
   assert.match(trip, /prefill=\{linePrefill\}/);
   // 電腦版 LINE 不支援預填訊息連結，只在手機改。
   assert.match(tracker, /isPhone\(\)/);
@@ -64,4 +64,21 @@ test("trip pages, the tracker and the form are wired up", async () => {
   assert.match(layout, /<InquiryTracker \/>/);
   assert.match(route, /isSameOriginRequest/);
   assert.match(route, /normalizeInquiryPath/);
+});
+
+test("trip LINE messages carry the chosen departure and plan when there is one", async () => {
+  const { tripLineMessage, linePrefillAttributes } = await import("../lib/inquiry-events.ts");
+  assert.equal(
+    tripLineMessage({ title: "釜山超值六日", url: "https://tabiyoi.com/trips/busan-value-6d" }),
+    "你好，我想詢問「釜山超值六日」\n想出發的月份：\n人數：\nhttps://tabiyoi.com/trips/busan-value-6d",
+  );
+  assert.equal(
+    tripLineMessage({ title: "釜山超值六日", url: "https://tabiyoi.com/trips/busan-value-6d", departure: "2027/02/04(四)", plan: "易斯達航空" }),
+    "你好，我想詢問「釜山超值六日」\n出發日期：2027/02/04(四)\n方案：易斯達航空\n人數：\nhttps://tabiyoi.com/trips/busan-value-6d",
+  );
+  assert.deepEqual(linePrefillAttributes(null, "x"), {});
+  // 從行程頁點進聯絡表單，那一頁的 LINE 按鈕也要帶同一段訊息。
+  const contact = await readFile(new URL("../app/contact/page.tsx", import.meta.url), "utf8");
+  assert.match(contact, /prefill=\{linePrefill\}/);
+  assert.match(contact, /\{\.\.\.linePrefill\}/);
 });

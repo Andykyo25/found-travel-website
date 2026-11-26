@@ -90,3 +90,21 @@ export function lineMessageUrl(lineId: string, message: string) {
 export function inquirySinceDate(days: number, now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date(now.getTime() - (days - 1) * 86_400_000));
 }
+
+/** 行程詢問的 LINE 預填訊息：行程名稱、已選的團期與方案、留空給客人填的欄位，最後附上行程頁網址。 */
+export function tripLineMessage({ title, url, departure, plan }: { title: string; url: string; departure?: string; plan?: string }) {
+  return [
+    `你好，我想詢問「${title}」`,
+    departure ? `出發日期：${departure}` : "想出發的月份：",
+    plan ? `方案：${plan}` : "",
+    "人數：",
+    url,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** 放在 LINE 按鈕上的屬性；查不到官方帳號 ID 時不加，按鈕維持原本的連結。 */
+export function linePrefillAttributes(lineId: string | null, message: string): Record<string, string> {
+  return lineId ? { "data-line-id": lineId, "data-line-message": message } : {};
+}

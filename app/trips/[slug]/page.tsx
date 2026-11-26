@@ -16,6 +16,7 @@ import { TripPlanCard } from "@/app/components/TripPlanCard";
 import { getSiteContent } from "@/lib/site-content";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
 import { lineAccountId } from "@/lib/line-account";
+import { linePrefillAttributes, tripLineMessage } from "@/lib/inquiry-events";
 import { publishedTripPlans } from "@/lib/trip-plans";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
@@ -59,8 +60,7 @@ export default async function TripPage({ params }: PageProps) {
   if (trip.slug && slug !== trip.slug) permanentRedirect(tripPath(trip));
   // 手機按 LINE 時預先填好要問的行程，客人按送出就好，顧問也一眼知道是哪一團。
   const lineId = await lineAccountId(content.lineUrl);
-  const lineMessage = `你好，我想詢問「${trip.title}」\n想出發的月份：\n人數：\n${origin}${tripPath(trip)}`;
-  const linePrefill: Record<string, string> = lineId ? { "data-line-id": lineId, "data-line-message": lineMessage } : {};
+  const linePrefill = linePrefillAttributes(lineId, tripLineMessage({ title: trip.title, url: `${origin}${tripPath(trip)}` }));
   const plans = publishedTripPlans(trip);
   const departures = upcomingDepartures(trip.departures);
   // 麵包屑走「首頁 / 日本旅遊行程 / 這個行程」：每個行程頁都連回自己的目的地頁。
