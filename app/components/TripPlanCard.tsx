@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatDepartureDate, formatPrice } from "@/lib/trip-values";
+import { departureAvailability, formatDepartureDate, formatPrice, fullDeparturesLast } from "@/lib/trip-values";
 import type { TripDeparture, TripPlan } from "@/lib/site-content";
 import { departuresForPlan, tripPlanLabel, tripPlanSummary } from "@/lib/trip-plans";
 
@@ -23,13 +23,17 @@ export function TripPlanCard({
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const applicableDepartures = departuresForPlan(departures, plan);
+  // 額滿的日期排在後面：只顯示前 6 個時，不會被一排額滿的日期佔掉。
+  const applicableDepartures = fullDeparturesLast(departuresForPlan(departures, plan), (item) => item.note);
   const selectedDeparture = applicableDepartures.find(d => d.id === selectedId);
   const visibleDepartures = showAll ? applicableDepartures : applicableDepartures.slice(0, 6);
   const remainingCount = applicableDepartures.length - visibleDepartures.length;
   const versionLabel = tripPlanLabel(plan);
   const summary = tripPlanSummary(plan);
-  const inquiryHref = `/contact?trip=${encodeURIComponent(tripId)}&plan=${encodeURIComponent(plan.id)}${selectedDeparture ? `&departure=${encodeURIComponent(selectedDeparture.id)}` : ""}`;
+  // 選到已額滿的日期：按鈕改成排候補，跟團期表的「排候補或問相近日期」走同一條路。
+  const waitlist = departureAvailability(selectedDeparture?.note) === "full";
+  const inquiryHref = `/contact?trip=${encodeURIComponent(tripId)}&plan=${encodeURIComponent(plan.id)}${selectedDeparture ? `&departure=${encodeURIComponent(selectedDeparture.id)}` : ""}${waitlist ? "&waitlist=1" : ""}`;
+  const versionName = plan.airline || plan.title;
 
   return (
     <article className="trip-plan-card" id={`plan-${plan.id}`}>
@@ -54,11 +58,12 @@ export function TripPlanCard({
           <div className="trip-plan-date-list">
             {visibleDepartures.map((departure) => (
               <button type="button" key={departure.id}
+                className={departureAvailability(departure.note) === "full" ? "is-full" : undefined}
                 aria-pressed={selectedDeparture?.id === departure.id}
-                aria-label={`${versionLabel} ${formatDepartureDate(departure.date)}${departure.note ? ` ${departure.note}` : ""}`}
+                aria-label={`${versionLabel} ${formatDepartureDate(departure.date)}${departureAvailability(departure.note) === "full" ? " 已額滿，可排候補" : departure.note ? ` ${departure.note}` : ""}`}
                 onClick={() => setSelectedId(id => id === departure.id ? null : departure.id)}>
                 {formatDepartureDate(departure.date)}
-                {departure.note && <small>{departure.note}</small>}
+                {departureAvailability(departure.note) === "full" ? <small>已額滿・可排候補</small> : departure.note && <small>{departure.note}</small>}
               </button>
             ))}
             {remainingCount > 0 ? (
@@ -92,9 +97,9 @@ export function TripPlanCard({
           href={inquiryHref}
           target={openInquiryInNewTab ? "_blank" : undefined}
           rel={openInquiryInNewTab ? "noreferrer" : undefined}
-          aria-label={`詢問${versionLabel}${selectedDeparture ? ` ${formatDepartureDate(selectedDeparture.date)} 出發` : ""}`}
+          aria-label={`${waitlist ? "排候補或問相近日期：" : "詢問"}${versionLabel}${selectedDeparture ? ` ${formatDepartureDate(selectedDeparture.date)} 出發` : ""}`}
         >
-          詢問{plan.airline || plan.title}版
+          {waitlist ? `排候補或問相近日期（${versionName}版）` : `詢問${versionName}版`}
         </Link>
       </div>
     </article>

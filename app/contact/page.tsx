@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  departureAvailability,
   formatDepartureDate,
   formatPrice,
   tripPath,
@@ -61,7 +62,8 @@ export default async function ContactPage({
           p.departureIds.includes(departure.id)),
     );
   // 額滿的團期點「排候補或問相近日期」過來（&waitlist=1）：訊息改成排候補。
-  const waitlist = params.waitlist === "1" && Boolean(departure);
+  // 選到的日期本身已額滿也算：從航空版本卡片或其他入口進來，都一樣是排候補。
+  const waitlist = Boolean(departure) && (params.waitlist === "1" || departureAvailability(departure?.note) === "full");
   // 從行程頁點「諮詢這趟旅行」或「詢問此團期」過來的：這頁所有 LINE 按鈕一樣預填行程（和已選的團期、方案）。
   const linePrefill = trip
     ? linePrefillAttributes(

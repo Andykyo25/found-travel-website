@@ -3353,3 +3353,5 @@ body:has(.public-page) { background: #faf8f3; }
 @media (max-width: 620px) {
   .board-full-toggle { display: flex; align-items: center; margin-left: 0; }
 }
+/* 航空版本卡片：額滿的日期淡化，選到時照樣用深色表示已選 */
+.public-page .trip-plan-date-list button.is-full:not([aria-pressed="true"]) { opacity: 0.6; background: transparent; }
