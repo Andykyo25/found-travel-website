@@ -11,6 +11,9 @@ import { getSiteContent } from "@/lib/site-content";
 import { socialMetadata } from "@/lib/page-metadata";
 import { telephoneHref } from "@/lib/structured-data";
 import { LineFloatingButton } from "@/app/components/LineFloatingButton";
+import { lineAccountId } from "@/lib/line-account";
+import { linePrefillAttributes, tripLineMessage } from "@/lib/inquiry-events";
+import { getSiteOrigin } from "@/lib/site-url";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SplitText } from "@/app/components/SplitText";
@@ -57,6 +60,18 @@ export default async function ContactPage({
           p.departureMode === "all" ||
           p.departureIds.includes(departure.id)),
     );
+  // 從行程頁點「諮詢這趟旅行」或「詢問此團期」過來的：這頁所有 LINE 按鈕一樣預填行程（和已選的團期、方案）。
+  const linePrefill = trip
+    ? linePrefillAttributes(
+        await lineAccountId(content.lineUrl),
+        tripLineMessage({
+          title: trip.title,
+          url: `${await getSiteOrigin()}${tripPath(trip)}`,
+          departure: departure ? formatDepartureDate(departure.date) : undefined,
+          plan: plan ? tripPlanLabel(plan) : undefined,
+        }),
+      )
+    : {};
   const initialMessage = trip
     ? [
         `想諮詢：${trip.title}`,
@@ -114,12 +129,13 @@ export default async function ContactPage({
           href={content.lineUrl}
           target="_blank"
           rel="noreferrer"
+          {...linePrefill}
         >
           改用 LINE 諮詢 <span aria-hidden="true">↗</span>
         </a>
       </section>
 
-      <LineFloatingButton lineUrl={content.lineUrl} />
+      <LineFloatingButton lineUrl={content.lineUrl} prefill={linePrefill} />
     </main>
     <SiteFooter content={content} />
     </>
