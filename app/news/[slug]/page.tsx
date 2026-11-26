@@ -7,7 +7,8 @@ import { SiteFooter } from "@/app/components/SiteFooter";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { SplitText } from "@/app/components/SplitText";
 import { TravelImage } from "@/app/components/TravelImage";
-import { findNewsArticle, newsDateLabel } from "@/lib/news";
+import { adjacentNews, findNewsArticle, newsDateLabel, relatedNews } from "@/lib/news";
+import { NewsCard } from "../NewsCard";
 import { getSiteContent } from "@/lib/site-content";
 import { getSiteOrigin } from "@/lib/site-url";
 import { agencyId, breadcrumbJsonLd } from "@/lib/structured-data";
@@ -45,6 +46,8 @@ export default async function NewsArticlePage({ params }: Params) {
   const article = findNewsArticle((await params).slug);
   if (!article) notFound();
   const [content, origin] = await Promise.all([getSiteContent(), getSiteOrigin()]);
+  const { previous, next } = adjacentNews(article.slug);
+  const related = relatedNews(article.slug);
 
   // 結構化資料：讓搜尋結果認得這是一則有發布日期的消息。
   const articleJsonLd = {
@@ -146,6 +149,35 @@ export default async function NewsArticlePage({ params }: Params) {
           ) : null}
         </div>
       </div>
+
+      {previous || next ? (
+        <nav className={styles.prevNext} aria-label="上一篇與下一篇">
+          {previous ? (
+            <Link href={`/news/${previous.slug}`} rel="prev">
+              <span>← 上一篇</span>
+              <strong>{previous.title}</strong>
+            </Link>
+          ) : <span />}
+          {next ? (
+            <Link className={styles.nextLink} href={`/news/${next.slug}`} rel="next">
+              <span>下一篇 →</span>
+              <strong>{next.title}</strong>
+            </Link>
+          ) : <span />}
+        </nav>
+      ) : null}
+
+      {related.length > 0 ? (
+        <section className={styles.related} aria-labelledby="related-title">
+          <div className={styles.relatedHead}>
+            <h2 id="related-title">延伸閱讀</h2>
+            <Link className={styles.textLink} href="/news">看全部消息 <span aria-hidden="true">→</span></Link>
+          </div>
+          <div className={styles.cards}>
+            {related.map((item) => <NewsCard key={item.slug} article={item} />)}
+          </div>
+        </section>
+      ) : null}
 
       <CommunityInvite url={content.communityUrl} title="喜歡這類旅遊須知？" text="新規定與出發前提醒會同步發到社群，加入就不會漏看。" />
 

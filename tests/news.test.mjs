@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
-import { findNewsArticle, newsArticles, newsDateLabel, publishedNews, taipeiDate } from "../lib/news.ts";
+import { adjacentNews, findNewsArticle, newsArticles, newsDateLabel, newsListPage, newsPageSize, newsTopic, newsTopicByCategory, newsTopics, publishedNews, relatedNews, taipeiDate } from "../lib/news.ts";
 
 const validDate = /^\d{4}-\d{2}-\d{2}$/;
 const articleText = (article) => JSON.stringify(article);
@@ -139,4 +139,43 @@ test("new travel articles keep their checked facts and link to trips on this sit
   assert.ok(findNewsArticle("northern-lights-guide", newsArticles, "2026-12-10"));
   const starlux = JSON.stringify(findNewsArticle("starlux-sydney-auckland", newsArticles, all));
   for (const fact of ["2027/3/23", "每週 4 班", "A330-900", "JX183", "JX184", "sydney-gold-coast-highlights-8d", "new-zealand-north-south-highlights-12d", "NZeTA", "最終公告為準"]) assert.ok(starlux.includes(fact), fact);
+});
+
+test("every article category belongs to one of the list topics", () => {
+  const slugs = newsTopics.map((topic) => topic.slug);
+  for (const article of newsArticles) {
+    // 新的 category 要在 newsTopicByCategory 補上歸類，否則會被猜到錯的分類。
+    assert.ok(article.category in newsTopicByCategory, article.category);
+    assert.ok(slugs.includes(newsTopic(article)), article.category);
+  }
+});
+
+test("the news list pages and filters by topic", () => {
+  const make = (index, category) => ({ ...newsArticles[0], slug: `a${index}`, category, publishedAt: `2026-01-${String(30 - index).padStart(2, "0")}` });
+  const articles = Array.from({ length: newsPageSize + 3 }, (_, index) => make(index, index % 3 ? "日本旅遊須知" : "限時優惠"));
+  const first = newsListPage(articles);
+  assert.equal(first.pageCount, 2);
+  assert.equal(first.items.length, newsPageSize);
+  const second = newsListPage(articles, { page: 2 });
+  assert.deepEqual(second.items.map((item) => item.slug), ["a12", "a13", "a14"]);
+  // 超出範圍的頁碼回到最接近的那一頁。
+  assert.equal(newsListPage(articles, { page: 99 }).page, 2);
+  assert.equal(newsListPage(articles, { page: 0 }).page, 1);
+  const offers = newsListPage(articles, { topic: "offers" });
+  assert.equal(offers.total, 5);
+  assert.ok(offers.items.every((item) => item.category === "限時優惠"));
+});
+
+test("article pages link to the previous, next and related articles", () => {
+  const a = { ...newsArticles[0], slug: "a", category: "日本旅遊須知", publishedAt: "2026-01-01" };
+  const b = { ...newsArticles[0], slug: "b", category: "限時優惠", publishedAt: "2026-01-02" };
+  const c = { ...newsArticles[0], slug: "c", category: "韓國旅遊須知", publishedAt: "2026-01-03" };
+  const future = { ...newsArticles[0], slug: "future", category: "日本旅遊須知", publishedAt: "2026-02-01" };
+  const list = [a, b, c, future];
+  const today = "2026-01-10";
+  assert.deepEqual(adjacentNews("b", list, today), { previous: a, next: c });
+  // 最新的一篇沒有下一篇，還沒上線的文章也不會被連到。
+  assert.equal(adjacentNews("c", list, today).next, undefined);
+  // 同類（出國須知）優先，再補其他最新的。
+  assert.deepEqual(relatedNews("a", list, today).map((item) => item.slug), ["c", "b"]);
 });
