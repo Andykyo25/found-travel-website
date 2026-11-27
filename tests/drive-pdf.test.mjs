@@ -71,6 +71,9 @@ test("links a site PDF to the Drive file with the same name, ignoring width and 
   // 旅展資料夾的檔名多了排序用的前綴，Drive 上沒有。
   const loose = autoLinkPlan(plan(), "更1.首爾「冰柱節」六日.pdf", extra);
   assert.equal("file" in loose && loose.file.id, "seoul00000001");
+  // 批次匯入存的檔名帶著旅展資料夾的路徑。
+  const withFolder = autoLinkPlan(plan(), "旅展行程/5.韓國 A/首爾/更1.首爾「冰柱節」六日.pdf", extra);
+  assert.equal("file" in withFolder && withFolder.file.id, "seoul00000001");
   assert.deepEqual(autoLinkPlan(plan(), "沒有這個檔.pdf", extra), { problem: "unmatched" });
 });
 

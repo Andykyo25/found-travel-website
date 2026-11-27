@@ -162,7 +162,8 @@ export function autoLinkPlan(
   filename: string,
   files: DriveFile[],
 ): AutoLink {
-  const key = driveNameKey(filename);
+  // 批次匯入的 PDF 存的是資料夾裡的相對路徑（「旅展行程/3.新馬.泰國/…/檔名.pdf」），只比最後的檔名。
+  const key = driveNameKey(filename.split(/[\\/]/).pop() ?? "");
   if (!key) return { problem: "unmatched" };
   let found = files.filter((file) => driveNameKey(file.name) === key);
   if (found.length === 0) found = files.filter((file) => looseNameKey(driveNameKey(file.name)) === looseNameKey(key));
