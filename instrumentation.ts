@@ -28,12 +28,21 @@ export async function register() {
     }
 
     // 業務系統的團期每 3 小時同步一次；啟動後一分鐘先跑第一次。沒設定連線資訊就不排程。
+    // 團期同步完接著檢查行程 PDF（Drive 上有新版就換上）；兩件事各自失敗不互相影響。
     const { isTourFeedConfigured, syncTourFeed } = await import("./lib/tour-feed-sync");
     if (isTourFeedConfigured()) {
       const feedState = globalThis as typeof globalThis & {
         tourFeedTimer?: ReturnType<typeof setInterval>;
       };
-      const sync = () => void syncTourFeed().catch((error) => console.error("Tour feed sync failed", error));
+      const syncPdfs = () =>
+        import("./lib/drive-pdf-sync")
+          .then(({ syncDrivePdfs }) => syncDrivePdfs())
+          .then((result) => console.log(`Drive PDF sync: ${result.replaced} replaced, ${result.problems} need attention`))
+          .catch((error) => console.error("Drive PDF sync failed", error));
+      const sync = () =>
+        void syncTourFeed()
+          .catch((error) => console.error("Tour feed sync failed", error))
+          .finally(() => void syncPdfs());
       if (!feedState.tourFeedTimer) {
         setTimeout(sync, 60_000).unref();
         feedState.tourFeedTimer = setInterval(sync, 3 * 60 * 60_000);

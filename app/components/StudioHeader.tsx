@@ -11,6 +11,7 @@ const tabs = [
   },
   { id: "inquiries", href: "/studio/inquiries", label: "詢問來源", title: "詢問來源" },
   { id: "tour-feed", href: "/studio/tour-feed", label: "團期同步", title: "團期同步" },
+  { id: "pdf-sync", href: "/studio/pdf-sync", label: "PDF 同步", title: "PDF 同步" },
   {
     id: "settings",
     href: "/studio/settings",

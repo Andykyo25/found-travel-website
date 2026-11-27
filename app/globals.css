@@ -2453,14 +2453,18 @@ img {
 }
 
 @media (max-width: 620px) {
+  /* 分頁多到一排放不下：每個分頁維持一行字，分頁列自己左右滑動，不把字擠成直排。 */
   .studio-tabs {
     width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
   .studio-tab {
-    flex: 1;
+    flex: 1 0 auto;
     padding-inline: 12px;
     text-align: center;
+    white-space: nowrap;
   }
 
   .contact-table-toolbar {

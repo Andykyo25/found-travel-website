@@ -70,21 +70,38 @@ async function signIn(config: NonNullable<ReturnType<typeof feedConfig>>) {
   return result.idToken;
 }
 
-let running: Promise<FeedSnapshot> | null = null;
-
-async function runSync(): Promise<FeedSnapshot> {
+/**
+ * 登入業務系統，回傳只能「讀取」的請求函式（團期同步與行程 PDF 同步共用）。
+ * 官網對業務系統只讀不寫：這裡刻意只提供 GET。
+ */
+export async function openFeedSession() {
   const config = feedConfig();
   if (!config) throw new TourFeedError("尚未設定業務系統的連線資訊");
   const headers = { Authorization: `Bearer ${await signIn(config)}` };
-  const list = (await fetchJson("讀取檔案清單", `${config.apiUrl}/api/sales-files`, { headers })) as { id?: unknown; name?: unknown }[];
+  return {
+    getJson: (step: string, path: string) => fetchJson(step, `${config.apiUrl}${path}`, { headers }),
+    getText: async (step: string, path: string) => (await request(step, `${config.apiUrl}${path}`, { headers })).text(),
+  };
+}
+
+/** 業務系統的動態檔清單（檔案編號與名稱）。 */
+export async function listFeedFiles(session: Awaited<ReturnType<typeof openFeedSession>>) {
+  const list = (await session.getJson("讀取檔案清單", "/api/sales-files")) as { id?: unknown; name?: unknown }[];
   if (!Array.isArray(list)) throw new TourFeedError("讀取檔案清單：回應格式不是預期的樣子");
+  return list.flatMap((entry) => (typeof entry.id === "string" && typeof entry.name === "string" ? [{ id: entry.id, name: entry.name }] : []));
+}
+
+let running: Promise<FeedSnapshot> | null = null;
+
+async function runSync(): Promise<FeedSnapshot> {
+  const session = await openFeedSession();
+  const list = await listFeedFiles(session);
 
   const now = new Date();
   const files: Parameters<typeof buildFeedProducts>[0] = [];
   for (const entry of list) {
-    if (typeof entry.id !== "string" || typeof entry.name !== "string") continue;
     // 檔案內容是純文字，不是 JSON。
-    const text = await (await request("讀取動態檔", `${config.apiUrl}/api/file-content/${encodeURIComponent(entry.id)}`, { headers })).text();
+    const text = await session.getText("讀取動態檔", `/api/file-content/${encodeURIComponent(entry.id)}`);
     // 原始文字含旅客姓名與利潤：解析完就丟，只留日期、售價、狀態。
     files.push({ name: entry.name, groups: parseFeedFile(entry.name, text, now) });
   }

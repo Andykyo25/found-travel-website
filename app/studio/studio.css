@@ -338,6 +338,20 @@
 .tour-feed-table small { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
 .tour-feed-table select { width: 100%; max-width: 30em; min-height: 44px; padding: 8px 10px; font: inherit; font-size: 14px; }
 
+/* PDF 同步 */
+.drive-pdf-table td { overflow-wrap: anywhere; }
+.drive-pdf-status { margin: 0; font-size: 14px; font-weight: 700; }
+.drive-pdf-status.attention { color: #96551f; }
+.drive-pdf-choices,
+.drive-pdf-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.drive-pdf-picker { margin-top: 12px; padding: 12px; border: 1px solid var(--line, #d8d2c6); border-radius: 12px; background: #fff; }
+.drive-pdf-picker label { display: grid; gap: 6px; font-size: 14px; }
+.drive-pdf-picker input { min-height: 44px; padding: 8px 10px; font: inherit; font-size: 15px; }
+.drive-pdf-picker ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.drive-pdf-picker li button { display: block; width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--line, #d8d2c6); border-radius: 10px; background: #fff; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.drive-pdf-picker li button:hover:not(:disabled),
+.drive-pdf-picker li button:focus-visible { border-color: var(--sage-deep); }
+
 /* 詢問來源統計 */
 .tour-feed-filters a.tour-feed-filter { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
 .tour-feed-filters a.tour-feed-filter[aria-current="page"] { border-color: var(--sage-deep); background: var(--sage-deep); color: #fff; font-weight: 700; }

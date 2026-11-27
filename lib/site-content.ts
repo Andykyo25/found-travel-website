@@ -5,6 +5,8 @@ import { applyAutoPrices, stampTripUpdates } from "@/lib/trip-summary";
 import { removeExpiredFromContent } from "@/lib/departure-tools";
 import { applyTourFeed } from "@/lib/tour-feed-overlay";
 import { getTourFeedState } from "@/lib/tour-feed-store";
+import { applyDrivePdfs } from "@/lib/drive-pdf";
+import { getDrivePdfState } from "@/lib/drive-pdf-store";
 import { isPublicEmail, isPublicTelephone } from "@/lib/trip-validation";
 import { cache } from "react";
 import {
@@ -759,10 +761,12 @@ async function publishedContent(strict: boolean): Promise<SiteContent> {
 // 前台讀取用：自動計算起始價格的行程，在這裡依「今天」的團期算出最新價格。
 // 後台編輯用 getSiteContentWithMeta()，拿到的是原樣儲存的內容。
 // 業務系統同步來的團期在這裡套上去（有對應的行程才會換），再算起始價格。
+// 業務系統 Drive 上有更新版的行程 PDF，也在這裡換上（同樣只在讀取時套用）。
 async function forVisitors(content: SiteContent): Promise<SiteContent> {
   const today = taipeiTodayTime();
-  const feed = await getTourFeedState();
-  return applyAutoPrices(applyTourFeed(content, feed.snapshot, feed.links, today), today);
+  const [feed, pdfs] = await Promise.all([getTourFeedState(), getDrivePdfState()]);
+  const withPdfs = applyDrivePdfs(content, pdfs.state, pdfs.links);
+  return applyAutoPrices(applyTourFeed(withPdfs, feed.snapshot, feed.links, today), today);
 }
 
 export async function getSiteContent(): Promise<SiteContent> {

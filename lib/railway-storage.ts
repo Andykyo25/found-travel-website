@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   NoSuchKey,
   PutObjectCommand,
@@ -318,6 +319,26 @@ export async function uploadTripPdf(
   return key;
 }
 
+/** 已上傳 PDF 的原始檔名與大小（上傳時記在物件的 metadata）。找不到回傳 null。 */
+export async function readTripPdfInfo(key: string): Promise<{ filename: string; size: number } | null> {
+  const storage = getClient();
+  if (!storage || !isTripPdfKey(key)) return null;
+  try {
+    const result = await storage.client.send(new HeadObjectCommand({ Bucket: storage.config.bucket, Key: key }));
+    let filename = "";
+    try {
+      filename = decodeURIComponent(result.Metadata?.filename ?? "");
+    } catch {
+      filename = "";
+    }
+    return { filename, size: result.ContentLength ?? 0 };
+  } catch (error) {
+    const errorName = (error as { name?: string } | null)?.name;
+    if (error instanceof NoSuchKey || errorName === "NoSuchKey" || errorName === "NotFound") return null;
+    throw error;
+  }
+}
+
 export type TripPdfCleanupResult = {
   deleted: number;
   protectedRecent: number;
@@ -548,8 +569,14 @@ export async function writeStudioPasswordObject(key: string, value: unknown) {
   );
 }
 
-// 業務系統團期的同步結果與人工指定的對應。和發布內容分開存，同步不會動到業務編輯的行程。
-const tourFeedKeys = { snapshot: "tour-feed/snapshot.json", links: "tour-feed/links.json" } as const;
+// 業務系統的同步結果與人工指定的對應（團期、行程 PDF）。和發布內容分開存，同步不會動到業務編輯的行程。
+const tourFeedKeys = {
+  snapshot: "tour-feed/snapshot.json",
+  links: "tour-feed/links.json",
+  pdfState: "drive-pdf/state.json",
+  pdfLinks: "drive-pdf/links.json",
+  pdfFiles: "drive-pdf/files.json",
+} as const;
 
 export async function readTourFeedObject(name: keyof typeof tourFeedKeys): Promise<unknown | null> {
   const storage = getClient();
