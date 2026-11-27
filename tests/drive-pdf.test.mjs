@@ -9,6 +9,9 @@ import {
   findReplacement,
   flattenDriveTree,
   isDraftPath,
+  resolveBySiblings,
+  siteDocumentTime,
+  suggestDriveFile,
   uploadedAtFromKey,
 } from "../lib/drive-pdf.ts";
 
@@ -91,6 +94,40 @@ test("picks between same-named files by departure city, otherwise asks staff", (
   assert.equal("problem" in unclear && unclear.problem, "ambiguous");
   const byAirline = autoLinkPlan(plan({ airline: "泰國亞洲航空" }), "精彩五日.pdf", twins);
   assert.equal("file" in byAirline && byAirline.file.id, "twinA00000001");
+});
+
+test("uses words from the plan name to pick between same-named files, then the sibling's leftover", () => {
+  const twins = [
+    { id: "busanEarly0001", name: "「巨濟島」釜山五日.pdf", path: "11.韓國 > 2.釜山 > 早去晚回五天 > 一站(彩妝)", modified: "" },
+    { id: "busanRegular01", name: "「巨濟島」釜山五日.pdf", path: "11.韓國 > 3.釜山=正航 > 一站(彩妝)", modified: "" },
+  ];
+  const early = autoLinkPlan(plan({ title: "台北出發・早去晚回" }), "「巨濟島」釜山五日.pdf", twins);
+  assert.equal("file" in early && early.file.id, "busanEarly0001");
+  const plain = autoLinkPlan(plan({ title: "台北出發" }), "「巨濟島」釜山五日.pdf", twins);
+  assert.equal("problem" in plain && plain.problem, "ambiguous");
+  assert.equal(resolveBySiblings(["busanEarly0001", "busanRegular01"], ["busanEarly0001"]), "busanRegular01");
+  assert.equal(resolveBySiblings(["busanEarly0001", "busanRegular01"], []), null);
+  assert.equal(resolveBySiblings(["a", "b", "c"], ["a"]), null);
+});
+
+test("dates the site's PDF by its 行程更新日 (end of that Taipei day), else by upload time", () => {
+  const key = "trip-pdfs/1787791025337-37e1657f-5b3c-436b-89fe-d9c651eb6044.pdf";
+  assert.equal(new Date(siteDocumentTime({ documentUpdatedAt: "2026-11-04" }, key)).toISOString(), "2026-11-04T15:59:59.000Z");
+  assert.equal(siteDocumentTime({ documentUpdatedAt: "" }, key), 1787791025337);
+  assert.equal(siteDocumentTime({}, key), 1787791025337);
+});
+
+test("suggests the closest Drive file only when days, bracket name and grade agree", () => {
+  const drive = [
+    { id: "vietnamStd0001", name: "1. (--)精彩北越5日-星宇.pdf", path: "07.河內 > 1.河內=JX", modified: "" },
+    { id: "vietnamSix0001", name: "1. (--)精彩北越6日-越捷-台北出發.pdf", path: "07.河內 > 2.河內=VJ", modified: "" },
+    { id: "seoulSkiTR0001", name: "(TR)首爾「滑雪」五日-AQUAFIELD高陽汗蒸幕.pdf", path: "10.首爾", modified: "" },
+  ];
+  assert.equal(suggestDriveFile("旅展行程/4.河內/10. (午晚)精彩北越5日-星宇.pdf", drive)?.id, "vietnamStd0001");
+  // 快閃與精彩是不同等級、賞楓與滑雪是不同行程：名稱再像也不建議。
+  assert.equal(suggestDriveFile("1. 快閃北越6日-越捷-台北出發.pdf", drive), null);
+  assert.equal(suggestDriveFile("(TR)首爾「賞楓」五日-AQUAFIELD高陽汗蒸幕.pdf", drive), null);
+  assert.equal(suggestDriveFile("東京河口湖溫泉螃蟹五日.pdf", drive), null);
 });
 
 test("finds a re-uploaded file with the same name in the same folder", () => {

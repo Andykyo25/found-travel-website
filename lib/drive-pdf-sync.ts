@@ -11,6 +11,8 @@ import {
   flattenDriveTree,
   isDraftPath,
   isDriveFileId,
+  resolveBySiblings,
+  siteDocumentTime,
   uploadedAtFromKey,
   type DriveFile,
   type DrivePdfLinks,
@@ -147,129 +149,190 @@ async function replaceWithDrive(file: DriveFile, now: string) {
   return { pdfKey, driveVersion: file.modified || now, replacedAt: now };
 }
 
-async function reconcilePlan(
-  job: PlanJob,
-  previous: DrivePlanState | undefined,
-  link: string | undefined,
-  files: DriveFile[],
-  byId: Map<string, DriveFile>,
-  info: ReturnType<typeof infoReader>,
-  now: string,
-): Promise<DrivePlanState> {
-  const { plan, contentKey } = job;
-  const sameBase = previous?.baseUrl === plan.documentUrl;
-  const kept = sameBase
+type PlanContext = {
+  previous: DrivePlanState | undefined;
+  link: string | undefined;
+  files: DriveFile[];
+  byId: Map<string, DriveFile>;
+  info: ReturnType<typeof infoReader>;
+  now: string;
+};
+
+type Linked = { file: DriveFile; linkedBy: "auto" | "manual"; sourceName?: string };
+/** 第一步的結果：對到的檔，或已經可以定案的狀態（找不到、同名不只一個…）。 */
+type Resolved = Linked | { settled: DrivePlanState };
+
+function keptFrom(previous: DrivePlanState | undefined, sameBase: boolean) {
+  return sameBase && previous
     ? { pdfKey: previous.pdfKey, driveVersion: previous.driveVersion, ...(previous.replacedAt ? { replacedAt: previous.replacedAt } : {}) }
     : { pdfKey: "", driveVersion: "" };
-  const base = { baseUrl: plan.documentUrl, ...(sameBase && previous.sourceName !== undefined ? { sourceName: previous.sourceName } : {}) };
+}
 
-  // 1. 這個方案對到 Drive 上哪個檔：業務指定的 → 之前自動對到的 → 用檔名找。
-  let file: DriveFile | undefined;
-  let linkedBy: "auto" | "manual" = "auto";
+/** 1. 這個方案對到 Drive 上哪個檔：業務指定的 → 之前自動對到的 → 用檔名找。 */
+async function resolveFile(job: PlanJob, context: PlanContext): Promise<Resolved> {
+  const { plan, contentKey } = job;
+  const { previous, link, files, byId, info } = context;
+  const sameBase = previous?.baseUrl === plan.documentUrl;
+  const kept = keptFrom(previous, sameBase);
+  const sourceName = sameBase && previous?.sourceName !== undefined ? previous.sourceName : undefined;
+  const base = { baseUrl: plan.documentUrl, ...(sourceName !== undefined ? { sourceName } : {}) };
+
   if (link) {
-    linkedBy = "manual";
-    file = byId.get(link);
-    if (!file) {
-      const known = previous?.driveId === link;
-      return { ...base, ...kept, driveId: link, driveName: known ? previous.driveName : "", drivePath: known ? previous.drivePath : "", linkedBy, problem: "missing" };
-    }
-  } else if (sameBase && previous.linkedBy === "auto" && previous.driveId) {
-    file = byId.get(previous.driveId) ?? findReplacement(previous, files) ?? undefined;
-    if (!file) {
-      return { ...base, ...kept, driveId: previous.driveId, driveName: previous.driveName, drivePath: previous.drivePath, linkedBy, problem: "missing" };
-    }
-  } else {
-    const sourceName = base.sourceName ?? ((await info(contentKey))?.filename || (/\.pdf$/i.test(plan.documentName) ? plan.documentName : ""));
-    const found = autoLinkPlan(plan, sourceName, files);
-    if ("problem" in found) {
-      return {
-        baseUrl: plan.documentUrl,
-        sourceName,
-        driveId: "",
-        driveName: "",
-        drivePath: "",
-        linkedBy: "",
-        pdfKey: "",
-        driveVersion: "",
-        problem: found.problem,
-        ...(found.problem === "ambiguous" ? { candidates: found.candidates.map((candidate) => candidate.id) } : {}),
-      };
-    }
-    file = found.file;
-    base.sourceName = sourceName;
+    const file = byId.get(link);
+    if (file) return { file, linkedBy: "manual", sourceName };
+    const known = previous?.driveId === link;
+    return {
+      settled: {
+        ...base,
+        ...kept,
+        driveId: link,
+        driveName: known ? previous.driveName : "",
+        drivePath: known ? previous.drivePath : "",
+        linkedBy: "manual",
+        problem: "missing",
+      },
+    };
   }
+  if (sameBase && previous?.linkedBy === "auto" && previous.driveId) {
+    const file = byId.get(previous.driveId) ?? findReplacement(previous, files);
+    if (file) return { file, linkedBy: "auto", sourceName };
+    return {
+      settled: { ...base, ...kept, driveId: previous.driveId, driveName: previous.driveName, drivePath: previous.drivePath, linkedBy: "auto", problem: "missing" },
+    };
+  }
+  const name = sourceName ?? ((await info(contentKey))?.filename || (/\.pdf$/i.test(plan.documentName) ? plan.documentName : ""));
+  const found = autoLinkPlan(plan, name, files);
+  if ("file" in found) return { file: found.file, linkedBy: "auto", sourceName: name };
+  return {
+    settled: {
+      baseUrl: plan.documentUrl,
+      sourceName: name,
+      driveId: "",
+      driveName: "",
+      drivePath: "",
+      linkedBy: "",
+      pdfKey: "",
+      driveVersion: "",
+      problem: found.problem,
+      ...(found.problem === "ambiguous" ? { candidates: found.candidates.map((candidate) => candidate.id) } : {}),
+    },
+  };
+}
 
-  const entry = { ...base, driveId: file.id, driveName: file.name, drivePath: file.path, linkedBy };
-  const sameFile = sameBase && previous.driveId === file.id;
-  const keptForFile = sameFile ? kept : { pdfKey: sameBase ? previous.pdfKey : "", driveVersion: "" };
+/** 2. 對到檔之後，要不要換成 Drive 的版本。 */
+async function settlePlan(job: PlanJob, linked: Linked, context: PlanContext): Promise<DrivePlanState> {
+  const { plan, contentKey } = job;
+  const { previous, info, now } = context;
+  const { file, linkedBy } = linked;
+  const sameBase = previous?.baseUrl === plan.documentUrl;
+  const kept = keptFrom(previous, sameBase);
+  const entry = {
+    baseUrl: plan.documentUrl,
+    ...(linked.sourceName !== undefined ? { sourceName: linked.sourceName } : {}),
+    driveId: file.id,
+    driveName: file.name,
+    drivePath: file.path,
+    linkedBy,
+  };
+  const sameFile = sameBase && previous?.driveId === file.id;
+  const keptForFile = sameFile ? kept : { pdfKey: kept.pdfKey, driveVersion: "" };
   if (isDraftPath(file.path)) return { ...entry, ...keptForFile, problem: "draft" };
 
-  // 2. 要不要換：已經比過這個檔，就看 Drive 有沒有再改過。
-  if (sameFile && previous.driveVersion) {
-    if (file.modified && file.modified > previous.driveVersion) {
-      try {
-        return { ...entry, ...(await replaceWithDrive(file, now)) };
-      } catch (error) {
-        console.error("Drive PDF replacement failed", file.id, error);
-        return { ...entry, ...kept, problem: "failed" };
-      }
+  const replace = async (fallback: typeof kept): Promise<DrivePlanState> => {
+    try {
+      return { ...entry, ...(await replaceWithDrive(file, now)) };
+    } catch (error) {
+      console.error("Drive PDF replacement failed", file.id, error);
+      return { ...entry, ...fallback, problem: "failed" };
     }
-    return { ...entry, ...kept, ...(previous.problem === "site-newer" ? { problem: "site-newer" as const } : {}) };
+  };
+
+  // 已經比過這個檔（官網顯示的就是對的版本）：只看 Drive 之後有沒有再改過。
+  if (sameFile && previous?.driveVersion && previous.problem !== "site-newer") {
+    if (file.modified && file.modified > previous.driveVersion) return replace(kept);
+    return { ...entry, ...kept };
   }
 
-  // 第一次跟這個檔比：Drive 改得比官網這份上傳得晚，就換成 Drive 的。
-  // 官網這份比較新的話先比大小：一樣就是同一份；不一樣多半是業務自己上傳的版本，不自動蓋掉，交給業務決定。
+  // 第一次跟這個檔比（上次判定「官網比較新」的也每次重新確認）：
+  // Drive 改得比官網這份 PDF 的版本晚，就換成 Drive 的。官網版本的時間看「行程更新日」，沒有填才用上傳時間。
+  // 官網這份比較新的話先比大小：一樣就是同一份；不一樣多半是業務自己做的版本，不自動蓋掉，交給業務決定。
   const shownKey = keptForFile.pdfKey || contentKey;
-  const driveIsNewer = Boolean(file.modified) && Date.parse(file.modified) > uploadedAtFromKey(shownKey);
+  const siteTime = keptForFile.pdfKey ? Date.parse(keptForFile.driveVersion) || uploadedAtFromKey(shownKey) : siteDocumentTime(plan, contentKey);
+  const driveIsNewer = Boolean(file.modified) && Date.parse(file.modified) > siteTime;
   let differs = false;
   if (!driveIsNewer || linkedBy === "manual") {
     const [siteSize, driveSize] = await Promise.all([info(shownKey).then((value) => value?.size ?? 0), driveFileSize(file.id)]);
     differs = siteSize > 0 && driveSize > 0 && siteSize !== driveSize;
   }
-  if (driveIsNewer || (linkedBy === "manual" && differs)) {
-    try {
-      return { ...entry, ...(await replaceWithDrive(file, now)) };
-    } catch (error) {
-      console.error("Drive PDF replacement failed", file.id, error);
-      return { ...entry, ...keptForFile, problem: "failed" };
-    }
-  }
+  if (driveIsNewer || (linkedBy === "manual" && differs)) return replace(keptForFile);
   return {
     ...entry,
     pdfKey: keptForFile.pdfKey,
     driveVersion: file.modified || now,
-    ...(sameBase && keptForFile.pdfKey && previous.replacedAt ? { replacedAt: previous.replacedAt } : {}),
+    ...(sameBase && keptForFile.pdfKey && previous?.replacedAt ? { replacedAt: previous.replacedAt } : {}),
     ...(differs ? { problem: "site-newer" as const } : {}),
   };
 }
 
-function planJobs(trips: Trip[], links: DrivePdfLinks): PlanJob[] {
-  return trips.flatMap((trip) =>
-    trip.plans.flatMap((plan) => {
-      if (plan.documentType !== "pdf") return [];
-      const contentKey = tripPdfKeyFromDocumentUrl(plan.documentUrl);
-      const key = drivePlanKey(trip.id, plan.id);
-      // 業務設定「不要連動」的方案不留紀錄。
-      return contentKey && links[key] !== "none" ? [{ trip, plan, key, contentKey }] : [];
-    }),
-  );
+/**
+ * 一個行程的方案一起處理：先決定各自對到哪個檔；同名檔分不出來的，
+ * 看同行程其他方案已經用掉哪個檔；最後再決定要不要換。
+ */
+async function reconcileTrip(jobs: PlanJob[], contextFor: (job: PlanJob) => PlanContext): Promise<Map<string, DrivePlanState>> {
+  const resolved = new Map<string, Resolved>();
+  for (const job of jobs) resolved.set(job.key, await resolveFile(job, contextFor(job)));
+
+  for (const job of jobs) {
+    const current = resolved.get(job.key)!;
+    if (!("settled" in current) || current.settled.problem !== "ambiguous") continue;
+    const taken = jobs.flatMap((other) => {
+      const result = resolved.get(other.key)!;
+      return other.key !== job.key && "file" in result ? [result.file.id] : [];
+    });
+    const id = resolveBySiblings(current.settled.candidates ?? [], taken);
+    const file = id ? contextFor(job).byId.get(id) : undefined;
+    if (file) resolved.set(job.key, { file, linkedBy: "auto", sourceName: current.settled.sourceName });
+  }
+
+  const results = new Map<string, DrivePlanState>();
+  for (const job of jobs) {
+    const current = resolved.get(job.key)!;
+    results.set(job.key, "settled" in current ? current.settled : await settlePlan(job, current, contextFor(job)));
+  }
+  return results;
+}
+
+/** 依行程分組；業務設定「不要連動」的方案不留紀錄。 */
+function planJobs(trips: Trip[], links: DrivePdfLinks): PlanJob[][] {
+  return trips
+    .map((trip) =>
+      trip.plans.flatMap((plan) => {
+        if (plan.documentType !== "pdf") return [];
+        const contentKey = tripPdfKeyFromDocumentUrl(plan.documentUrl);
+        const key = drivePlanKey(trip.id, plan.id);
+        return contentKey && links[key] !== "none" ? [{ trip, plan, key, contentKey }] : [];
+      }),
+    )
+    .filter((jobs) => jobs.length > 0);
 }
 
 export type DrivePdfSyncResult = { syncedAt: string; plans: number; replaced: number; problems: number };
 
 // 同步與後台的「改用 Drive 版本」都會改同一份紀錄，同一時間只做一件事。
-let busy: Promise<unknown> | null = null;
+// 排程（instrumentation）和後台頁面是分開打包的，各有一份這個模組；
+// 「進行中」的記號放在整個程序共用的 globalThis，兩邊才看得到同一個。
+const shared = globalThis as typeof globalThis & { drivePdfSyncBusy?: Promise<unknown> | null };
 
 export function isDrivePdfSyncRunning() {
-  return busy !== null;
+  return Boolean(shared.drivePdfSyncBusy);
 }
 
 function exclusive<T>(task: () => Promise<T>): Promise<T> {
-  if (busy) return Promise.reject(new TourFeedError("PDF 同步進行中，請一兩分鐘後再試"));
+  if (shared.drivePdfSyncBusy) return Promise.reject(new TourFeedError("PDF 同步進行中，請一兩分鐘後再試"));
   const run = task().finally(() => {
-    busy = null;
+    shared.drivePdfSyncBusy = null;
   });
-  busy = run;
+  shared.drivePdfSyncBusy = run;
   return run;
 }
 
@@ -287,8 +350,9 @@ async function runSync(): Promise<DrivePdfSyncResult> {
     const info = infoReader();
     const plans: Record<string, DrivePlanState> = {};
     const linkFor = (key: string) => (links[key] && links[key] !== "none" ? links[key] : undefined);
-    await eachLimit(planJobs(content.trips, links), concurrency, async (job) => {
-      plans[job.key] = await reconcilePlan(job, previous?.plans[job.key], linkFor(job.key), files, byId, info, now);
+    const contextFor = (job: PlanJob): PlanContext => ({ previous: previous?.plans[job.key], link: linkFor(job.key), files, byId, info, now });
+    await eachLimit(planJobs(content.trips, links), concurrency, async (jobs) => {
+      for (const [key, entry] of await reconcileTrip(jobs, contextFor)) plans[key] = entry;
     });
 
     const state: DrivePdfState = { syncedAt: now, plans };

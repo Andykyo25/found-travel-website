@@ -19,17 +19,31 @@ export type DrivePdfRow = {
   replacedAt: string;
   sourceName: string;
   candidates: { id: string; name: string; path: string }[];
+  /** 檔名對不到時，名稱最接近的 Drive 檔（要業務確認）。 */
+  suggestion: { id: string; name: string; path: string } | null;
 };
 
 type DriveFileOption = { id: string; name: string; path: string; modified: string };
 
-type Filter = "attention" | "replaced" | "current" | "other" | "all";
-const filterLabels: Record<Filter, string> = { attention: "需要處理", replaced: "已換新版", current: "與 Drive 一致", other: "其他", all: "全部" };
+type Filter = "decide" | "no-drive" | "replaced" | "current" | "other" | "all";
+const filterLabels: Record<Filter, string> = {
+  decide: "需要決定",
+  "no-drive": "Drive 上沒有",
+  replaced: "已換新版",
+  current: "與 Drive 一致",
+  other: "其他",
+  all: "全部",
+};
 
-const attention = new Set<DrivePlanStatus>(["unmatched", "ambiguous", "missing", "site-newer", "failed", "draft"]);
+// 需要業務決定的：分不出是哪個檔、官網與 Drive 版本不同、下載失敗。
+const needsDecision = new Set<DrivePlanStatus>(["ambiguous", "site-newer", "failed"]);
+// Drive 上沒有對應的檔：官網照常顯示現有 PDF，只是不會自動更新。
+const notOnDrive = new Set<DrivePlanStatus>(["unmatched", "missing"]);
+const attention = new Set<DrivePlanStatus>([...needsDecision, ...notOnDrive]);
 
 function rowFilter(row: DrivePdfRow): Exclude<Filter, "all"> {
-  if (attention.has(row.status)) return "attention";
+  if (needsDecision.has(row.status)) return "decide";
+  if (notOnDrive.has(row.status)) return "no-drive";
   if (row.status === "replaced") return "replaced";
   if (row.status === "current") return "current";
   return "other";
@@ -41,12 +55,18 @@ const statusText: Record<DrivePlanStatus, string> = {
   unchecked: "還沒比對，下次同步時處理",
   "changed-on-site": "後台換過這個方案的 PDF，下次同步重新比對",
   off: "不連動：維持後台上傳的 PDF",
-  unmatched: "Drive 上找不到同名的檔",
+  unmatched: "Drive 上沒有同名的檔（可能改了名或已下架），官網照常顯示現有 PDF",
   ambiguous: "Drive 上有不只一個同名檔，請指定是哪一個",
-  missing: "原本對到的檔在 Drive 上不見了，官網維持現有 PDF",
+  missing: "原本對到的檔在 Drive 上不見了（可能改了名或已下架），官網照常顯示現有 PDF",
   draft: "Drive 上這個檔放在「待修」資料夾，先不換",
-  "site-newer": "官網的 PDF 比 Drive 的新、內容也不一樣，沒有自動換",
+  "site-newer": "官網這份比 Drive 上的新、內容也不一樣（可能是旅展或業務自己改過的版本），沒有自動換",
   failed: "從 Drive 下載失敗，下次同步再試",
+};
+
+const filterHints: Partial<Record<Filter, string>> = {
+  decide: "請確認要用哪個檔，或維持官網現在的版本。官網的 PDF 比較新的，若確定 Drive 上的才是最新版，按「改用 Drive 版本」。",
+  "no-drive":
+    "這些方案官網照常顯示現有的 PDF，只是不會自動更新，不處理也沒關係。有「名稱最接近的檔」的，確認是同一個行程就按「用這個檔」；完全找不到的多半是 Drive 上已經下架，可以考慮把這個方案或行程下架。",
 };
 
 // 自己排台北時間（固定 UTC+8）：伺服器與瀏覽器的 toLocaleString 會用不同的空白字元，畫面會對不上。
@@ -77,14 +97,14 @@ export function DrivePdfPanel({
   files: DriveFileOption[];
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<Filter>("attention");
+  const [filter, setFilter] = useState<Filter>("decide");
   const [busy, setBusy] = useState("");
   const [picking, setPicking] = useState("");
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   const counts = useMemo(() => {
-    const result: Record<Filter, number> = { attention: 0, replaced: 0, current: 0, other: 0, all: rows.length };
+    const result: Record<Filter, number> = { decide: 0, "no-drive": 0, replaced: 0, current: 0, other: 0, all: rows.length };
     for (const row of rows) result[rowFilter(row)] += 1;
     return result;
   }, [rows]);
@@ -150,6 +170,7 @@ export function DrivePdfPanel({
           </button>
         ))}
       </div>
+      {filterHints[filter] && visible.length > 0 ? <p className="drive-pdf-hint">{filterHints[filter]}</p> : null}
 
       {visible.length === 0 ? (
         <div className="contact-table-empty">{syncedAt ? "這一類目前沒有方案。" : "同步一次之後，這裡會列出每個方案的 PDF 對到 Drive 上哪個檔。"}</div>
@@ -182,7 +203,25 @@ export function DrivePdfPanel({
                           {row.status === "replaced" && row.replacedAt ? `｜官網換上於 ${when(row.replacedAt)}` : ""}
                         </small>
                       ) : row.sourceName ? (
-                        <small>官網的檔名：{row.sourceName}</small>
+                        <small>官網的檔名：{row.sourceName.split("/").pop()}</small>
+                      ) : null}
+
+                      {row.suggestion ? (
+                        <div className="drive-pdf-suggestion">
+                          <small>
+                            名稱最接近的檔（請先確認是同一個行程）：
+                            <br />
+                            <strong>{row.suggestion.name}</strong>｜{shortPath(row.suggestion.path)}
+                          </small>
+                          <button
+                            type="button"
+                            className="button button-secondary button-small"
+                            disabled={busy !== "" || running}
+                            onClick={() => link(row, row.suggestion!.id, `已指定「${row.tripTitle}」用「${row.suggestion!.name}」，並換上這個檔。`)}
+                          >
+                            用這個檔
+                          </button>
+                        </div>
                       ) : null}
 
                       {row.status === "ambiguous" && row.candidates.length > 0 ? (

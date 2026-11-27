@@ -2,7 +2,7 @@ import { StudioHeader } from "@/app/components/StudioHeader";
 import { DrivePdfPanel, type DrivePdfRow } from "@/app/components/DrivePdfPanel";
 import { getSiteContentWithMeta } from "@/lib/site-content";
 import { requireStudioUser } from "@/lib/studio-auth";
-import { drivePlanKey, drivePlanStatus, type DrivePdfLinks } from "@/lib/drive-pdf";
+import { drivePlanKey, drivePlanStatus, suggestDriveFile, type DrivePdfLinks } from "@/lib/drive-pdf";
 import { readDriveFiles, readDrivePdfStateFresh } from "@/lib/drive-pdf-store";
 import { isDrivePdfSyncRunning } from "@/lib/drive-pdf-sync";
 import { isTourFeedConfigured } from "@/lib/tour-feed-sync";
@@ -28,6 +28,12 @@ export default async function StudioPdfSyncPage() {
       const key = drivePlanKey(trip.id, plan.id);
       const entry = state?.plans[key];
       const manual = links[key] ?? "";
+      const status = drivePlanStatus(trip.id, plan, state, links);
+      // 檔名對不到：給一個名稱最接近的檔讓業務確認（不會自動套用）。
+      const suggested =
+        (status === "unmatched" || status === "missing") && files.length > 0
+          ? suggestDriveFile(entry?.driveName || entry?.sourceName || "", files)
+          : null;
       return [
         {
           key,
@@ -35,8 +41,9 @@ export default async function StudioPdfSyncPage() {
           planId: plan.id,
           tripTitle: trip.title,
           planLabel: [plan.airline, plan.title].filter(Boolean).join("・"),
-          status: drivePlanStatus(trip.id, plan, state, links),
+          status,
           manual,
+          suggestion: suggested && suggested.id !== entry?.driveId ? { id: suggested.id, name: suggested.name, path: suggested.path } : null,
           driveName: entry?.driveName ?? "",
           drivePath: entry?.drivePath ?? "",
           driveModified: (entry?.driveId && fileById.get(entry.driveId)?.modified) || "",

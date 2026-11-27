@@ -148,22 +148,35 @@ function airlineMatches(plan: Pick<TripPlan, "airline">, path: string) {
   return airlineWords.some((word) => text.includes(word) && plan.airline.includes(word));
 }
 
+/** 方案名稱裡可以拿來認資料夾的字，例如「台北出發・早去晚回」的「早去晚回」。出發地與日期不算。 */
+function planWords(plan: Pick<TripPlan, "title">) {
+  return plan.title
+    .normalize("NFKC")
+    .split(/[・\s、,，/／()（）+＋]+/)
+    .filter((word) => word.length >= 2 && !/出發|限|\d/.test(word));
+}
+
 export type AutoLink =
   | { file: DriveFile }
   | { problem: "unmatched" }
   | { problem: "ambiguous"; candidates: DriveFile[] };
 
+/** 官網 PDF 的原始檔名。批次匯入存的是資料夾裡的相對路徑（「旅展行程/3.新馬.泰國/…/檔名.pdf」），只取最後的檔名。 */
+export function sourceBaseName(filename: string) {
+  return filename.split(/[\\/]/).pop() ?? "";
+}
+
 /**
  * 用官網 PDF 的原始檔名找 Drive 上的同一個檔。
- * 同名檔不只一個時（例如台北、高雄出發各放一份），看資料夾的出發地與航空跟方案相不相符。
+ * 同名檔不只一個時（例如台北、高雄出發各放一份），看資料夾的出發地、航空，
+ * 以及方案名稱裡的字（「早去晚回」）跟資料夾名稱相不相符。
  */
 export function autoLinkPlan(
   plan: Pick<TripPlan, "airline" | "title" | "departureAirport">,
   filename: string,
   files: DriveFile[],
 ): AutoLink {
-  // 批次匯入的 PDF 存的是資料夾裡的相對路徑（「旅展行程/3.新馬.泰國/…/檔名.pdf」），只比最後的檔名。
-  const key = driveNameKey(filename.split(/[\\/]/).pop() ?? "");
+  const key = driveNameKey(sourceBaseName(filename));
   if (!key) return { problem: "unmatched" };
   let found = files.filter((file) => driveNameKey(file.name) === key);
   if (found.length === 0) found = files.filter((file) => looseNameKey(driveNameKey(file.name)) === looseNameKey(key));
@@ -173,11 +186,85 @@ export function autoLinkPlan(
   if (unique.length === 1) return { file: unique[0] };
 
   const city = planCity(plan);
+  const words = planWords(plan);
   const scored = unique
-    .map((file) => ({ file, score: (pathCity(file.path) === city ? 2 : 0) + (airlineMatches(plan, file.path) ? 1 : 0) }))
+    .map((file) => {
+      const path = file.path.normalize("NFKC");
+      const score =
+        (pathCity(path) === city ? 2 : 0) + (airlineMatches(plan, path) ? 1 : 0) + (words.some((word) => path.includes(word)) ? 1.5 : 0);
+      return { file, score };
+    })
     .sort((a, b) => b.score - a.score);
   if (scored[0].score > scored[1].score) return { file: scored[0].file };
   return { problem: "ambiguous", candidates: unique };
+}
+
+/**
+ * 同一個行程裡兩個方案用同名的 PDF（例如台北出發、早去晚回各一份）：
+ * 其中一個已經認出是哪個檔，剩下那個就是另一個檔。
+ */
+export function resolveBySiblings(candidates: string[], takenBySiblings: Iterable<string>) {
+  const taken = new Set(takenBySiblings);
+  const left = candidates.filter((id) => !taken.has(id));
+  return left.length === 1 && left.length < candidates.length ? left[0] : null;
+}
+
+/**
+ * 官網這份 PDF 是什麼時候的版本：後台有「行程更新日」（批次匯入時填的是原始檔的修改日）就用它，
+ * 只有日期就算到當天結束（台北時間），寧可不換也不要換錯；沒有填才用上傳時間。
+ */
+export function siteDocumentTime(plan: Pick<TripPlan, "documentUpdatedAt">, pdfKey: string) {
+  const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(plan.documentUpdatedAt ?? "");
+  if (date) return Date.UTC(Number(date[1]), Number(date[2]) - 1, Number(date[3]), 23 - 8, 59, 59);
+  return uploadedAtFromKey(pdfKey);
+}
+
+const gradeWords = ["超值", "精彩", "豪華", "特惠", "尊爵", "樂活", "歡樂", "親子", "快閃", "全覽", "經典"];
+
+/** 建議用：去掉編號、括號註記、限定日期等裝飾，只留行程本身的名字。 */
+function coreName(name: string) {
+  return driveNameKey(sourceBaseName(name))
+    .replace(/^(?:new|更新?|新)/, "")
+    .replace(/^[\d.、-]+/, "")
+    .replace(/\([^)]*\)|[【】「」◆@=]/g, "")
+    .replace(/^限[\d.、~～-]+/, "")
+    .replace(/[-~～_]/g, "");
+}
+
+function bigrams(text: string) {
+  const set = new Set<string>();
+  for (let index = 0; index < text.length - 1; index++) set.add(text.slice(index, index + 2));
+  return set;
+}
+
+function similarity(a: Set<string>, b: Set<string>) {
+  let shared = 0;
+  for (const pair of a) if (b.has(pair)) shared++;
+  return a.size + b.size === 0 ? 0 : (2 * shared) / (a.size + b.size);
+}
+
+const dayCount = (name: string) => /(\d{1,2}|[一二三四五六七八九十]{1,3})\s*[日天]/.exec(name.normalize("NFKC"))?.[1] ?? "";
+const bracketName = (name: string) => /「([^」]+)」|【([^】]+)】/.exec(name)?.slice(1).find(Boolean) ?? "";
+const gradeOf = (name: string) => gradeWords.find((word) => name.includes(word)) ?? "";
+
+/**
+ * 檔名對不到時，給業務一個「名稱最接近」的檔參考（不會自動套用）。
+ * 天數、「」裡的行程名稱或等級（快閃／精彩）不一樣的，就算名稱很像也不建議。
+ */
+export function suggestDriveFile(filename: string, files: DriveFile[]): DriveFile | null {
+  const base = sourceBaseName(filename);
+  const target = bigrams(coreName(base));
+  const days = dayCount(base);
+  const bracket = bracketName(base);
+  const grade = gradeOf(base);
+  let best: { file: DriveFile; score: number } | null = null;
+  for (const file of files) {
+    if ((days && dayCount(file.name) && dayCount(file.name) !== days) || (bracket && bracketName(file.name) && bracketName(file.name) !== bracket)) continue;
+    if (grade && gradeOf(file.name) && gradeOf(file.name) !== grade) continue;
+    const score = similarity(target, bigrams(coreName(file.name)));
+    if (!best || score > best.score) best = { file, score };
+  }
+  return best && best.score >= 0.6 ? best.file : null;
 }
 
 /**
